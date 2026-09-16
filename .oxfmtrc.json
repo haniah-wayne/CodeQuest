@@ -1,0 +1,10 @@
+{
+	"tabWidth": 4,
+	"useTabs": true,
+	"sortTailwindcss": {
+		"stylesheet": "./app/globals.css"
+	},
+	"sortImports": {
+		"newlinesBetween": false
+	}
+}
