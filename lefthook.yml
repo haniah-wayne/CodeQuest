@@ -1,5 +1,5 @@
 pre-commit:
-  parallel: true
-  jobs:
-    - run: npm run lint:fix
-      glob: "*.{js,ts,jsx,tsx}"
+    parallel: true
+    jobs:
+        - run: npm run lint:fix
+          glob: "*.{js,ts,jsx,tsx}"
