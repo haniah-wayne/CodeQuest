@@ -6,5 +6,14 @@
 	},
 	"sortImports": {
 		"newlinesBetween": false
-	}
+	},
+	"overrides": [
+		{
+			"files": ["*.yml"],
+			"options": {
+				"tabWidth": 2,
+				"useTabs": false
+			}
+		}
+	]
 }
