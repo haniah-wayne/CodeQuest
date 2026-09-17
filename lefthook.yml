@@ -3,3 +3,4 @@ pre-commit:
   jobs:
     - run: npm run lint:fix
       glob: "*.{js,ts,jsx,tsx}"
+      stage_fixed: true
