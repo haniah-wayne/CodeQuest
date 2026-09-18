@@ -1,6 +1,7 @@
 import Image from "next/image";
 import wsuMap from "@/assets/img/wsu-map.png";
 import { HowItWorks } from "@/components/how-it-works";
+import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
 export default function Home() {
@@ -35,6 +36,8 @@ export default function Home() {
 
 				<HowItWorks />
 			</main>
+
+			<SiteFooter />
 		</>
 	);
 }

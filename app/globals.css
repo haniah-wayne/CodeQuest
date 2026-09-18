@@ -70,6 +70,10 @@
 	--text-caption--line-height: 1.4;
 	--text-caption--letter-spacing: 0.01em;
 	--text-caption--font-weight: 500;
+
+	/* WSU primaries https://base.wayne.edu/styleguide/cms/colors */
+	--color-wsu-green: #0c5449;
+	--color-wsu-gold: #ffcc33;
 }
 
 @theme inline {
@@ -225,4 +229,9 @@
 		box-shadow: none;
 		translate: 0 6px;
 	}
+}
+
+#site-footer .wordmark {
+	color: --alpha(var(--color-wsu-green) / 0.07);
+	mask-image: linear-gradient(to bottom, transparent, black 55%);
 }
