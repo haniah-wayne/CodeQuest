@@ -2,6 +2,8 @@
 // creating the login form components
 
 import { useState } from "react";
+import { supabase } from "@/lib/supabase";
+
 
 export default function LoginForm() {
     // setting the email, password, error, and role state
@@ -12,15 +14,22 @@ export default function LoginForm() {
     const [showPassword, setShowPassword] = useState(false);
 
     // handling when the email or password is empty
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
+    
         if (!email || !password) {
             setError("Both fields are required.");
             return;
         }
-
-        console.log("Logging in with:", { email, password, role });
+        const {data,error} = await supabase.auth.signInWithPassword({
+            email,
+            password,
+     });
+        if (error){
+            setError(error.message)
+            return;
+        }
+        console.log("Logging in with:", { email,role });
         setError("");
     };
 
@@ -55,7 +64,7 @@ export default function LoginForm() {
                             </div>
                             <input
                                 type="email"
-                                className="pl-10 w-full py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                                className="pl-10 w-full py-3 border border-gray-200 text-black rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
                                 placeholder="you@example.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
@@ -73,7 +82,7 @@ export default function LoginForm() {
                             </div>
                             <input
                                 type={showPassword ? "text" : "password"}
-                                className="pl-10 w-full py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                                className="pl-10 w-full py-3 border border-gray-200 text-black rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
                                 placeholder="fill it"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -103,7 +112,7 @@ export default function LoginForm() {
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
                         <select
-                            className="w-full py-3 px-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                            className="w-full py-3 px-3 border border-gray-200 text-black rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
                             value={role}
                             onChange={(e) => setRole(e.target.value)}
                         >
