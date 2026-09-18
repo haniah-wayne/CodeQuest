@@ -7,6 +7,8 @@ CREATE TABLE Profiles(
     CHECK (ROLE IN ('student', 'professor')) 
 );
 
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
 CREATE POLICY Policyforrole ON Profiles
     AS PERMISSIVE
     FOR SELECT
