@@ -1,6 +1,6 @@
 export function SiteFooter() {
 	return (
-		<footer id="site-footer" className="relative overflow-hidden bg-emerald-50/30 pt-16">
+		<footer id="site-footer" className="relative overflow-hidden bg-emerald-50/50 pt-16">
 			<span className="sr-only">CodeQuest</span>
 
 			<span

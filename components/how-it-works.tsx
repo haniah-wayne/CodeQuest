@@ -39,7 +39,10 @@ const steps: Step[] = [
 
 export function HowItWorks() {
 	return (
-		<section id="how-it-works" className="border-t border-border bg-emerald-50/30 py-24">
+		<section
+			id="how-it-works"
+			className="bg-linear-to-b/oklch from-emerald-50/50 to-white py-24"
+		>
 			<div className="mx-auto flex w-full max-w-7xl flex-col gap-12 px-5 sm:px-8">
 				<hgroup className="mx-auto flex max-w-2xl flex-col items-center gap-2 text-center">
 					<h2 className="text-title">How It Works</h2>
