@@ -15,6 +15,7 @@
 		"@hugeicons/react": "^1.1.10",
 		"class-variance-authority": "^0.7.1",
 		"cn": "^0.3.0",
+		"i": "^0.3.7",
 		"next": "16.3.5",
 		"oxfmt": "^0.68.0",
 		"react": "19.2.8",

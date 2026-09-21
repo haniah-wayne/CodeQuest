@@ -25,7 +25,7 @@ export function SiteHeader() {
 						Sign in
 					</Button>
 
-					<Button render={<Link href="/sign-up" />} size="sm" className="px-4">
+					<Button render={<Link href="/sign_up" />} size="sm" className="px-4">
 						Create account
 					</Button>
 				</div>
