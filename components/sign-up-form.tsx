@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
 	Field,
 	FieldDescription,
+	FieldError,
 	FieldGroup,
 	FieldLabel,
 	FieldLegend,
@@ -15,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Radio, RadioGroup } from "@/components/ui/radio-group";
 import { ROLES, type Role } from "@/lib/auth/roles";
+import { MIN_PASSWORD_LENGTH } from "@/lib/auth/schemas";
 
 const ROLE_LABELS: Record<Role, string> = {
 	student: "Student",
@@ -41,59 +43,68 @@ export function SignUpForm() {
 				<FieldGroup>
 					{state.error && <AuthFormError>{state.error}</AuthFormError>}
 
-					<Field>
+					<Field data-invalid={Boolean(state.fieldErrors?.name) || undefined}>
 						<FieldLabel className="text-label" htmlFor="name">
 							Name
 						</FieldLabel>
 
 						<Input
+							className="h-11"
 							id="name"
 							name="name"
 							type="text"
 							autoComplete="name"
 							placeholder="Ada Lovelace"
-							className="h-11"
 							required
+							aria-invalid={Boolean(state.fieldErrors?.name) || undefined}
 						/>
+
+						<FieldError>{state.fieldErrors?.name}</FieldError>
 					</Field>
 
-					<Field>
+					<Field data-invalid={Boolean(state.fieldErrors?.email) || undefined}>
 						<FieldLabel className="text-label" htmlFor="email">
 							Email
 						</FieldLabel>
 
 						<Input
+							className="h-11"
 							id="email"
 							name="email"
 							type="email"
 							autoComplete="email"
 							placeholder="you@wayne.edu"
-							className="h-11"
 							required
+							aria-invalid={Boolean(state.fieldErrors?.email) || undefined}
 						/>
+
+						<FieldError>{state.fieldErrors?.email}</FieldError>
 					</Field>
 
-					<Field>
+					<Field data-invalid={Boolean(state.fieldErrors?.password) || undefined}>
 						<FieldLabel className="text-label" htmlFor="password">
 							Password
 						</FieldLabel>
 
 						<Input
+							className="h-11"
 							id="password"
 							name="password"
 							type="password"
 							autoComplete="new-password"
-							className="h-11"
 							required
-							minLength={8}
+							minLength={MIN_PASSWORD_LENGTH}
+							aria-invalid={Boolean(state.fieldErrors?.password) || undefined}
 						/>
 
 						<FieldDescription className="text-caption">
-							At least 8 characters.
+							At least {MIN_PASSWORD_LENGTH} characters.
 						</FieldDescription>
+
+						<FieldError>{state.fieldErrors?.password}</FieldError>
 					</Field>
 
-					<FieldSet>
+					<FieldSet data-invalid={Boolean(state.fieldErrors?.role) || undefined}>
 						<FieldLegend className="text-label" variant="label">
 							I&apos;m a
 						</FieldLegend>
@@ -116,6 +127,8 @@ export function SignUpForm() {
 								</FieldLabel>
 							))}
 						</RadioGroup>
+
+						<FieldError>{state.fieldErrors?.role}</FieldError>
 					</FieldSet>
 
 					<Button type="submit" size="lg" className="w-full" disabled={pending}>

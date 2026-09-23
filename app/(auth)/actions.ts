@@ -1,5 +1,9 @@
 "use server";
 
+import { redirect } from "next/navigation";
+import * as v from "valibot";
+import { isRole, roleHome } from "@/lib/auth/roles";
+import { SignInSchema, SignUpSchema } from "@/lib/auth/schemas";
 import { createClient } from "@/lib/supabase/server";
 
 export interface AuthFormState {
@@ -7,20 +11,73 @@ export interface AuthFormState {
 	fieldErrors?: Partial<Record<"name" | "email" | "password" | "role", string>>;
 }
 
+function toFieldErrors(
+	nested: Partial<Record<string, [string, ...string[]]>>,
+): NonNullable<AuthFormState["fieldErrors"]> {
+	return Object.fromEntries(
+		Object.entries(nested).flatMap(([field, messages]) =>
+			messages?.[0] ? [[field, messages[0]]] : [],
+		),
+	);
+}
+
 export async function signIn(
 	_prevState: AuthFormState,
 	formData: FormData,
 ): Promise<AuthFormState> {
-	// TODO
-	return {} as never;
+	const parsed = v.safeParse(SignInSchema, Object.fromEntries(formData));
+
+	if (!parsed.success) {
+		return {
+			fieldErrors: toFieldErrors(v.flatten<typeof SignInSchema>(parsed.issues).nested ?? {}),
+		};
+	}
+
+	const supabase = await createClient();
+
+	const { data, error } = await supabase.auth.signInWithPassword(parsed.output);
+
+	if (error) {
+		return { error: error.message };
+	}
+
+	const role = data.user.user_metadata?.role;
+
+	redirect(roleHome(isRole(role) ? role : null));
 }
 
 export async function signUp(
 	_prevState: AuthFormState,
 	formData: FormData,
 ): Promise<AuthFormState> {
-	// TODO
-	return {} as never;
+	const parsed = v.safeParse(SignUpSchema, Object.fromEntries(formData));
+
+	if (!parsed.success) {
+		return {
+			fieldErrors: toFieldErrors(v.flatten<typeof SignUpSchema>(parsed.issues).nested ?? {}),
+		};
+	}
+
+	const { name, email, password, role } = parsed.output;
+
+	const supabase = await createClient();
+
+	const { error } = await supabase.auth.signUp({
+		email,
+		password,
+		options: {
+			data: {
+				name,
+				role,
+			},
+		},
+	});
+
+	if (error) {
+		return { error: error.message };
+	}
+
+	redirect(roleHome(role));
 }
 
 export async function sendResetPasswordEmail(prevState: unknown, formData: FormData) {

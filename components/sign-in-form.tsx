@@ -9,8 +9,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
-export function SignInForm() {
+export function SignInForm({ initialError }: { initialError?: string }) {
 	const [state, action, pending] = useActionState(signIn, {});
+
+	const error = state.error ?? initialError;
 
 	return (
 		<AuthCard
@@ -22,36 +24,40 @@ export function SignInForm() {
 		>
 			<form action={action}>
 				<FieldGroup>
-					{state.error && <AuthFormError>{state.error}</AuthFormError>}
+					{error && <AuthFormError>{error}</AuthFormError>}
 
-					<Field>
+					<Field data-invalid={Boolean(state.fieldErrors?.email) || undefined}>
 						<FieldLabel className="text-label" htmlFor="email">
 							Email
 						</FieldLabel>
 
 						<Input
+							className="h-11"
 							id="email"
 							name="email"
 							type="email"
 							autoComplete="email"
 							placeholder="you@wayne.edu"
-							className="h-11"
 							required
+							aria-invalid={Boolean(state.fieldErrors?.email) || undefined}
 						/>
+
+						<FieldError>{state.fieldErrors?.email}</FieldError>
 					</Field>
 
-					<Field>
+					<Field data-invalid={Boolean(state.fieldErrors?.password) || undefined}>
 						<FieldLabel className="text-label" htmlFor="password">
 							Password
 						</FieldLabel>
 
 						<Input
+							className="h-11"
 							id="password"
 							name="password"
 							type="password"
 							autoComplete="current-password"
-							className="h-11"
 							required
+							aria-invalid={Boolean(state.fieldErrors?.password) || undefined}
 						/>
 
 						<FieldError>{state.fieldErrors?.password}</FieldError>
