@@ -15,7 +15,7 @@ export default function CourseCreationForm() {
     const [error, setError] = useState("");
     const [courseColor, setCourseColor] = useState("");
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        setCourseColor(generateRandomColor());
+        const newColor = generateRandomColor();
         e.preventDefault();
         if(!courseName || !courseDesc){
             setError("All fields are required.");
@@ -27,16 +27,16 @@ export default function CourseCreationForm() {
                 id: previousCourses.length + 1,
                 name: courseName,
                 desc: courseDesc,
-                color: courseColor,
+                color: newColor,
             },
         ]);
-    }
         console.log("Creating course with:", {courseName, courseDesc, courseColor});
+    }
     const [courses, setCourses] = useState([{
         id: 1,
         name: courseName,
         desc: courseDesc,
-        color: courseColor
+        color: generateRandomColor()
         
     }])
     return (
