@@ -9,6 +9,13 @@ function generateRandomColor() {
     return (c);
 }
 
+type Course = {
+    id: number;
+    name: string;
+    desc: string;
+    color: string;
+};
+
 export default function CourseCreationForm() {
     const [courseName, setCourseName] = useState("");
     const [courseDesc, setCourseDes] = useState("");
@@ -32,13 +39,7 @@ export default function CourseCreationForm() {
         ]);
         console.log("Creating course with:", {courseName, courseDesc, courseColor});
     }
-    const [courses, setCourses] = useState([{
-        id: 1,
-        name: courseName,
-        desc: courseDesc,
-        color: generateRandomColor()
-        
-    }])
+    const [courses, setCourses] = useState<Course[]>([])
     return (
         <div>
             <div>
