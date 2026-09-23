@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState } from "react";
 import { signIn } from "@/app/(auth)/actions";
 import { AuthCard, AuthFormError } from "@/components/auth-card";
+import { ForgotPasswordDialog } from "@/components/forgot-password-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -63,12 +63,7 @@ export function SignInForm() {
 							Remember me
 						</FieldLabel>
 
-						<Link
-							href="/forgot-password"
-							className="ml-auto text-caption text-muted-foreground underline underline-offset-4 hover:text-foreground"
-						>
-							Forgot password?
-						</Link>
+						<ForgotPasswordDialog />
 					</Field>
 
 					<Button type="submit" size="lg" className="w-full" disabled={pending}>

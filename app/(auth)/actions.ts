@@ -1,5 +1,7 @@
 "use server";
 
+import { createClient } from "@/lib/supabase/server";
+
 export interface AuthFormState {
 	error?: string;
 	fieldErrors?: Partial<Record<"name" | "email" | "password" | "role", string>>;
@@ -20,10 +22,6 @@ export async function signUp(
 	// TODO
 	return {} as never;
 }
-
-import { redirect } from "next/navigation";
-//functionality for the forget and reset password forms
-import { createClient } from "@/lib/supabase/client";
 
 export async function sendResetPasswordEmail(prevState: unknown, formData: FormData) {
 	//calls server functiona to send the email, parameter of state and data

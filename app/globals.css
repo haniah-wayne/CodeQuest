@@ -211,6 +211,10 @@
 	p {
 		text-wrap: pretty;
 	}
+
+	button {
+		cursor: pointer;
+	}
 }
 
 #site-header .inner {
