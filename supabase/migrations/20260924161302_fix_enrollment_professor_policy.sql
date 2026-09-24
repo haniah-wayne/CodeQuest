@@ -1,3 +1,5 @@
+DROP POLICY IF EXISTS "PolicyforclenrollmentP" ON "Enrollment";
+
 DROP POLICY IF EXISTS "Policyforenrollment_P" ON "Enrollment";
 
 CREATE FUNCTION public.is_class_professor(class_id BIGINT)
