@@ -12,8 +12,8 @@ interface Step {
 
 const steps: Step[] = [
 	{
-		title: "Stomp the Campus",
-		body: "Nostrud occaecat officia ipsum cillum quis consectetur sunt. Sit amet consectetur adipisicing elit.",
+		title: "Explore the Campus",
+		body: "Walk around different parts of campus serching for new challenges",
 		tagline: "Geofenced trigger",
 		icon: Cursor,
 		tileClass: "bg-pink-300/40 text-pink-800",
@@ -21,7 +21,7 @@ const steps: Step[] = [
 	},
 	{
 		title: "Hack the Quest",
-		body: "Nostrud occaecat officia ipsum cillum quis consectetur sunt. Sit amet consectetur adipisicing elit.",
+		body: "Collaborate with team mates or work on your own to solve the challenges. Put your knowledge from classes to use!",
 		tagline: "Interactive debugging",
 		icon: Code,
 		tileClass: "bg-teal-400/40 text-teal-800",
@@ -29,7 +29,7 @@ const steps: Step[] = [
 	},
 	{
 		title: "Climb the Leaderboard",
-		body: "Nostrud occaecat officia ipsum cillum quis consectetur sunt. Sit amet consectetur adipisicing elit.",
+		body: "View your score and compete with classmates to win the ultimate prize!",
 		tagline: "Live class standings",
 		icon: Trophy,
 		tileClass: "bg-amber-400/40 text-amber-800",
