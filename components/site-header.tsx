@@ -22,7 +22,7 @@ export async function SiteHeader() {
 				<div className="ml-auto flex items-center gap-1 sm:gap-2">
 					{user ? (
 						<>
-							<span className="mr-2">{user.name}</span>
+							<span className="mr-2">{user.email}</span>
 
 							<form action={signOut}>
 								<Button className="px-3" type="submit" size="sm" variant="outline">
