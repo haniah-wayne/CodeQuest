@@ -12,11 +12,20 @@ function generateRandomColor() {
 
 	return c;
 }
+function generateClassCode() {
+	//generates a random class code.
+	const validChars = "abcdef1234567890";
+	let classCode = "";
+	for (let i = 0; i < 10; i++) {
+		classCode += validChars.charAt(Math.floor(Math.random() * validChars.length));
+	}
+	return classCode;
+}
 
 type Course = {
-	id: number;
-	name: string;
-	desc: string;
+	ClassID: number;
+	ClassName: string;
+	Description: string;
 	color: string;
 };
 
@@ -27,13 +36,13 @@ export default function CourseCreationForm() {
 	const [courseName, setCourseName] = useState("");
 	const [courseDesc, setCourseDesc] = useState("");
 
-	const [courses, setCourses] = useState<Course[]>([]);
+	const [Classes, setClasses] = useState<Course[]>([]);
 
 	const [error, setError] = useState("");
 	const [loading, setLoading] = useState(true);
 	const [creating, setCreating] = useState(false);
 
-	// Load professor and their courses when the component mounts
+	// Load professor and their Classes when the component mounts
 	useEffect(() => {
 		async function loadProfessorData() {
 			setLoading(true);
@@ -56,7 +65,7 @@ export default function CourseCreationForm() {
 			// Get professor information
 			const { data: professor, error: professorError } = await createClient()
 				.from("Profile")
-				.select("LastName")
+				.select("FirstName")
 				.eq("ID", user.id)
 				.single();
 
@@ -67,32 +76,32 @@ export default function CourseCreationForm() {
 				return;
 			}
 
-			setProfessorName(professor.LastName);
+			setProfessorName(professor.FirstName);
 
-			// Get courses belonging to this professor
-			const { data: courseData, error: coursesError } = await createClient()
+			// Get Classes belonging to this professor
+			const { data: courseData, error: ClassesError } = await createClient()
 				.from("Classes")
 				.select("ClassID, ClassName, Description, color")
 				.eq("professor_id", user.id)
 				.order("id", { ascending: true });
 
-			if (coursesError) {
-				console.error(coursesError);
-				setError("Could not load your courses.");
+			if (ClassesError) {
+				console.error(ClassesError);
+				setError("Could not load your Classes.");
 				setLoading(false);
 				return;
 			}
 
-			// Convert Supabase's "description" field to the
+			// Convert Supabase's "Description" field to the
 			// "desc" field used by the React component
-			const formattedCourses: Course[] = (courseData ?? []).map((course) => ({
-				id: course.ClassID,
-				name: course.ClassName,
-				desc: course.Description,
+			const formattedClasses: Course[] = (courseData ?? []).map((course) => ({
+				ClassID: course.ClassID,
+				ClassName: course.ClassName,
+				Description: course.Description,
 				color: course.color,
 			}));
 
-			setCourses(formattedCourses);
+			setClasses(formattedClasses);
 			setLoading(false);
 		}
 
@@ -120,14 +129,15 @@ export default function CourseCreationForm() {
 
 		// Insert the course into Supabase
 		const { data: newCourse, error: insertError } = await createClient()
-			.from("courses")
+			.from("Classes")
 			.insert({
-				professor_id: professorId,
-				name: courseName.trim(),
-				description: courseDesc.trim(),
+				ProfessorID: professorId,
+				ClassName: courseName.trim(),
+				Description: courseDesc.trim(),
 				color: newColor,
+				ClassCode: generateClassCode(),
 			})
-			.select("id, name, description, color")
+			.select("ClassID, ClassName, Description, color")
 			.single();
 
 		if (insertError) {
@@ -139,13 +149,13 @@ export default function CourseCreationForm() {
 
 		// Add the newly-created course to the UI
 		const course: Course = {
-			id: newCourse.id,
-			name: newCourse.name,
-			desc: newCourse.description,
+			ClassID: newCourse.ClassID,
+			ClassName: newCourse.ClassName,
+			Description: newCourse.Description,
 			color: newCourse.color,
 		};
 
-		setCourses((previousCourses) => [...previousCourses, course]);
+		setClasses((previousClasses) => [...previousClasses, course]);
 
 		// Clear form
 		setCourseName("");
@@ -166,7 +176,7 @@ export default function CourseCreationForm() {
 
 				<p>
 					To make a course, we&pos;ll need to have information on the course name and
-					description.
+					Description.
 				</p>
 			</div>
 
@@ -202,20 +212,20 @@ export default function CourseCreationForm() {
 				</form>
 			</div>
 
-			{/* Previously-created courses */}
+			{/* Previously-created Classes */}
 			<div>
 				<hr />
 
-				<h2>Your Created Courses:</h2>
+				<h2>Your Created Classes:</h2>
 
-				{courses.length === 0 ? (
-					<p>You haven&pos;t created any courses yet.</p>
+				{Classes.length === 0 ? (
+					<p>You haven&pos;t created any Classes yet.</p>
 				) : (
-					courses.map((course) => (
-						<div key={course.id}>
-							<h3>Course Name: {course.name}</h3>
+					Classes.map((course) => (
+						<div key={course.ClassID}>
+							<h3>Course Name: {course.ClassName}</h3>
 
-							<p>Course Description: {course.desc}</p>
+							<p>Course Description: {course.Description}</p>
 
 							<div
 								style={{
