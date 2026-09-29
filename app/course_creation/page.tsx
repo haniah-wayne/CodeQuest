@@ -175,7 +175,7 @@ export default function CourseCreationForm() {
 				<h2>Fill out the details below to make a new course!</h2>
 
 				<p>
-					To make a course, we&pos;ll need to have information on the course name and
+					To make a course, we{"'"}ll need to have information on the course name and
 					Description.
 				</p>
 			</div>
@@ -219,7 +219,7 @@ export default function CourseCreationForm() {
 				<h2>Your Created Classes:</h2>
 
 				{Classes.length === 0 ? (
-					<p>You haven&pos;t created any Classes yet.</p>
+					<p>You haven{"'"}t created any Classes yet.</p>
 				) : (
 					Classes.map((course) => (
 						<div key={course.ClassID}>
