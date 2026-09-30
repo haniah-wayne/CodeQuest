@@ -34,7 +34,7 @@ export function SignUpForm() {
 	return (
 		<AuthCard
 			title="Create your account"
-			Description="Start hunting down problem sets across campus."
+			description="Start hunting down problem sets across campus."
 			altPrompt="Already have an account?"
 			altLabel="Sign in"
 			altHref="/sign-in"

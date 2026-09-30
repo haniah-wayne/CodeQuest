@@ -17,7 +17,7 @@ export default function ResetPassword() {
 	return (
 		<AuthCard
 			title="Set a new password"
-			Description="Choose a new password for your account."
+			description="Choose a new password for your account."
 			altPrompt="Remembered it?"
 			altLabel="Back to sign in"
 			altHref="/sign-in"

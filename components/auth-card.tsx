@@ -5,14 +5,14 @@ import { Separator } from "@/components/ui/separator";
 
 export function AuthCard({
 	title,
-	Description,
+	description,
 	altPrompt,
 	altLabel,
 	altHref,
 	children,
 }: {
 	title: string;
-	Description: string;
+	description: string;
 	altPrompt: string;
 	altLabel: string;
 	altHref: string;
@@ -24,7 +24,7 @@ export function AuthCard({
 				<hgroup className="flex flex-col gap-2">
 					<h1 className="text-title">{title}</h1>
 
-					<p className="text-body-sm text-muted-foreground">{Description}</p>
+					<p className="text-body-sm text-muted-foreground">{description}</p>
 				</hgroup>
 			</CardHeader>
 
