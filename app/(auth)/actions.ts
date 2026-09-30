@@ -96,6 +96,7 @@ export async function sendResetPasswordEmail(prevState: unknown, formData: FormD
 	const { error } = await supabase.auth.resetPasswordForEmail(
 		//the form data being sent is email as a string
 		formData.get("email") as string,
+		{ redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback?next=/reset-password` },
 	);
 
 	if (error) {
