@@ -1,5 +1,7 @@
 "use client";
 
+import { DashboardSquare01Icon, BookOpen01Icon, ChartUpIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -77,20 +79,22 @@ export default function Studentclassespage() {
 				<h2 className="mb-8 text-xl font-bold">CodeQuest</h2>
 
 				<nav className="flex flex-col gap-4">
-					<Button variant="ghost" className="justify-start">
+					<Button variant="ghost" className="justify-start gap-3">
+						<HugeiconsIcon icon={DashboardSquare01Icon} size={20} />
 						Dashboard
 					</Button>
 
-					<Button variant="ghost" className="justify-start">
+					<Button variant="ghost" className="justify-start gap-3">
+						<HugeiconsIcon icon={BookOpen01Icon} size={20} />
 						My Classes
 					</Button>
 
-					<Button variant="ghost" className="justify-start">
+					<Button variant="ghost" className="justify-start gap-3">
+						<HugeiconsIcon icon={ChartUpIcon} size={20} />
 						Progress
 					</Button>
 				</nav>
 			</aside>
-
 			{/* Main Content */}
 			<div className="flex-1 p-6">
 				<Card className="mb-4 px-4">
