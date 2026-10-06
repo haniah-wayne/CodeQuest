@@ -94,5 +94,30 @@ export default function LeaderboardPage() {
 		return <p className="text-red-500">{error}</p>;
 	}
 	// display the actual pages
-	return <h1>Leaderboard</h1>;
+	return (
+		<>
+			<h1>Leaderboards</h1>
+			<h2>Global Leaderboard</h2>
+			<ol>
+				{globalLeaderboard.map((student, index) => (
+					<li key={student.student_id}>
+						{index + 1}. {student.student_name} - {student.total_score} points
+					</li>
+				))}
+			</ol>
+			<h2>Class Leaderboards</h2>
+			{classLeaderboards.map((classBoard) => (
+				<div key={classBoard.classId}>
+					<h3>{classBoard.className}</h3>
+					<ol>
+						{classBoard.leaderboard.map((student, index) => (
+							<li key={student.student_id}>
+								{index + 1}. {student.student_name} - {student.total_score} points
+							</li>
+						))}
+					</ol>
+				</div>
+			))}
+		</>
+	);
 }
