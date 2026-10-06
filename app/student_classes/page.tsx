@@ -5,6 +5,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 
 type Class = {
@@ -21,6 +22,7 @@ const supabase = createClient();
 
 export default function Studentclassespage() {
 	const [classes, setClasses] = useState<Class[]>([]);
+	const [classCode, setClassCode] = useState("");
 
 	useEffect(() => {
 		async function getUser() {
@@ -95,46 +97,62 @@ export default function Studentclassespage() {
 					</Button>
 				</nav>
 			</aside>
+
 			{/* Main Content */}
 			<div className="flex-1 p-6">
+				{/* Join class*/}
 				<Card className="mb-4 px-4">
-					<p className="text-2xl font-bold text-foreground">My Classes</p>
+					<p className="text-2xl font-bold text-foreground">Join a class</p>
+					<div className="mb-4 px-4">
+						<Input
+							placeholder="Enter class code"
+							value={classCode}
+							onChange={(e) => setClassCode(e.target.value)}
+							className="max-w-sm"
+						/>
+					</div>
 				</Card>
 
-				{classes.map((classItem) => (
-					<Card
-						key={classItem.ClassID}
-						className="w-96 overflow-hidden rounded-md border border-border bg-card py-0 shadow-lg"
-					>
-						{/* Class Header */}
-						<div
-							className="px-4 py-4"
-							style={{
-								backgroundColor: classItem.color ?? "#98B6A7",
-							}}
+				{/* My classes*/}
+
+				<Card className="mb-4 px-4">
+					<p className="text-2xl font-bold text-foreground">My Classes</p>
+
+					{classes.map((classItem) => (
+						<Card
+							key={classItem.ClassID}
+							className="w-96 overflow-hidden rounded-md border border-border bg-card py-0 shadow-lg"
 						>
-							<p className="text-xl font-bold text-foreground">
-								{classItem.ClassName}
-							</p>
-						</div>
-
-						{/* Class Information */}
-						<div className="px-4 py-4">
-							<p className="text-sm text-[#333333]">{classItem.Description}</p>
-
-							<p className="mt-3 text-sm font-medium text-[#333333]">
-								Class Code: {classItem.ClassCode}
-							</p>
-
-							<Button
-								className="mt-4 ml-auto block w-30 text-white transition-opacity hover:opacity-80"
-								style={{ backgroundColor: classItem.color ?? "#98B6A7" }}
+							{/* Class Header */}
+							<div
+								className="px-4 py-4"
+								style={{
+									backgroundColor: classItem.color ?? "#98B6A7",
+								}}
 							>
-								View Classes
-							</Button>
-						</div>
-					</Card>
-				))}
+								<p className="text-xl font-bold text-foreground">
+									{classItem.ClassName}
+								</p>
+							</div>
+
+							{/* Class Information */}
+							<div className="px-4 py-4">
+								<p className="text-sm text-[#333333]">{classItem.Description}</p>
+
+								<p className="mt-3 text-sm font-medium text-[#333333]">
+									Class Code: {classItem.ClassCode}
+								</p>
+
+								<Button
+									className="mt-4 ml-auto block w-30 text-white transition-opacity hover:opacity-80"
+									style={{ backgroundColor: classItem.color ?? "#98B6A7" }}
+								>
+									View Class
+								</Button>
+							</div>
+						</Card>
+					))}
+				</Card>
 			</div>
 		</div>
 	);
