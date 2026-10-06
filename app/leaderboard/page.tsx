@@ -67,9 +67,12 @@ export default function LeaderboardPage() {
 						if (error) {
 							throw error;
 						}
+						const classInfo = Array.isArray(enrollment.Classes)
+							? enrollment.Classes[0]
+							: enrollment.Classes;
 						return {
 							classId: enrollment.ClassID,
-							className: enrollment.Classes?.ClassName ?? "Unknown Class",
+							className: classInfo?.ClassName ?? "Unknown Class",
 							leaderboard: data ?? [],
 						};
 					}),
