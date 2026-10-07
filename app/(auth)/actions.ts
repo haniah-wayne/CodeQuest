@@ -6,20 +6,11 @@ import * as v from "valibot";
 import { isRole, roleHome } from "@/lib/auth/roles";
 import { SignInSchema, SignUpSchema } from "@/lib/auth/schemas";
 import { createClient } from "@/lib/supabase/server";
+import { toFieldErrors } from "@/lib/validation";
 
 export interface AuthFormState {
 	error?: string;
 	fieldErrors?: Partial<Record<"name" | "email" | "password" | "role", string>>;
-}
-
-function toFieldErrors(
-	nested: Partial<Record<string, [string, ...string[]]>>,
-): NonNullable<AuthFormState["fieldErrors"]> {
-	return Object.fromEntries(
-		Object.entries(nested).flatMap(([field, messages]) =>
-			messages?.[0] ? [[field, messages[0]]] : [],
-		),
-	);
 }
 
 export async function signIn(
@@ -96,6 +87,7 @@ export async function sendResetPasswordEmail(prevState: unknown, formData: FormD
 	const { error } = await supabase.auth.resetPasswordForEmail(
 		//the form data being sent is email as a string
 		formData.get("email") as string,
+		{ redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback?next=/reset-password` },
 	);
 
 	if (error) {
