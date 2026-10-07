@@ -1,5 +1,15 @@
+import { Alert02Icon, Book02Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import Link from "next/link";
 import type * as React from "react";
+import {
+	Empty,
+	EmptyContent,
+	EmptyDescription,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle,
+} from "@/components/ui/empty";
 import type { Tables } from "@/supabase/database.types";
 
 export type ClassSummary = Pick<
@@ -8,6 +18,12 @@ export type ClassSummary = Pick<
 > &
 	Partial<Pick<Tables<"Classes">, "ClassCode">>;
 
+interface EmptyState {
+	title: string;
+	description: string;
+	action?: React.ReactNode;
+}
+
 export function ClassGrid({
 	classes,
 	error,
@@ -15,14 +31,22 @@ export function ClassGrid({
 }: {
 	classes: ClassSummary[] | null;
 	error: unknown;
-	empty: React.ReactNode;
+	empty: EmptyState;
 }) {
 	if (error) {
-		return <EmptyState>Couldn’t load your classes. Refresh to try again.</EmptyState>;
+		return (
+			<GridEmpty
+				icon={Alert02Icon}
+				empty={{
+					title: "Couldn’t load your classes",
+					description: "Refresh the page to try again.",
+				}}
+			/>
+		);
 	}
 
 	if (!classes?.length) {
-		return <EmptyState>{empty}</EmptyState>;
+		return <GridEmpty icon={Book02Icon} empty={empty} />;
 	}
 
 	return (
@@ -67,10 +91,20 @@ function ClassCard({ class: c }: { class: ClassSummary }) {
 	);
 }
 
-function EmptyState({ children }: { children: React.ReactNode }) {
+function GridEmpty({ icon, empty }: { icon: IconSvgElement; empty: EmptyState }) {
 	return (
-		<p className="flex min-h-48 items-center justify-center rounded-3xl border border-dashed border-emerald-200 bg-white/70 p-8 text-center text-body-sm text-muted-foreground">
-			{children}
-		</p>
+		<Empty className="min-h-72 rounded-3xl border border-emerald-200 bg-white/70">
+			<EmptyHeader>
+				<EmptyMedia className="bg-emerald-50 text-wsu-green" variant="icon">
+					<HugeiconsIcon icon={icon} />
+				</EmptyMedia>
+
+				<EmptyTitle>{empty.title}</EmptyTitle>
+
+				<EmptyDescription>{empty.description}</EmptyDescription>
+			</EmptyHeader>
+
+			{empty.action && <EmptyContent>{empty.action}</EmptyContent>}
+		</Empty>
 	);
 }
