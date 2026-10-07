@@ -74,6 +74,21 @@ export default function Studentclassespage() {
 		getUser();
 	}, []);
 
+	async function handleJoinClass() {
+		if (!classCode.trim()) return;
+		const { data, error } = await supabase
+			.from("Classes")
+			.select("ClassID, ClassName")
+			.eq("ClassCode", classCode.trim())
+			.single();
+
+		if (error) {
+			console.log("Class not found:", error);
+			return;
+		}
+		console.log("Joining class with code:", classCode);
+	}
+
 	return (
 		<div className="flex min-h-screen">
 			{/* Sidebar */}
@@ -110,6 +125,7 @@ export default function Studentclassespage() {
 							onChange={(e) => setClassCode(e.target.value)}
 							className="max-w-sm"
 						/>
+						<Button onClick={handleJoinClass}>Join Class</Button>
 					</div>
 				</Card>
 
