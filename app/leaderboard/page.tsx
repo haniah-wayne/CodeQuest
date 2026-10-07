@@ -7,7 +7,7 @@ type student = {
 	student_id: string;
 	student_name: string;
 	total_score: number;
-	rank: number;
+	rank?: number;
 };
 
 type classLeaderboard = {
@@ -51,13 +51,6 @@ export default function LeaderboardPage() {
 				if (enrollmentError) {
 					throw enrollmentError;
 				}
-				//global leaderboard, all organization done by supabase rpc function
-				const { data: globalLeaderboard, error: globalError } =
-					await supabase.rpc("get_global_leaderboard");
-				if (globalError) {
-					throw globalError;
-				}
-				setGlobalLeaderboard(globalLeaderboard ?? []);
 				//class leaderboards, does one rpc call per a class
 				const classBoards = await Promise.all(
 					(enrollments ?? []).map(async (enrollment) => {
@@ -99,19 +92,10 @@ export default function LeaderboardPage() {
 	// display the actual pages
 	return (
 		<>
-			<h1>Leaderboards</h1>
-			<h2>Global Leaderboard</h2>
-			<ol>
-				{globalLeaderboard.map((student, index) => (
-					<li key={student.student_id}>
-						{index + 1}. {student.student_name} - {student.total_score} points
-					</li>
-				))}
-			</ol>
-			<h2>Class Leaderboards</h2>
+			<h1>Class Leaderboards</h1>
 			{classLeaderboards.map((classBoard) => (
 				<div key={classBoard.classId}>
-					<h3>{classBoard.className}</h3>
+					<h2>{classBoard.className}</h2>
 					<ol>
 						{classBoard.leaderboard.map((student, index) => (
 							<li key={student.student_id}>
