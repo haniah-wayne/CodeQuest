@@ -17,7 +17,6 @@ type classLeaderboard = {
 };
 
 export default function LeaderboardPage() {
-	const [globalLeaderboard, setGlobalLeaderboard] = useState<student[]>([]);
 	const [classLeaderboards, setClassLeaderboards] = useState<classLeaderboard[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
