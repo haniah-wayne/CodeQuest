@@ -76,17 +76,18 @@ export default function Studentclassespage() {
 
 	async function handleJoinClass() {
 		if (!classCode.trim()) return;
-		const { data, error } = await supabase
-			.from("Classes")
-			.select("ClassID, ClassName")
-			.eq("ClassCode", classCode.trim())
-			.single();
-
+		const { data, error } = await supabase.rpc("join_class_by_code", {
+			class_code: classCode.trim(),
+		});
 		if (error) {
 			console.log("Class not found:", error);
 			return;
 		}
-		console.log("Joining class with code:", classCode);
+		console.log("Joining class with code:", classCode, data);
+
+		if (data == "joined") {
+			window.location.reload();
+		}
 	}
 
 	return (
