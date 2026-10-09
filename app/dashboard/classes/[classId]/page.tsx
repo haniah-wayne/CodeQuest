@@ -2,8 +2,12 @@ import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ChallengeList } from "@/components/class/challenge-list";
 import { JoinCode } from "@/components/class/join-code";
+import { LeaderboardList } from "@/components/class/leaderboard-list";
+import { RosterList } from "@/components/class/roster-list";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
+import { requireSessionUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ClassPage(props: PageProps<"/dashboard/classes/[classId]">) {
@@ -12,23 +16,50 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 
 	if (!Number.isSafeInteger(id)) notFound();
 
+	const user = await requireSessionUser();
 	const supabase = await createClient();
 
 	// RLS decides who can see the class and its rows, so a missing class means
 	// not found or not allowed
-	const classResult = await supabase
-		.from("Classes")
-		.select("ClassName, Description, ClassCode, ProfessorID, color")
-		.eq("ClassID", id)
-		.maybeSingle();
-
-	if (classResult.error) {
-		console.error(classResult.error);
-	}
+	const [classResult, challengesResult, enrollmentResult, submissionsResult] = await Promise.all([
+		supabase
+			.from("Classes")
+			.select("ClassName, Description, ClassCode, ProfessorID, color")
+			.eq("ClassID", id)
+			.maybeSingle(),
+		supabase
+			.from("Challenges")
+			.select("ChallengeID, Title, Description, ChallengeType, Points")
+			.eq("ClassID", id)
+			.order("CreatedAt"),
+		supabase
+			.from("Enrollment")
+			.select("StudentID, Profile(Name, Email)")
+			.eq("ClassID", id)
+			.order("EnrolledAt"),
+		supabase
+			.from("Submission")
+			.select("StudentID, ChallengeID, Score, Challenges!inner(ClassID)")
+			.eq("Challenges.ClassID", id),
+	]);
 
 	const c = classResult.data;
 
 	if (!c) notFound();
+
+	for (const { error } of [challengesResult, enrollmentResult, submissionsResult]) {
+		if (error) console.error(error);
+	}
+
+	const isProfessor = c.ProfessorID === user.id;
+
+	const challenges = challengesResult.data ?? [];
+
+	const roster = (enrollmentResult.data ?? []).map((e) => ({
+		id: e.StudentID,
+		name: e.Profile.Name,
+		email: e.Profile.Email,
+	}));
 
 	return (
 		<>
@@ -54,6 +85,18 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 						actions={<JoinCode code={c.ClassCode} />}
 					/>
 				</div>
+			</div>
+
+			<ChallengeList challenges={challenges} error={challengesResult.error} />
+
+			<div className="grid items-start gap-6 lg:grid-cols-2">
+				<LeaderboardList />
+
+				<RosterList
+					students={roster}
+					error={enrollmentResult.error}
+					showEmails={isProfessor}
+				/>
 			</div>
 		</>
 	);
