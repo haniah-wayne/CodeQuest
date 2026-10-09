@@ -25,7 +25,12 @@ export async function ProfessorDashboard({ user }: { user: SessionUser }) {
 			<ClassGrid
 				classes={classes}
 				error={error}
-				empty="You haven’t created any classes yet. Your first one will show up here."
+				empty={{
+					title: "No classes yet",
+					description:
+						"Create your first class, then share its join code with your students.",
+					action: <CreateClassDialog />,
+				}}
 			/>
 		</>
 	);
