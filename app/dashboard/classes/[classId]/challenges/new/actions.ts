@@ -38,5 +38,5 @@ export async function createChallenge(prevState: { error?: string }, formData: F
 		return { error: "Something went wrong saving that challenge." };
 	}
 
-	redirect(`/instructor/class/${classId}`);
+	redirect(`/classes/${classId}`);
 }
