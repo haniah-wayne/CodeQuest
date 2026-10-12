@@ -23,7 +23,10 @@ export async function StudentDashboard({ user }: { user: SessionUser }) {
 			<ClassGrid
 				classes={enrollments?.map((e) => e.Classes) ?? null}
 				error={error}
-				empty="You haven’t joined any classes yet."
+				empty={{
+					title: "No classes yet",
+					description: "Classes you join will show up here.",
+				}}
 			/>
 		</>
 	);
