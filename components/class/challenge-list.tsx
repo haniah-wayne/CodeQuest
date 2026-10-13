@@ -2,6 +2,8 @@ import { Flag02Icon } from "@hugeicons/core-free-icons";
 import { ClassSection, SectionEmpty, SectionError } from "@/components/class/class-section";
 import { Badge } from "@/components/ui/badge";
 import type { Tables } from "@/supabase/database.types";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 type Challenge = Pick<
 	Tables<"Challenges">,
@@ -16,6 +18,13 @@ export function ChallengeList({ challenges, error }: { challenges: Challenge[]; 
 			icon={Flag02Icon}
 			count={challenges.length}
 		>
+
+			<div className="flex justify-end px-3 pb-2 sm:px-4">
+				<Button asChild size="sm">
+					<Link href="/challenges/new">Create Challenge</Link>
+				</Button>
+			</div>
+
 			{error ? (
 				<SectionError what="challenges" />
 			) : challenges.length === 0 ? (
@@ -61,6 +70,20 @@ export function ChallengeList({ challenges, error }: { challenges: Challenge[]; 
 						</li>
 					))}
 				</ol>
+			)}
+
+			{error ? (
+				<SectionError what="challenges" />
+			) : challenges.length === 0 ? (
+				<>
+					<SectionEmpty
+						icon={Flag02Icon}
+						title="No challenges yet"
+						description="Challenges added to this class will show up here."
+					/>
+				</>
+			) : (
+				<ol className="flex flex-col"></ol>
 			)}
 		</ClassSection>
 	);
