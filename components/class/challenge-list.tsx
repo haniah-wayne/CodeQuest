@@ -2,15 +2,16 @@ import { Flag02Icon } from "@hugeicons/core-free-icons";
 import { ClassSection, SectionEmpty, SectionError } from "@/components/class/class-section";
 import { Badge } from "@/components/ui/badge";
 import type { Tables } from "@/supabase/database.types";
-import { Button } from "@/components/ui/button";
+//import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button"; 
 
 type Challenge = Pick<
 	Tables<"Challenges">,
 	"ChallengeID" | "Title" | "Description" | "ChallengeType" | "Points"
 >;
 
-export function ChallengeList({ challenges, error }: { challenges: Challenge[]; error: unknown }) {
+export function ChallengeList({ challenges, error, classId }: { challenges: Challenge[]; error: unknown; classId: string; }) {
 	return (
 		<ClassSection
 			id="challenges"
@@ -20,9 +21,9 @@ export function ChallengeList({ challenges, error }: { challenges: Challenge[]; 
 		>
 
 			<div className="flex justify-end px-3 pb-2 sm:px-4">
-				<Button asChild size="sm">
-					<Link href="/challenges/new">Create Challenge</Link>
-				</Button>
+				<Link href={`/dashboard/classes/${classId}/challenges/new` } className={buttonVariants({ size: "sm" })}>   {/*not sure how the class ID thing can be rerouted or used */ }
+					Create Challenge
+				</Link>
 			</div>
 
 			{error ? (
