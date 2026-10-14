@@ -15,5 +15,6 @@
 				"useTabs": false
 			}
 		}
-	]
+	],
+	"ignorePatterns": ["database.types.ts"]
 }
