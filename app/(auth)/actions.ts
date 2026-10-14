@@ -6,20 +6,11 @@ import * as v from "valibot";
 import { isRole, roleHome } from "@/lib/auth/roles";
 import { SignInSchema, SignUpSchema } from "@/lib/auth/schemas";
 import { createClient } from "@/lib/supabase/server";
+import { toFieldErrors } from "@/lib/validation";
 
 export interface AuthFormState {
 	error?: string;
 	fieldErrors?: Partial<Record<"name" | "email" | "password" | "role", string>>;
-}
-
-function toFieldErrors(
-	nested: Partial<Record<string, [string, ...string[]]>>,
-): NonNullable<AuthFormState["fieldErrors"]> {
-	return Object.fromEntries(
-		Object.entries(nested).flatMap(([field, messages]) =>
-			messages?.[0] ? [[field, messages[0]]] : [],
-		),
-	);
 }
 
 export async function signIn(
