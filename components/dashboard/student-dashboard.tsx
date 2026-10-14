@@ -1,5 +1,6 @@
 import { ClassGrid } from "@/components/dashboard/class-grid";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
+import { JoinClassDialog } from "@/components/dashboard/join-class-dialog";
 import type { SessionUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
@@ -18,6 +19,7 @@ export async function StudentDashboard({ user }: { user: SessionUser }) {
 		<>
 			<DashboardPageHeader
 				title={user.name ? `Welcome back, ${user.name}` : "Welcome back"}
+				actions={<JoinClassDialog />}
 			/>
 
 			<ClassGrid
@@ -25,7 +27,8 @@ export async function StudentDashboard({ user }: { user: SessionUser }) {
 				error={error}
 				empty={{
 					title: "No classes yet",
-					description: "Classes you join will show up here.",
+					description: "Join a class with the code your professor shared.",
+					action: <JoinClassDialog />,
 				}}
 			/>
 		</>
