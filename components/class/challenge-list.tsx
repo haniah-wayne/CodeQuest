@@ -1,17 +1,24 @@
 import { Flag02Icon } from "@hugeicons/core-free-icons";
+import Link from "next/link";
 import { ClassSection, SectionEmpty, SectionError } from "@/components/class/class-section";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import type { Tables } from "@/supabase/database.types";
-//import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button"; 
 
 type Challenge = Pick<
 	Tables<"Challenges">,
 	"ChallengeID" | "Title" | "Description" | "ChallengeType" | "Points"
 >;
 
-export function ChallengeList({ challenges, error, classId }: { challenges: Challenge[]; error: unknown; classId: string; }) {
+export function ChallengeList({
+	challenges,
+	error,
+	classId,
+}: {
+	challenges: Challenge[];
+	error: unknown;
+	classId: string;
+}) {
 	return (
 		<ClassSection
 			id="challenges"
@@ -19,13 +26,6 @@ export function ChallengeList({ challenges, error, classId }: { challenges: Chal
 			icon={Flag02Icon}
 			count={challenges.length}
 		>
-
-			<div className="flex justify-end px-3 pb-2 sm:px-4">
-				<Link href={`/dashboard/classes/${classId}/challenges/new` } className={buttonVariants({ size: "sm" })}>   {/*not sure how the class ID thing can be rerouted or used */ }
-					Create Challenge
-				</Link>
-			</div>
-
 			{error ? (
 				<SectionError what="challenges" />
 			) : challenges.length === 0 ? (
@@ -33,6 +33,14 @@ export function ChallengeList({ challenges, error, classId }: { challenges: Chal
 					icon={Flag02Icon}
 					title="No challenges yet"
 					description="Challenges added to this class will show up here."
+					actions={
+						<Link
+							className={buttonVariants({ size: "sm" })}
+							href={`/dashboard/classes/${classId}/challenges/new`}
+						>
+							Create a challenge
+						</Link>
+					}
 				/>
 			) : (
 				<ol className="flex flex-col">
@@ -71,20 +79,6 @@ export function ChallengeList({ challenges, error, classId }: { challenges: Chal
 						</li>
 					))}
 				</ol>
-			)}
-
-			{error ? (
-				<SectionError what="challenges" />
-			) : challenges.length === 0 ? (
-				<>
-					<SectionEmpty
-						icon={Flag02Icon}
-						title="No challenges yet"
-						description="Challenges added to this class will show up here."
-					/>
-				</>
-			) : (
-				<ol className="flex flex-col"></ol>
 			)}
 		</ClassSection>
 	);
