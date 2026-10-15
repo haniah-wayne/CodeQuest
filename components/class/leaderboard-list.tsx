@@ -70,8 +70,6 @@ export function LeaderboardList({
 										{entry.student_name}
 									</span>
 
-									{isViewer && <Badge variant="secondary">You</Badge>}
-
 									{podium && entry.rank === 1 && (
 										<Badge className="bg-wsu-gold/25 text-foreground">
 											Top
