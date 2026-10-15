@@ -56,6 +56,7 @@ export function SignUpForm() {
 							autoComplete="name"
 							placeholder="Ada Lovelace"
 							required
+							defaultValue={state.values?.name}
 							aria-invalid={Boolean(state.fieldErrors?.name) || undefined}
 						/>
 
@@ -75,6 +76,7 @@ export function SignUpForm() {
 							autoComplete="email"
 							placeholder="you@wayne.edu"
 							required
+							defaultValue={state.values?.email}
 							aria-invalid={Boolean(state.fieldErrors?.email) || undefined}
 						/>
 
@@ -109,7 +111,14 @@ export function SignUpForm() {
 							I&apos;m a
 						</FieldLegend>
 
-						<RadioGroup name="role" defaultValue="student" required>
+						{/* React resets the form after each submit, and Base UI's hidden
+						inputs only pick up defaultValue on mount, so remount them */}
+						<RadioGroup
+							key={state.values?.role}
+							name="role"
+							defaultValue={state.values?.role ?? "student"}
+							required
+						>
 							{ROLES.map((role) => (
 								<FieldLabel
 									className="w-full gap-3 rounded-2xl border border-input bg-input/20 p-4 transition-colors has-data-checked:border-primary has-data-checked:bg-primary/5"
