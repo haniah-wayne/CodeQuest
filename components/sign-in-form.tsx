@@ -1,7 +1,9 @@
 "use client";
-
-import { useActionState } from "react";
+import Image from "next/image";
+import { useActionState, useState } from "react";
 import { signIn } from "@/app/(auth)/actions";
+import eye_closed from "@/assets/img/eye_closed.png";
+import eye_open from "@/assets/img/eye_open.png";
 import { AuthCard, AuthFormError } from "@/components/auth-card";
 import { ForgotPasswordDialog } from "@/components/forgot-password-dialog";
 import { Button } from "@/components/ui/button";
@@ -11,7 +13,8 @@ import { Input } from "@/components/ui/input";
 
 export function SignInForm({ initialError }: { initialError?: string }) {
 	const [state, action, pending] = useActionState(signIn, {});
-
+	const [password, setPassword] = useState("");
+	const [visible, setVisible] = useState(false);
 	const error = state.error ?? initialError;
 
 	return (
@@ -54,12 +57,16 @@ export function SignInForm({ initialError }: { initialError?: string }) {
 							className="h-11"
 							id="password"
 							name="password"
-							type="password"
+							type={visible ? "text" : "password"}
+							value={password}
+							onChange={(e) => setPassword(e.target.value)}
 							autoComplete="current-password"
 							required
 							aria-invalid={Boolean(state.fieldErrors?.password) || undefined}
 						/>
-
+						<div p-2 onClick={() => setVisible(!visible)}>
+							<Image src={visible ? eye_open : eye_closed} alt="view password" />
+						</div>
 						<FieldError>{state.fieldErrors?.password}</FieldError>
 					</Field>
 
