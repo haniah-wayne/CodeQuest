@@ -1,17 +1,27 @@
 import { RankingIcon, Medal01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ClassSection, SectionEmpty, SectionError } from "@/components/class/class-section";
+import { requireSessionUser } from "@/lib/auth/session";
+import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/supabase/database.types";
 
 type LeaderboardRow = Database["public"]["Functions"]["get_class_leaderboard"]["Returns"][number];
 
 type LeaderboardListProps = {
-	rows: LeaderboardRow[];
-	error: unknown;
-	viewerId: string;
+	classId: number;
 };
 
-export function LeaderboardList({ rows, error, viewerId }: LeaderboardListProps) {
+export async function LeaderboardList({ classId }: LeaderboardListProps) {
+	const user = await requireSessionUser();
+	const supabase = await createClient();
+
+	const { data, error } = await supabase.rpc("get_class_leaderboard", {
+		p_class_id: classId,
+	});
+
+	const rows: LeaderboardRow[] = data ?? [];
+	const viewerId = user.id;
+
 	const sortedRows = [...rows].sort((a, b) => Number(a.rank) - Number(b.rank));
 
 	return (
