@@ -1,8 +1,6 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
-	// Allows to automatically instantiate createClient with right options
-	// instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
 	__InternalSupabase: {
 		PostgrestVersion: "14.5";
 	};
@@ -15,6 +13,7 @@ export type Database = {
 					IsCorrect: boolean;
 					QuestionID: number;
 				};
+				ComputedFields: never;
 				Insert: {
 					AnswerText: string;
 					ChoiceID?: never;
@@ -45,6 +44,7 @@ export type Database = {
 					StartedAt: string;
 					Status: string;
 				};
+				ComputedFields: never;
 				Insert: {
 					ChallengeID: number;
 					CompletedAt?: string | null;
@@ -80,6 +80,7 @@ export type Database = {
 					Points: number;
 					Title: string;
 				};
+				ComputedFields: never;
 				Insert: {
 					ChallengeID?: never;
 					ChallengeType?: string | null;
@@ -121,6 +122,7 @@ export type Database = {
 					StudentID: string;
 					Successful: boolean;
 				};
+				ComputedFields: never;
 				Insert: {
 					ChallengeID: number;
 					CheckedInAt?: string;
@@ -168,6 +170,7 @@ export type Database = {
 					Description: string | null;
 					ProfessorID: string;
 				};
+				ComputedFields: never;
 				Insert: {
 					ClassCode: string;
 					ClassID?: never;
@@ -203,6 +206,7 @@ export type Database = {
 					EnrollmentID: number;
 					StudentID: string;
 				};
+				ComputedFields: never;
 				Insert: {
 					ClassID: number;
 					EnrolledAt?: string;
@@ -240,6 +244,7 @@ export type Database = {
 					Longitude: number;
 					Radius: number;
 				};
+				ComputedFields: never;
 				Insert: {
 					ChallengeID: number;
 					Latitude: number;
@@ -272,6 +277,7 @@ export type Database = {
 					Password: string | null;
 					Role: string;
 				};
+				ComputedFields: never;
 				Insert: {
 					Email?: string | null;
 					ID: string;
@@ -295,6 +301,7 @@ export type Database = {
 					QuestionText: string;
 					QuestionType: string;
 				};
+				ComputedFields: never;
 				Insert: {
 					ChallengeID: number;
 					QuestionID?: never;
@@ -327,6 +334,7 @@ export type Database = {
 					StudentID: string;
 					SubmittedAt: string;
 				};
+				ComputedFields: never;
 				Insert: {
 					AnswerText?: string | null;
 					ChoiceID?: number | null;
@@ -381,6 +389,7 @@ export type Database = {
 					SubmissionID: number;
 					SubmittedAt: string;
 				};
+				ComputedFields: never;
 				Insert: {
 					ChallengeID: number;
 					Code?: string | null;
@@ -425,11 +434,18 @@ export type Database = {
 			[_ in never]: never;
 		};
 		Functions: {
-			is_class_professor: { Args: { class_id: number }; Returns: boolean };
 			get_class_leaderboard: {
 				Args: { p_class_id: number };
-				Returns: { student_id: string; student_name: string; total_score: number }[];
+				Returns: {
+					rank: number;
+					student_id: string;
+					student_name: string;
+					total_score: number;
+				}[];
 			};
+			get_global_leaderboard: { Args: Record<PropertyKey, never>; Returns: undefined };
+			is_class_professor: { Args: { class_id: number }; Returns: boolean };
+			join_class_by_code: { Args: { class_code: string }; Returns: string };
 		};
 		Enums: {
 			[_ in never]: never;
@@ -454,9 +470,7 @@ export type Tables<
 		? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
 				DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
 		: never) = never,
-> = DefaultSchemaTableNameOrOptions extends {
-	schema: keyof DatabaseWithoutInternals;
-}
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
 	? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
 			DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
 			Row: infer R;
@@ -482,9 +496,7 @@ export type TablesInsert<
 	}
 		? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
 		: never) = never,
-> = DefaultSchemaTableNameOrOptions extends {
-	schema: keyof DatabaseWithoutInternals;
-}
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
 	? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
 			Insert: infer I;
 		}
@@ -507,9 +519,7 @@ export type TablesUpdate<
 	}
 		? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
 		: never) = never,
-> = DefaultSchemaTableNameOrOptions extends {
-	schema: keyof DatabaseWithoutInternals;
-}
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
 	? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
 			Update: infer U;
 		}
@@ -532,9 +542,7 @@ export type Enums<
 	}
 		? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
 		: never) = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-	schema: keyof DatabaseWithoutInternals;
-}
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
 	? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
 	: DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
 		? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
@@ -549,9 +557,7 @@ export type CompositeTypes<
 	}
 		? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
 		: never) = never,
-> = PublicCompositeTypeNameOrOptions extends {
-	schema: keyof DatabaseWithoutInternals;
-}
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
 	? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
 	: PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
 		? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]

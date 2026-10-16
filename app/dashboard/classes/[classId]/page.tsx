@@ -87,11 +87,7 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 			<ChallengeList challenges={challenges} error={challengesResult.error} />
 
 			<div className="grid items-start gap-6 lg:grid-cols-2">
-				<LeaderboardList
-					rows={leaderboardResult.data ?? []}
-					error={leaderboardResult.error}
-					viewerId={user.id}
-				/>
+				<LeaderboardList classId={id} />
 
 				<RosterList
 					students={roster}
