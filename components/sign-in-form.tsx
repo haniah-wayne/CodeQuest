@@ -39,6 +39,7 @@ export function SignInForm({ initialError }: { initialError?: string }) {
 							autoComplete="email"
 							placeholder="you@wayne.edu"
 							required
+							defaultValue={state.values?.email}
 							aria-invalid={Boolean(state.fieldErrors?.email) || undefined}
 						/>
 
@@ -65,7 +66,14 @@ export function SignInForm({ initialError }: { initialError?: string }) {
 
 					<Field orientation="horizontal">
 						<FieldLabel className="text-label" htmlFor="remember">
-							<Checkbox id="remember" name="remember" />
+							{/* React resets the form after each submit, and Base UI's hidden
+							input only picks up defaultChecked on mount, so remount it */}
+							<Checkbox
+								key={String(state.values?.remember)}
+								id="remember"
+								name="remember"
+								defaultChecked={state.values?.remember}
+							/>
 							Remember me
 						</FieldLabel>
 
