@@ -1,7 +1,9 @@
 "use client";
-
-import { useActionState } from "react";
+import Image from "next/image";
+import { useActionState, useState } from "react";
 import { signUp } from "@/app/(auth)/actions";
+import eye_closed from "@/assets/img/eye_closed.png";
+import eye_open from "@/assets/img/eye_open.png";
 import { AuthCard, AuthFormError } from "@/components/auth-card";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,7 +32,8 @@ const ROLE_DESCRIPTIONS: Record<Role, string> = {
 
 export function SignUpForm() {
 	const [state, action, pending] = useActionState(signUp, {});
-
+	const [password, setPassword] = useState("");
+	const [visible, setVisible] = useState(false);
 	return (
 		<AuthCard
 			title="Create your account"
@@ -90,13 +93,17 @@ export function SignUpForm() {
 							className="h-11"
 							id="password"
 							name="password"
-							type="password"
+							type={visible ? "text" : "password"}
+							value={password}
+							onChange={(e) => setPassword(e.target.value)}
 							autoComplete="new-password"
 							required
 							minLength={MIN_PASSWORD_LENGTH}
 							aria-invalid={Boolean(state.fieldErrors?.password) || undefined}
 						/>
-
+						<div p-2 onClick={() => setVisible(!visible)}>
+							<Image src={visible ? eye_open : eye_closed} alt="view password" />
+						</div>
 						<FieldDescription className="text-caption">
 							At least {MIN_PASSWORD_LENGTH} characters.
 						</FieldDescription>

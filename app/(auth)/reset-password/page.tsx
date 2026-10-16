@@ -1,8 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { updatePassword } from "@/app/(auth)/actions";
+import eye_closed from "@/assets/img/eye_closed.png";
+import eye_open from "@/assets/img/eye_open.png";
 import { AuthCard, AuthFormError } from "@/components/auth-card";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -13,6 +16,8 @@ export default function ResetPassword() {
 		success: "",
 		error: "",
 	});
+	const [password, setPassword] = useState("");
+	const [visible, setVisible] = useState(false);
 
 	return (
 		<AuthCard
@@ -54,10 +59,15 @@ export default function ResetPassword() {
 								className="h-11"
 								id="password"
 								name="password"
-								type="password"
+								type={visible ? "text" : "password"}
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
 								autoComplete="new-password"
 								required
 							/>
+							<div p-2 onClick={() => setVisible(!visible)}>
+								<Image src={visible ? eye_open : eye_closed} alt="view password" />
+							</div>
 						</Field>
 
 						<Button type="submit" size="lg" className="w-full" disabled={pending}>
