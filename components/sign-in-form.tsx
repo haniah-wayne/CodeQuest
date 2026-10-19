@@ -54,20 +54,29 @@ export function SignInForm({ initialError }: { initialError?: string }) {
 							Password
 						</FieldLabel>
 
-						<Input
-							className="h-11"
-							id="password"
-							name="password"
-							type={visible ? "text" : "password"}
-							value={password}
-							onChange={(e) => setPassword(e.target.value)}
-							autoComplete="current-password"
-							required
-							aria-invalid={Boolean(state.fieldErrors?.password) || undefined}
-						/>
-						<div p-2 onClick={() => setVisible(!visible)}>
-							<HugeiconsIcon icon={visible ? eye_open : eye_closed} />
+						<div className="relative">
+							<Input
+								className="h-11 pr-11"
+								id="password"
+								name="password"
+								type={visible ? "text" : "password"}
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								autoComplete="current-password"
+								required
+								aria-invalid={Boolean(state.fieldErrors?.password) || undefined}
+							/>
+
+							<button
+								type="button"
+								className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+								onClick={() => setVisible(!visible)}
+								aria-label={visible ? "Hide password" : "Show password"}
+							>
+								<HugeiconsIcon icon={visible ? eye_open : eye_closed} size={18} />
+							</button>
 						</div>
+
 						<FieldError>{state.fieldErrors?.password}</FieldError>
 					</Field>
 

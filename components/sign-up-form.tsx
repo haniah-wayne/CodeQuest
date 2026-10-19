@@ -1,6 +1,6 @@
 "use client";
-import { EyeClosedIcon as eye_closed } from "@hugeicons/core-free-icons";
-import { EyeIcon as eye_open } from "@hugeicons/core-free-icons";
+import { EyeClosedIcon } from "@hugeicons/core-free-icons";
+import { EyeIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useActionState, useState } from "react";
 import { signUp } from "@/app/(auth)/actions";
@@ -91,21 +91,30 @@ export function SignUpForm() {
 							Password
 						</FieldLabel>
 
-						<Input
-							className="h-11"
-							id="password"
-							name="password"
-							type={visible ? "text" : "password"}
-							value={password}
-							onChange={(e) => setPassword(e.target.value)}
-							autoComplete="new-password"
-							required
-							minLength={MIN_PASSWORD_LENGTH}
-							aria-invalid={Boolean(state.fieldErrors?.password) || undefined}
-						/>
-						<div p-2 onClick={() => setVisible(!visible)}>
-							<HugeiconsIcon icon={visible ? eye_open : eye_closed} />
+						<div className="relative">
+							<Input
+								className="h-11 pr-11"
+								id="password"
+								name="password"
+								type={visible ? "text" : "password"}
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								autoComplete="new-password"
+								required
+								minLength={MIN_PASSWORD_LENGTH}
+								aria-invalid={Boolean(state.fieldErrors?.password) || undefined}
+							/>
+
+							<button
+								type="button"
+								className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+								onClick={() => setVisible(!visible)}
+								aria-label={visible ? "Hide password" : "Show password"}
+							>
+								<HugeiconsIcon icon={visible ? EyeIcon : EyeClosedIcon} size={18} />
+							</button>
 						</div>
+
 						<FieldDescription className="text-caption">
 							At least {MIN_PASSWORD_LENGTH} characters.
 						</FieldDescription>
