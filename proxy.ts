@@ -44,10 +44,15 @@ export async function proxy(request: NextRequest) {
 
 	const { pathname } = request.nextUrl;
 
-	if (user && AUTH_ROUTES.includes(pathname)) {
+	if (user && (pathname === "/" || AUTH_ROUTES.includes(pathname))) {
 		const role = user.user_metadata?.role;
+		const home = roleHome(isRole(role) ? role : null);
 
-		return redirectWithCookies(request, response, roleHome(isRole(role) ? role : null));
+		// Users without a valid role already fallback to root so this prevents
+		// redirect loops
+		if (home !== pathname) {
+			return redirectWithCookies(request, response, home);
+		}
 	}
 
 	// Optimistic check only. Pages still verify the session themselves.

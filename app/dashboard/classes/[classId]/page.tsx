@@ -21,7 +21,7 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 
 	// RLS decides who can see the class and its rows, so a missing class means
 	// not found or not allowed
-	const [classResult, challengesResult, enrollmentResult, submissionsResult] = await Promise.all([
+	const [classResult, challengesResult, enrollmentResult, leaderboardResult] = await Promise.all([
 		supabase
 			.from("Classes")
 			.select("ClassName, Description, ClassCode, ProfessorID, color")
@@ -37,17 +37,14 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 			.select("StudentID, Profile(Name, Email)")
 			.eq("ClassID", id)
 			.order("EnrolledAt"),
-		supabase
-			.from("Submission")
-			.select("StudentID, ChallengeID, Score, Challenges!inner(ClassID)")
-			.eq("Challenges.ClassID", id),
+		supabase.rpc("get_class_leaderboard", { p_class_id: id }),
 	]);
 
 	const c = classResult.data;
 
 	if (!c) notFound();
 
-	for (const { error } of [challengesResult, enrollmentResult, submissionsResult]) {
+	for (const { error } of [challengesResult, enrollmentResult, leaderboardResult]) {
 		if (error) console.error(error);
 	}
 
@@ -87,10 +84,18 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 				</div>
 			</div>
 
-			<ChallengeList challenges={challenges} error={challengesResult.error} />
+			<ChallengeList
+				challenges={challenges}
+				error={challengesResult.error}
+				classId={classId}
+			/>
 
 			<div className="grid items-start gap-6 lg:grid-cols-2">
-				<LeaderboardList />
+				<LeaderboardList
+					rows={leaderboardResult.data ?? []}
+					error={leaderboardResult.error}
+					viewerId={user.id}
+				/>
 
 				<RosterList
 					students={roster}

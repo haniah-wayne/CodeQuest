@@ -426,6 +426,10 @@ export type Database = {
 		};
 		Functions: {
 			is_class_professor: { Args: { class_id: number }; Returns: boolean };
+			get_class_leaderboard: {
+				Args: { p_class_id: number };
+				Returns: { student_id: string; student_name: string; total_score: number }[];
+			};
 		};
 		Enums: {
 			[_ in never]: never;
