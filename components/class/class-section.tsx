@@ -4,6 +4,7 @@ import type * as React from "react";
 import { Badge } from "@/components/ui/badge";
 import {
 	Empty,
+	EmptyContent,
 	EmptyDescription,
 	EmptyHeader,
 	EmptyMedia,
@@ -53,10 +54,12 @@ export function SectionEmpty({
 	icon,
 	title,
 	description,
+	actions,
 }: {
 	icon: IconSvgElement;
 	title: string;
 	description: React.ReactNode;
+	actions?: React.ReactNode;
 }) {
 	return (
 		<Empty className="gap-3 p-8">
@@ -69,6 +72,8 @@ export function SectionEmpty({
 
 				<EmptyDescription>{description}</EmptyDescription>
 			</EmptyHeader>
+
+			{actions && <EmptyContent>{actions}</EmptyContent>}
 		</Empty>
 	);
 }
