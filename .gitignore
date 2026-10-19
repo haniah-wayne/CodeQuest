@@ -43,7 +43,6 @@ next-env.d.ts
 
 #visual studio
 .vs/
-
 # Supabase local files
 supabase/.temp/
 supabase/.branches/

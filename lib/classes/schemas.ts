@@ -8,3 +8,13 @@ export const CreateClassSchema = v.object({
 		v.nonEmpty("Enter a description."),
 	),
 });
+
+export const JoinClassSchema = v.object({
+	// Codes are generated as lowercase hex, so accept whatever case was typed
+	code: v.pipe(
+		v.string("Enter a join code."),
+		v.trim(),
+		v.toLowerCase(),
+		v.nonEmpty("Enter a join code."),
+	),
+});
