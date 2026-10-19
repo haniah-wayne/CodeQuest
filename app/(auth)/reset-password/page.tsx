@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
+import { EyeClosedIcon as eye_closed } from "@hugeicons/core-free-icons";
+import { EyeIcon as eye_open } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { updatePassword } from "@/app/(auth)/actions";
-import eye_closed from "@/assets/img/eye_closed.png";
-import eye_open from "@/assets/img/eye_open.png";
 import { AuthCard, AuthFormError } from "@/components/auth-card";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -66,7 +66,7 @@ export default function ResetPassword() {
 								required
 							/>
 							<div p-2 onClick={() => setVisible(!visible)}>
-								<Image src={visible ? eye_open : eye_closed} alt="view password" />
+								<HugeiconsIcon icon={visible ? eye_open : eye_closed} />
 							</div>
 						</Field>
 

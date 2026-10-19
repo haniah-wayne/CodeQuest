@@ -1,9 +1,9 @@
 "use client";
-import Image from "next/image";
+import { EyeClosedIcon as eye_closed } from "@hugeicons/core-free-icons";
+import { EyeIcon as eye_open } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useActionState, useState } from "react";
 import { signUp } from "@/app/(auth)/actions";
-import eye_closed from "@/assets/img/eye_closed.png";
-import eye_open from "@/assets/img/eye_open.png";
 import { AuthCard, AuthFormError } from "@/components/auth-card";
 import { Button } from "@/components/ui/button";
 import {
@@ -102,7 +102,7 @@ export function SignUpForm() {
 							aria-invalid={Boolean(state.fieldErrors?.password) || undefined}
 						/>
 						<div p-2 onClick={() => setVisible(!visible)}>
-							<Image src={visible ? eye_open : eye_closed} alt="view password" />
+							<HugeiconsIcon icon={visible ? eye_open : eye_closed} />
 						</div>
 						<FieldDescription className="text-caption">
 							At least {MIN_PASSWORD_LENGTH} characters.
