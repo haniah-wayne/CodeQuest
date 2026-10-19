@@ -431,7 +431,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_class_leaderboard: { Args: never; Returns: undefined }
+      get_class_leaderboard: {
+        Args: { p_class_id: number }
+        Returns: {
+          rank: number
+          student_id: string
+          student_name: string
+          total_score: number
+        }[]
+      }
       get_global_leaderboard: { Args: never; Returns: undefined }
       is_class_professor: { Args: { class_id: number }; Returns: boolean }
       join_class_by_code: { Args: { class_code: string }; Returns: string }
