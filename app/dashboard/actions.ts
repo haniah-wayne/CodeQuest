@@ -49,7 +49,6 @@ export async function createClass(
 		ProfessorID: user.id,
 		ClassName: parsed.output.name,
 		Description: parsed.output.description,
-		color: `#${randomBytes(3).toString("hex")}`,
 		ClassCode: randomBytes(5).toString("hex"),
 	});
 

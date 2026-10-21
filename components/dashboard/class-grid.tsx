@@ -12,10 +12,7 @@ import {
 } from "@/components/ui/empty";
 import type { Tables } from "@/supabase/database.types";
 
-export type ClassSummary = Pick<
-	Tables<"Classes">,
-	"ClassID" | "ClassName" | "Description" | "color"
-> &
+export type ClassSummary = Pick<Tables<"Classes">, "ClassID" | "ClassName" | "Description"> &
 	Partial<Pick<Tables<"Classes">, "ClassCode">>;
 
 interface EmptyState {
@@ -66,12 +63,6 @@ function ClassCard({ class: c }: { class: ClassSummary }) {
 			className="group/class flex flex-1 flex-col gap-2 rounded-3xl border border-accent bg-white p-6 transition-colors outline-none hover:border-emerald-200 hover:bg-emerald-50/40 focus-visible:ring-[3px] focus-visible:ring-ring/50"
 			href={`/dashboard/classes/${c.ClassID}`}
 		>
-			<span
-				aria-hidden
-				className="mb-2 h-1.5 w-10 rounded-full bg-wsu-green"
-				style={c.color ? { backgroundColor: c.color } : undefined}
-			/>
-
 			<h2 className="text-heading">{c.ClassName}</h2>
 
 			{c.Description && (
