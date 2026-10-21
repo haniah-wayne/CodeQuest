@@ -1,3 +1,4 @@
+
 import mapboxgl from "mapbox-gl";
 
 export function createMap(
@@ -16,13 +17,14 @@ export function createMap(
 }
 
 export function addChallengeMarker(
-    map: mapboxgl.Map,
-    longitude: number,
-    latitude: number,
+  map: mapboxgl.Map,
+  longitude: number,
+  latitude: number,
 ) {
   const marker = new mapboxgl.Marker();
-    marker.setLngLat([longitude,latitude]);
-    marker.addTo(map);
+
+  marker.setLngLat([longitude, latitude]);
+  marker.addTo(map);
 
   return marker;
 }
@@ -31,26 +33,74 @@ export function selectChallengeLocation(
   map: mapboxgl.Map,
   selectLocation: (longitude: number, latitude: number) => void,
 ) {
-  map.on("click", (event) => {
+  const handleClick = (event: mapboxgl.MapMouseEvent) => {
     const longitude = event.lngLat.lng;
     const latitude = event.lngLat.lat;
 
     console.log(longitude, latitude);
 
-    SelectLocation(longitude, latitude);
-  });
+    selectLocation(longitude, latitude);
+  };
+
   map.on("click", handleClick);
 
   return () => map.off("click", handleClick);
 }
 
-export function removeChallengeMarker()
+export function removeChallengeMarker(
+  marker: mapboxgl.Marker,
+) {
+  marker.remove();
+}
 
-export function showStudentLocation()
+export function showStudentLocation(map: mapboxgl.Map) {
+  const geolocate = new mapboxgl.GeolocateControl({
+    trackUserLocation: true,
+    showUserLocation: true,
+    followUserLocation: false,
+  });
 
-export function calculateDistance()
+  map.addControl(geolocate);
 
-export function updateLocation()
+  return geolocate;
+}
 
-export function showChallengePopup()
+export function calculateDistance(
+  studentLongitude: number,
+  studentLatitude: number,
+  challengeLongitude: number,
+  challengeLatitude: number,
+) {
+  const studentLocation = new mapboxgl.LngLat(
+    studentLongitude,
+    studentLatitude,
+  );
 
+  const challengeLocation = new mapboxgl.LngLat(
+    challengeLongitude,
+    challengeLatitude,
+  );
+
+  return studentLocation.distanceTo(challengeLocation);
+}
+
+export function isWithinRadius(
+  distance: number,
+  radius: number,
+) {
+  return distance <= radius;
+}
+
+export function showChallengePopup(
+  marker: mapboxgl.Marker,
+  title: string,
+  description: string,
+) {
+  const popup = new mapboxgl.Popup({ offset: 25 }).setText(
+    `${title}: ${description}`,
+  );
+
+  marker.setPopup(popup);
+
+  return popup;
+}
