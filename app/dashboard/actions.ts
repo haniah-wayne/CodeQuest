@@ -4,7 +4,7 @@ import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import * as v from "valibot";
 import { getSessionUser } from "@/lib/auth/session";
-import { CreateClassSchema } from "@/lib/classes/schemas";
+import { CreateClassSchema, JoinClassSchema } from "@/lib/classes/schemas";
 import { createClient } from "@/lib/supabase/server";
 import { toFieldErrors } from "@/lib/validation";
 
@@ -49,7 +49,6 @@ export async function createClass(
 		ProfessorID: user.id,
 		ClassName: parsed.output.name,
 		Description: parsed.output.description,
-		color: `#${randomBytes(3).toString("hex")}`,
 		ClassCode: randomBytes(5).toString("hex"),
 	});
 
@@ -57,6 +56,58 @@ export async function createClass(
 		console.error(error);
 
 		return { values, error: "Couldn't create the class. Try again." };
+	}
+
+	revalidatePath("/dashboard");
+
+	return { success: true };
+}
+
+export interface JoinClassState {
+	error?: string;
+	fieldErrors?: Partial<Record<"code", string>>;
+	values?: { code: string };
+	success?: boolean;
+}
+
+export async function joinClass(
+	_prevState: JoinClassState,
+	formData: FormData,
+): Promise<JoinClassState> {
+	const values = { code: formData.get("code")?.toString() ?? "" };
+
+	const user = await getSessionUser();
+
+	if (user?.role !== "student") {
+		return { values, error: "Only students can join classes." };
+	}
+
+	const parsed = v.safeParse(JoinClassSchema, values);
+
+	if (!parsed.success) {
+		return {
+			values,
+			fieldErrors: toFieldErrors(
+				v.flatten<typeof JoinClassSchema>(parsed.issues).nested ?? {},
+			),
+		};
+	}
+
+	const supabase = await createClient();
+
+	const { data, error } = await supabase.rpc("join_class_by_code", {
+		class_code: parsed.output.code,
+	});
+
+	if (error || data !== "joined") {
+		console.error(error ?? data);
+
+		return {
+			values,
+			fieldErrors: {
+				code: "No class matches that code.",
+			},
+		};
 	}
 
 	revalidatePath("/dashboard");
