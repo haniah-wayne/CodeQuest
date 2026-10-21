@@ -9,7 +9,7 @@ export async function ProfessorDashboard({ user }: { user: SessionUser }) {
 
 	const { data: classes, error } = await supabase
 		.from("Classes")
-		.select("ClassID, ClassName, Description, color, ClassCode")
+		.select("ClassID, ClassName, Description, ClassCode")
 		.eq("ProfessorID", user.id)
 		.order("CreatedAt");
 

@@ -14,95 +14,40 @@ export type Database = {
   }
   public: {
     Tables: {
-      AnswerChoices: {
-        Row: {
-          AnswerText: string
-          ChoiceID: number
-          IsCorrect: boolean
-          QuestionID: number
-        }
-        Insert: {
-          AnswerText: string
-          ChoiceID?: never
-          IsCorrect?: boolean
-          QuestionID: number
-        }
-        Update: {
-          AnswerText?: string
-          ChoiceID?: never
-          IsCorrect?: boolean
-          QuestionID?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "AnswerChoices_QuestionID_fkey"
-            columns: ["QuestionID"]
-            isOneToOne: false
-            referencedRelation: "Questions"
-            referencedColumns: ["QuestionID"]
-          },
-        ]
-      }
-      ChallengeCompletions: {
-        Row: {
-          ChallengeID: number
-          CompletedAt: string | null
-          CompletionID: number
-          StartedAt: string
-          Status: string
-        }
-        Insert: {
-          ChallengeID: number
-          CompletedAt?: string | null
-          CompletionID?: never
-          StartedAt?: string
-          Status: string
-        }
-        Update: {
-          ChallengeID?: number
-          CompletedAt?: string | null
-          CompletionID?: never
-          StartedAt?: string
-          Status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ChallengeCompletions_ChallengeID_fkey"
-            columns: ["ChallengeID"]
-            isOneToOne: false
-            referencedRelation: "Challenges"
-            referencedColumns: ["ChallengeID"]
-          },
-        ]
-      }
       Challenges: {
         Row: {
           ChallengeID: number
           ChallengeType: string | null
           ClassID: number
+          CodeLanguage: string | null
           CreatedAt: string
           Description: string | null
-          Instructions: string | null
+          IsPublished: boolean | null
+          MaxAttempts: number | null
           Points: number
           Title: string
         }
         Insert: {
-          ChallengeID?: never
+          ChallengeID?: number
           ChallengeType?: string | null
           ClassID: number
+          CodeLanguage?: string | null
           CreatedAt?: string
           Description?: string | null
-          Instructions?: string | null
+          IsPublished?: boolean | null
+          MaxAttempts?: number | null
           Points?: number
           Title: string
         }
         Update: {
-          ChallengeID?: never
+          ChallengeID?: number
           ChallengeType?: string | null
           ClassID?: number
+          CodeLanguage?: string | null
           CreatedAt?: string
           Description?: string | null
-          Instructions?: string | null
+          IsPublished?: boolean | null
+          MaxAttempts?: number | null
           Points?: number
           Title?: string
         }
@@ -169,25 +114,22 @@ export type Database = {
           ClassCode: string
           ClassID: number
           ClassName: string
-          color: string | null
           CreatedAt: string
           Description: string | null
           ProfessorID: string
         }
         Insert: {
           ClassCode: string
-          ClassID?: never
+          ClassID?: number
           ClassName: string
-          color?: string | null
           CreatedAt?: string
           Description?: string | null
           ProfessorID: string
         }
         Update: {
           ClassCode?: string
-          ClassID?: never
+          ClassID?: number
           ClassName?: string
-          color?: string | null
           CreatedAt?: string
           Description?: string | null
           ProfessorID?: string
@@ -294,119 +236,100 @@ export type Database = {
         }
         Relationships: []
       }
-      Questions: {
+      Solutions: {
         Row: {
           ChallengeID: number
-          QuestionID: number
-          QuestionText: string
-          QuestionType: string
+          Solution: string
         }
         Insert: {
-          ChallengeID: number
-          QuestionID?: never
-          QuestionText: string
-          QuestionType: string
+          ChallengeID?: number
+          Solution: string
         }
         Update: {
           ChallengeID?: number
-          QuestionID?: never
-          QuestionText?: string
-          QuestionType?: string
+          Solution?: string
         }
         Relationships: [
           {
-            foreignKeyName: "Questions_ChallengeID_fkey"
+            foreignKeyName: "Solutions_ChallengeID_fkey"
             columns: ["ChallengeID"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "Challenges"
             referencedColumns: ["ChallengeID"]
           },
         ]
       }
-      StudentAnswers: {
+      StudentSubmissions: {
         Row: {
-          AnswerText: string | null
-          ChoiceID: number | null
-          IsCorrect: boolean | null
-          QuestionID: number
-          StudentAnswersID: number
-          StudentID: string
-          SubmittedAt: string
+          Output: string | null
+          Score: number | null
+          SubmissionID: number
+          TestCaseID: number
         }
         Insert: {
-          AnswerText?: string | null
-          ChoiceID?: number | null
-          IsCorrect?: boolean | null
-          QuestionID: number
-          StudentAnswersID?: never
-          StudentID: string
-          SubmittedAt?: string
+          Output?: string | null
+          Score?: number | null
+          SubmissionID?: number
+          TestCaseID: number
         }
         Update: {
-          AnswerText?: string | null
-          ChoiceID?: number | null
-          IsCorrect?: boolean | null
-          QuestionID?: number
-          StudentAnswersID?: never
-          StudentID?: string
-          SubmittedAt?: string
+          Output?: string | null
+          Score?: number | null
+          SubmissionID?: number
+          TestCaseID?: number
         }
         Relationships: [
           {
-            foreignKeyName: "StudentAnswers_ChoiceID_fkey"
-            columns: ["ChoiceID"]
-            isOneToOne: false
-            referencedRelation: "AnswerChoices"
-            referencedColumns: ["ChoiceID"]
+            foreignKeyName: "StudentSubmissions_SubmissionID_fkey"
+            columns: ["SubmissionID"]
+            isOneToOne: true
+            referencedRelation: "Submission"
+            referencedColumns: ["SubmissionID"]
           },
           {
-            foreignKeyName: "StudentAnswers_QuestionID_fkey"
-            columns: ["QuestionID"]
+            foreignKeyName: "StudentSubmissions_TestCaseID_fkey"
+            columns: ["TestCaseID"]
             isOneToOne: false
-            referencedRelation: "Questions"
-            referencedColumns: ["QuestionID"]
-          },
-          {
-            foreignKeyName: "StudentAnswers_StudentID_fkey"
-            columns: ["StudentID"]
-            isOneToOne: false
-            referencedRelation: "Profile"
-            referencedColumns: ["ID"]
+            referencedRelation: "TestCase"
+            referencedColumns: ["TestCaseID"]
           },
         ]
       }
       Submission: {
         Row: {
+          AttemptNum: number | null
           ChallengeID: number
           Code: string | null
-          Feedback: string | null
           Language: string | null
           Output: string | null
           Score: number | null
+          Status: string | null
           StudentID: string
           SubmissionID: number
           SubmittedAt: string
         }
         Insert: {
+          AttemptNum?: number | null
           ChallengeID: number
           Code?: string | null
-          Feedback?: string | null
           Language?: string | null
           Output?: string | null
           Score?: number | null
+          Status?: string | null
           StudentID: string
-          SubmissionID?: never
+          SubmissionID?: number
           SubmittedAt?: string
         }
         Update: {
+          AttemptNum?: number | null
           ChallengeID?: number
           Code?: string | null
-          Feedback?: string | null
           Language?: string | null
           Output?: string | null
           Score?: number | null
+          Status?: string | null
           StudentID?: string
-          SubmissionID?: never
+          SubmissionID?: number
           SubmittedAt?: string
         }
         Relationships: [
@@ -423,6 +346,41 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "Profile"
             referencedColumns: ["ID"]
+          },
+        ]
+      }
+      TestCase: {
+        Row: {
+          ChallengeID: number
+          CreatedAt: string | null
+          ExpectedOutput: string | null
+          Input: string | null
+          Score: number | null
+          TestCaseID: number
+        }
+        Insert: {
+          ChallengeID: number
+          CreatedAt?: string | null
+          ExpectedOutput?: string | null
+          Input?: string | null
+          Score?: number | null
+          TestCaseID?: number
+        }
+        Update: {
+          ChallengeID?: number
+          CreatedAt?: string | null
+          ExpectedOutput?: string | null
+          Input?: string | null
+          Score?: number | null
+          TestCaseID?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "TestCase_ChallengeID_fkey"
+            columns: ["ChallengeID"]
+            isOneToOne: false
+            referencedRelation: "Challenges"
+            referencedColumns: ["ChallengeID"]
           },
         ]
       }

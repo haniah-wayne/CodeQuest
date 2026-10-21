@@ -24,7 +24,7 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 	const [classResult, challengesResult, enrollmentResult, leaderboardResult] = await Promise.all([
 		supabase
 			.from("Classes")
-			.select("ClassName, Description, ClassCode, ProfessorID, color")
+			.select("ClassName, Description, ClassCode, ProfessorID")
 			.eq("ClassID", id)
 			.maybeSingle(),
 		supabase
@@ -70,12 +70,6 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 				</Link>
 
 				<div className="flex flex-col gap-4">
-					<span
-						aria-hidden
-						className="h-1.5 w-10 rounded-full bg-wsu-green"
-						style={c.color ? { backgroundColor: c.color } : undefined}
-					/>
-
 					<DashboardPageHeader
 						title={c.ClassName}
 						description={c.Description}

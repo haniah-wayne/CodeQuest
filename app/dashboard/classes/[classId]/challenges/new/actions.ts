@@ -75,28 +75,12 @@ export async function createChallenge(
 		return { values, error: "Something went wrong saving that challenge." };
 	}
 
-	const { data: question, error: questionError } = await supabase
-		.from("Questions")
-		.insert({
-			ChallengeID: challenge.ChallengeID,
-			QuestionText: description,
-			QuestionType: "short_answer",
-		})
-		.select("QuestionID")
-		.single();
+	const { error: solutionError } = await supabase
+		.from("Solutions")
+		.insert({ ChallengeID: challenge.ChallengeID, Solution: solution });
 
-	const { error: answerError } = question
-		? await supabase
-				.from("AnswerChoices")
-				.insert({ QuestionID: question.QuestionID, AnswerText: solution, IsCorrect: true })
-		: { error: null };
-
-	if (questionError || answerError) {
-		console.error(questionError ?? answerError);
-
-		if (question) {
-			await supabase.from("Questions").delete().eq("QuestionID", question.QuestionID);
-		}
+	if (solutionError) {
+		console.error(solutionError);
 
 		await supabase.from("Challenges").delete().eq("ChallengeID", challenge.ChallengeID);
 
