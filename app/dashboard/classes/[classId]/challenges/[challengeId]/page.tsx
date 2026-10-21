@@ -26,9 +26,7 @@ export default async function ChallengePage(
 	const [challengeResult, submissionsResult] = await Promise.all([
 		supabase
 			.from("Challenges")
-			.select(
-				"Title, Description, Instructions, Points, Classes(ClassName, ProfessorID, color)",
-			)
+			.select("Title, Description, Points, Classes(ClassName, ProfessorID)")
 			.eq("ChallengeID", challengeId)
 			.eq("ClassID", classId)
 			.maybeSingle(),
@@ -75,16 +73,6 @@ export default async function ChallengePage(
 				</Link>
 
 				<div className="flex flex-col gap-4">
-					<span
-						aria-hidden
-						className="h-1.5 w-10 rounded-full bg-wsu-green"
-						style={
-							challenge.Classes.color
-								? { backgroundColor: challenge.Classes.color }
-								: undefined
-						}
-					/>
-
 					<DashboardPageHeader
 						title={challenge.Title}
 						description={challenge.Description}
@@ -109,35 +97,12 @@ export default async function ChallengePage(
 				</div>
 			</div>
 
-			<div
-				className={
-					challenge.Instructions
-						? "grid items-start gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]"
-						: "flex flex-col"
-				}
-			>
-				{challenge.Instructions && (
-					<section
-						className="flex min-w-0 flex-col gap-3 rounded-3xl border border-accent bg-white px-5 py-4 sm:px-6 lg:sticky lg:top-28"
-						aria-labelledby="instructions-heading"
-					>
-						<h2 className="text-label" id="instructions-heading">
-							Instructions
-						</h2>
-
-						<p className="text-body-sm whitespace-pre-wrap text-muted-foreground">
-							{challenge.Instructions}
-						</p>
-					</section>
-				)}
-
-				<CodeWorkspace
-					challengeId={challengeId}
-					initialLanguage={initialLanguage}
-					initialCode={initialCode}
-					solved={solved}
-				/>
-			</div>
+			<CodeWorkspace
+				challengeId={challengeId}
+				initialLanguage={initialLanguage}
+				initialCode={initialCode}
+				solved={solved}
+			/>
 		</>
 	);
 }

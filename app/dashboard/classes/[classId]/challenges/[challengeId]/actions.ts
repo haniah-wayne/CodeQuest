@@ -81,7 +81,7 @@ export async function submitSolution(input: {
 	const [challengeResult, solvedResult] = await Promise.all([
 		supabase
 			.from("Challenges")
-			.select("ClassID, Points, Questions(AnswerChoices(AnswerText, IsCorrect))")
+			.select("ClassID, Points, Solutions(Solution)")
 			.eq("ChallengeID", challengeId)
 			.maybeSingle(),
 		supabase
@@ -107,12 +107,10 @@ export async function submitSolution(input: {
 		return { error: "You've already solved this challenge." };
 	}
 
-	const expected = challenge.Questions.flatMap((q) => q.AnswerChoices).find(
-		(a) => a.IsCorrect,
-	)?.AnswerText;
+	const expected = challenge.Solutions?.Solution;
 
 	if (expected === undefined) {
-		console.error(`Challenge ${challengeId} has no correct answer to grade against`);
+		console.error(`Challenge ${challengeId} has no solution to grade against`);
 
 		return { error: "This challenge isn't ready for submissions yet." };
 	}
