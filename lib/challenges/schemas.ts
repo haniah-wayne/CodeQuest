@@ -12,7 +12,10 @@ export const CreateChallengeSchema = v.object({
 		v.trim(),
 		v.nonEmpty("Enter a description."),
 	),
-	solution: v.pipe(v.string("Enter the solution."), v.trim(), v.nonEmpty("Enter the solution.")),
+	solution: v.pipe(
+		v.string("Enter the expected output."),
+		v.check((s) => s.trim() !== "", "Enter the expected output."),
+	),
 });
 
 // Keeps junk off the code runner
