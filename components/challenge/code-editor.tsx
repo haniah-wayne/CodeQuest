@@ -19,7 +19,7 @@ import {
 	lineNumbers,
 } from "@codemirror/view";
 import { githubLight } from "@fsegurai/codemirror-theme-github-light";
-import { useEffect, useEffectEvent, useRef } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import type { LanguageId } from "@/lib/challenges/languages";
 
 const INDENT = "    ";
@@ -67,6 +67,9 @@ export function CodeEditor({
 	const containerRef = useRef<HTMLDivElement>(null);
 	const viewRef = useRef<EditorView | null>(null);
 	const languageSlot = useRef(new Compartment());
+
+	const statesRef = useRef(new Map<LanguageId, EditorState>());
+	const [placeholder] = useState(value);
 
 	const emitChange = useEffectEvent((doc: string) => onChange(doc));
 
@@ -127,12 +130,24 @@ export function CodeEditor({
 	useEffect(() => {
 		if (!containerRef.current) return;
 
-		const view = new EditorView({
-			state: createState(),
-			parent: containerRef.current,
-		});
+		const view = new EditorView({ parent: containerRef.current });
 
 		viewRef.current = view;
+
+		return () => {
+			viewRef.current = null;
+			view.destroy();
+		};
+	}, []);
+
+	useEffect(() => {
+		const view = viewRef.current;
+
+		if (!view) return;
+
+		const states = statesRef.current;
+
+		view.setState(states.get(language) ?? createState());
 
 		let cancelled = false;
 
@@ -146,8 +161,7 @@ export function CodeEditor({
 
 		return () => {
 			cancelled = true;
-			viewRef.current = null;
-			view.destroy();
+			states.set(language, view.state);
 		};
 	}, [language]);
 
@@ -178,7 +192,7 @@ export function CodeEditor({
 				className="min-h-72 min-w-0 bg-background text-base sm:text-sm [&:has(.cm-editor)>pre]:hidden"
 			>
 				<pre className="m-0 py-4 pr-4 pl-12 font-mono leading-6 wrap-break-word whitespace-pre-wrap text-foreground">
-					{value}
+					{placeholder}
 				</pre>
 			</div>
 		</div>
