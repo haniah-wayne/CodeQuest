@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { type CreateChallengeState, createChallenge } from "./actions";
 
 export default function CreateChallengePage() {
@@ -82,13 +83,14 @@ export default function CreateChallengePage() {
 							</Field>
 
 							<Field data-invalid={Boolean(state.fieldErrors?.solution) || undefined}>
-								<FieldLabel htmlFor="solution">Solution</FieldLabel>
-								<Input
+								<FieldLabel htmlFor="solution">Expected Output</FieldLabel>
+								<Textarea
 									id="solution"
 									name="solution"
 									defaultValue={state.values?.solution}
-									type="text"
-									placeholder="Correct answer"
+									className="font-mono"
+									placeholder={"1\n2\n3"}
+									spellCheck={false}
 									required
 									aria-invalid={Boolean(state.fieldErrors?.solution) || undefined}
 								/>
