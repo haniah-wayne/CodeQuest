@@ -32,7 +32,7 @@ export default async function ChallengePage(
 			.maybeSingle(),
 		supabase
 			.from("Submission")
-			.select("Code, Language, Score")
+			.select("Code, Language, Status")
 			.eq("ChallengeID", challengeId)
 			.eq("StudentID", user.id)
 			.order("SubmittedAt", { ascending: false }),
@@ -55,7 +55,7 @@ export default async function ChallengePage(
 
 	const submissions = submissionsResult.data ?? [];
 	const latest = submissions[0];
-	const solved = submissions.some((s) => (s.Score ?? 0) > 0);
+	const solved = submissions.some((s) => s.Status === "correct");
 
 	// Pick up where the student left off with their last submission
 	const initialLanguage = isLanguageId(latest?.Language) ? latest.Language : DEFAULT_LANGUAGE;

@@ -89,7 +89,7 @@ export async function submitSolution(input: {
 			.select("SubmissionID")
 			.eq("ChallengeID", challengeId)
 			.eq("StudentID", user.id)
-			.gt("Score", 0)
+			.eq("Status", "correct")
 			.limit(1),
 	]);
 
@@ -135,6 +135,7 @@ export async function submitSolution(input: {
 		Language: language,
 		Output: result.output,
 		Score: points,
+		Status: correct ? "correct" : "incorrect",
 	});
 
 	if (insertError) {
