@@ -59,12 +59,21 @@ export function CodeWorkspace({
 		setPendingKind(kind);
 
 		startTransition(async () => {
-			const state =
-				kind === "run"
-					? await runCode({ language, code })
-					: await submitSolution({ challengeId, language, code });
+			try {
+				const state =
+					kind === "run"
+						? await runCode({ language, code })
+						: await submitSolution({ challengeId, language, code });
 
-			setOutcome({ ...state, kind });
+				setOutcome({ ...state, kind });
+			} catch (error) {
+				console.error(error);
+
+				setOutcome({
+					kind,
+					error: "Something went wrong. Check your connection and try again.",
+				});
+			}
 		});
 	}
 
@@ -173,7 +182,9 @@ function OutputPanel({ outcome }: { outcome: Outcome }) {
 			{kind === "submit" && correct !== undefined && (
 				<Verdict tone={correct ? "success" : "error"}>
 					{correct
-						? `Correct! You earned ${points} ${points === 1 ? "point" : "points"}.`
+						? points
+							? `Correct! You earned ${points} ${points === 1 ? "point" : "points"}.`
+							: "Correct!"
 						: result?.problem
 							? "Your program didn’t finish cleanly, so it wasn’t graded as correct."
 							: "Not quite. Your output didn’t match what this challenge expects."}
