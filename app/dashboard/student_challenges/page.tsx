@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
+import MapView from "@/components/map-view";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -11,6 +12,7 @@ import {
 	CardContent,
 	CardFooter,
 } from "@/components/ui/card";
+import { calculateDistance } from "@/lib/mapbox";
 import { createClient } from "@/lib/supabase/client";
 
 const supabase = createClient();
@@ -34,21 +36,6 @@ type Challenge = {
 	Longitude: number | null;
 	Radius: number | null;
 };
-
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
-	const R = 6371000;
-
-	const dLat = ((lat2 - lat1) * Math.PI) / 180;
-	const dLon = ((lon2 - lon1) * Math.PI) / 180;
-
-	const a =
-		Math.sin(dLat / 2) ** 2 +
-		Math.cos((lat1 * Math.PI) / 180) *
-			Math.cos((lat2 * Math.PI) / 180) *
-			Math.sin(dLon / 2) ** 2;
-
-	return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
 
 export default function MyChallengesPage() {
 	const [classes, setClasses] = useState<StudentClass[]>([]);
@@ -94,33 +81,29 @@ export default function MyChallengesPage() {
 				return;
 			}
 
-			const { data: classData, error: classError } = await supabase
-				.from("Classes")
-				.select("ClassID, ClassName")
-				.in("ClassID", classIds);
+			const [classesResult, challengesResult] = await Promise.all([
+				supabase.from("Classes").select("ClassID, ClassName").in("ClassID", classIds),
 
-			if (classError) {
-				setMessage(classError.message);
+				supabase
+					.from("Challenges")
+					.select(
+						"ChallengeID, ClassID, Title, Description, Points, ChallengeType, Instructions, CreatedAt",
+					)
+					.in("ClassID", classIds),
+			]);
+
+			const firstError = classesResult.error || challengesResult.error;
+
+			if (firstError) {
+				setMessage(firstError.message);
 				setLoading(false);
 				return;
 			}
 
-			setClasses(classData ?? []);
+			setClasses(classesResult.data ?? []);
 
-			const { data: challengeData, error: challengeError } = await supabase
-				.from("Challenges")
-				.select(
-					"ChallengeID, ClassID, Title, Description, Points, ChallengeType, Instructions, CreatedAt",
-				)
-				.in("ClassID", classIds);
-
-			if (challengeError) {
-				setMessage(challengeError.message);
-				setLoading(false);
-				return;
-			}
-
-			const ids = challengeData?.map((c) => c.ChallengeID) ?? [];
+			const challengeData = challengesResult.data ?? [];
+			const ids = challengeData.map((c) => c.ChallengeID);
 
 			if (ids.length === 0) {
 				setChallenges([]);
@@ -128,43 +111,40 @@ export default function MyChallengesPage() {
 				return;
 			}
 
-			const { data: locationData, error: locationError } = await supabase
-				.from("Locations")
-				.select("LocationID, ChallengeID, Latitude, Longitude, Radius")
-				.in("ChallengeID", ids);
+			const [locationsResult, submissionsResult, checkInsResult] = await Promise.all([
+				supabase
+					.from("Locations")
+					.select("LocationID, ChallengeID, Latitude, Longitude, Radius")
+					.in("ChallengeID", ids),
 
-			if (locationError) {
-				setMessage(locationError.message);
+				supabase
+					.from("Submission")
+					.select("ChallengeID, Score")
+					.eq("StudentID", user.id)
+					.in("ChallengeID", ids),
+
+				supabase
+					.from("CheckIns")
+					.select("ChallengeID")
+					.eq("StudentID", user.id)
+					.eq("Successful", true)
+					.in("ChallengeID", ids),
+			]);
+
+			const secondError =
+				locationsResult.error || submissionsResult.error || checkInsResult.error;
+
+			if (secondError) {
+				setMessage(secondError.message);
 				setLoading(false);
 				return;
 			}
 
-			const { data: submissions, error: submissionError } = await supabase
-				.from("Submission")
-				.select("ChallengeID, Score")
-				.eq("StudentID", user.id)
-				.in("ChallengeID", ids);
+			const locationData = locationsResult.data;
+			const submissions = submissionsResult.data;
+			const checkIns = checkInsResult.data;
 
-			if (submissionError) {
-				setMessage(submissionError.message);
-				setLoading(false);
-				return;
-			}
-
-			const { data: checkIns, error: checkInError } = await supabase
-				.from("CheckIns")
-				.select("ChallengeID")
-				.eq("StudentID", user.id)
-				.eq("Successful", true)
-				.in("ChallengeID", ids);
-
-			if (checkInError) {
-				setMessage(checkInError.message);
-				setLoading(false);
-				return;
-			}
-
-			const combined: Challenge[] = (challengeData ?? []).map((challenge) => {
+			const combined: Challenge[] = challengeData.map((challenge) => {
 				const submission = submissions?.find(
 					(sub) => sub.ChallengeID === challenge.ChallengeID,
 				);
@@ -177,18 +157,16 @@ export default function MyChallengesPage() {
 					(item) => item.ChallengeID === challenge.ChallengeID,
 				);
 
+				let status: Challenge["status"] = "Locked";
+				if (location) status = "Available";
+				if (checkedIn) status = "Checked In";
+				if (submission) status = "Completed";
 				return {
 					...challenge,
 					Latitude: location?.Latitude ?? null,
 					Longitude: location?.Longitude ?? null,
 					Radius: location?.Radius ?? null,
-					status: submission
-						? "Completed"
-						: checkedIn
-							? "Checked In"
-							: location
-								? "Available"
-								: "Locked",
+					status,
 				};
 			});
 
