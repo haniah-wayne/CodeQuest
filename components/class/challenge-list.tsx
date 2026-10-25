@@ -14,17 +14,31 @@ export function ChallengeList({
 	challenges,
 	error,
 	classId,
+	createChall,
 }: {
 	challenges: Challenge[];
 	error: unknown;
 	classId: string;
-}) {
+    createChall?: boolean;
+	}) {
+
+	const createButton = createChall ? (
+		<Link
+			className={buttonVariants({ size: "sm" })}
+			href={`/dashboard/classes/${classId}/challenges/new`}
+		>
+			Create a challenge
+		</Link>
+	) : null;
+
 	return (
 		<ClassSection
 			id="challenges"
 			title="Challenges"
 			icon={Flag02Icon}
 			count={challenges.length}
+			action={createButton}
+           
 		>
 			{error ? (
 				<SectionError what="challenges" />

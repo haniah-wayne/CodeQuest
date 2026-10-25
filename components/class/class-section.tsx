@@ -17,19 +17,21 @@ export function ClassSection({
 	icon,
 	count,
 	children,
+	action,
 }: {
 	id: string;
 	title: string;
 	icon: IconSvgElement;
 	count?: number;
 	children: React.ReactNode;
+    action?: React.ReactNode;
 }) {
 	return (
 		<section
 			className="flex min-w-0 flex-col rounded-3xl border border-accent bg-white"
 			aria-labelledby={id}
 		>
-			<header className="flex items-center gap-3 border-b border-border/60 px-5 py-4 sm:px-6">
+			<header className="flex items-center gap-3 border-b border-border/60 px-5 py-4 sm:px-6" >
 				<span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-wsu-green">
 					<HugeiconsIcon icon={icon} className="size-4.5" />
 				</span>
@@ -43,6 +45,8 @@ export function ClassSection({
 						{count}
 					</Badge>
 				)}
+
+				{action && <div className="ml-auto">{action}</div>}
 			</header>
 
 			<div className="flex flex-1 flex-col p-2 sm:p-3">{children}</div>
