@@ -26,10 +26,7 @@ export function selectChallengeLocation(
 	selectLocation: (longitude: number, latitude: number) => void,
 ) {
 	const handleClick = (event: mapboxgl.MapMouseEvent) => {
-		const longitude = event.lngLat.lng;
-		const latitude = event.lngLat.lat;
-
-		console.log(longitude, latitude);
+		const { lng: longitude, lat: latitude } = event.lngLat.wrap();
 
 		selectLocation(longitude, latitude);
 	};
