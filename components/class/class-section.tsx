@@ -17,12 +17,14 @@ export function ClassSection({
 	icon,
 	count,
 	children,
+	action,
 }: {
 	id: string;
 	title: string;
 	icon: IconSvgElement;
 	count?: number;
 	children: React.ReactNode;
+	action?: React.ReactNode;
 }) {
 	return (
 		<section
@@ -43,6 +45,8 @@ export function ClassSection({
 						{count}
 					</Badge>
 				)}
+
+				{action && <div className="ml-auto">{action}</div>}
 			</header>
 
 			<div className="flex flex-1 flex-col p-2 sm:p-3">{children}</div>

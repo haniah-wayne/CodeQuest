@@ -1,7 +1,8 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,12 +17,18 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Input } from "@/components/ui/input";
 import { type CreateChallengeState, createChallenge } from "./actions";
 
+const MapView = dynamic(() => import("@/components/mapview"), { ssr: false });
+
 export default function CreateChallengePage() {
 	const { classId } = useParams<{ classId: string }>();
 	const [state, action, pending] = useActionState<CreateChallengeState, FormData>(
 		createChallenge,
 		{},
 	); //for the form
+	const [location, setLocation] = useState<{
+		longitude: number;
+		latitude: number;
+	} | null>(null); //the spot on the map
 
 	return (
 		<div className="mx-auto w-full max-w-2xl px-4 py-10">
@@ -93,6 +100,33 @@ export default function CreateChallengePage() {
 									aria-invalid={Boolean(state.fieldErrors?.solution) || undefined}
 								/>
 								<FieldError>{state.fieldErrors?.solution}</FieldError>
+							</Field>
+
+							<input
+								type="hidden"
+								name="longitude"
+								value={location?.longitude ?? ""}
+							/>
+							<input type="hidden" name="latitude" value={location?.latitude ?? ""} />
+
+							<Field
+								data-invalid={
+									Boolean(
+										state.fieldErrors?.longitude ?? state.fieldErrors?.latitude,
+									) || undefined
+								}
+							>
+								<FieldLabel>Challenge Location</FieldLabel>
+								<MapView
+									mode="professor"
+									className="h-80 w-full overflow-hidden rounded-2xl"
+									locationSelect={(longitude, latitude) =>
+										setLocation({ longitude, latitude })
+									}
+								/>
+								<FieldError>
+									{state.fieldErrors?.longitude ?? state.fieldErrors?.latitude}
+								</FieldError>
 							</Field>
 						</FieldGroup>
 					</CardContent>
