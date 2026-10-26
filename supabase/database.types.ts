@@ -259,42 +259,6 @@ export type Database = {
           },
         ]
       }
-      StudentSubmissions: {
-        Row: {
-          Output: string | null
-          Score: number | null
-          SubmissionID: number
-          TestCaseID: number
-        }
-        Insert: {
-          Output?: string | null
-          Score?: number | null
-          SubmissionID?: number
-          TestCaseID: number
-        }
-        Update: {
-          Output?: string | null
-          Score?: number | null
-          SubmissionID?: number
-          TestCaseID?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "StudentSubmissions_SubmissionID_fkey"
-            columns: ["SubmissionID"]
-            isOneToOne: true
-            referencedRelation: "Submission"
-            referencedColumns: ["SubmissionID"]
-          },
-          {
-            foreignKeyName: "StudentSubmissions_TestCaseID_fkey"
-            columns: ["TestCaseID"]
-            isOneToOne: false
-            referencedRelation: "TestCase"
-            referencedColumns: ["TestCaseID"]
-          },
-        ]
-      }
       Submission: {
         Row: {
           AttemptNum: number | null
@@ -389,6 +353,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_challenge: {
+        Args: {
+          class_id: number
+          description: string
+          lat: number
+          long: number
+          radius: number
+          solution: string
+          title: string
+        }
+        Returns: number
+      }
       get_class_leaderboard: {
         Args: { p_class_id: number }
         Returns: {

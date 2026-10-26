@@ -70,42 +70,18 @@ export async function createChallenge(
 
 	const { title, description, solution, longitude, latitude } = parsed.output;
 
-	const { data: challenge, error: challengeError } = await supabase
-		.from("Challenges")
-		.insert({ ClassID: classId, Title: title, Description: description })
-		.select("ChallengeID")
-		.single();
-
-	if (challengeError) {
-		console.error(challengeError);
-
-		return { values, error: "Something went wrong saving that challenge." };
-	}
-
-	const { error: solutionError } = await supabase
-		.from("Solutions")
-		.insert({ ChallengeID: challenge.ChallengeID, Solution: solution });
-
-	if (solutionError) {
-		console.error(solutionError);
-
-		await supabase.from("Challenges").delete().eq("ChallengeID", challenge.ChallengeID);
-
-		return { values, error: "Something went wrong saving that challenge." };
-	}
-
-	const { error: locationError } = await supabase.from("Locations").insert({
-		ChallengeID: challenge.ChallengeID,
-		Longitude: longitude,
-		Latitude: latitude,
-		Radius: 100,
+	const { error } = await supabase.rpc("create_challenge", {
+		class_id: classId,
+		title,
+		description,
+		solution,
+		long: longitude,
+		lat: latitude,
+		radius: 100,
 	});
 
-	if (locationError) {
-		console.error(locationError);
-
-		await supabase.from("Solutions").delete().eq("ChallengeID", challenge.ChallengeID);
-		await supabase.from("Challenges").delete().eq("ChallengeID", challenge.ChallengeID);
+	if (error) {
+		console.error(error);
 
 		return { values, error: "Something went wrong saving that challenge." };
 	}
