@@ -14,14 +14,14 @@ export function ChallengeList({
 	challenges,
 	error,
 	classId,
-	createChall,
+	create,
 }: {
 	challenges: Challenge[];
 	error: unknown;
 	classId: string;
-	createChall?: boolean;
+	create?: boolean;
 }) {
-	const createButton = createChall ? (
+	const createButton = create ? (
 		<Link
 			className={buttonVariants({ size: "sm" })}
 			href={`/dashboard/classes/${classId}/challenges/new`}
@@ -30,29 +30,24 @@ export function ChallengeList({
 		</Link>
 	) : null;
 
+	const isEmpty = !error && challenges.length === 0;
+
 	return (
 		<ClassSection
 			id="challenges"
 			title="Challenges"
 			icon={Flag02Icon}
 			count={challenges.length}
-			action={createButton}
+			action={isEmpty ? null : createButton}
 		>
 			{error ? (
 				<SectionError what="challenges" />
-			) : challenges.length === 0 ? (
+			) : isEmpty ? (
 				<SectionEmpty
 					icon={Flag02Icon}
 					title="No challenges yet"
 					description="Challenges added to this class will show up here."
-					actions={
-						<Link
-							className={buttonVariants({ size: "sm" })}
-							href={`/dashboard/classes/${classId}/challenges/new`}
-						>
-							Create a challenge
-						</Link>
-					}
+					actions={createButton}
 				/>
 			) : (
 				<ol className="flex flex-col">
