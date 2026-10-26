@@ -1,6 +1,5 @@
 "use client";
 
-import type mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useEffect, useRef } from "react";
 import {
@@ -14,7 +13,7 @@ import {
 	selectChallengeLocation,
 } from "@/lib/mapbox";
 
-type MapViewProps = {
+interface MapViewProps {
 	mode: "student" | "professor";
 	className?: string;
 	challengeLongitude?: number;
@@ -24,7 +23,7 @@ type MapViewProps = {
 	radius?: number;
 	locationSelect?: (longitude: number, latitude: number) => void;
 	availableChange?: (available: boolean) => void;
-};
+}
 
 export default function MapView({
 	mode,
@@ -63,14 +62,17 @@ export default function MapView({
 
 	useEffect(() => {
 		if (!mapContainerRef.current) return;
+
 		const accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+
 		if (!accessToken) {
 			console.error("Mapbox access token is missing");
 			return;
 		}
+
 		const map = createMap(mapContainerRef.current, accessToken);
 		mapRef.current = map;
-		let geolocate: ReturnType<typeof showStudentLocation> | undefined;
+
 		let removeClickListener: (() => void) | undefined;
 
 		if (mode === "student") {
