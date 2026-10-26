@@ -24,7 +24,6 @@ type MapViewProps = {
 	radius?: number;
 	locationSelect?: (longitude: number, latitude: number) => void;
 	availableChange?: (available: boolean) => void;
-	
 };
 
 export default function MapView({

@@ -19,9 +19,8 @@ export function ChallengeList({
 	challenges: Challenge[];
 	error: unknown;
 	classId: string;
-    createChall?: boolean;
-	}) {
-
+	createChall?: boolean;
+}) {
 	const createButton = createChall ? (
 		<Link
 			className={buttonVariants({ size: "sm" })}
@@ -38,7 +37,6 @@ export function ChallengeList({
 			icon={Flag02Icon}
 			count={challenges.length}
 			action={createButton}
-           
 		>
 			{error ? (
 				<SectionError what="challenges" />
