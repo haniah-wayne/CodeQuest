@@ -1,6 +1,8 @@
 "use client";
-
-import { useActionState } from "react";
+import { EyeClosedIcon } from "@hugeicons/core-free-icons";
+import { EyeIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { useActionState, useState } from "react";
 import { signUp } from "@/app/(auth)/actions";
 import { AuthCard, AuthFormError } from "@/components/auth-card";
 import { Button } from "@/components/ui/button";
@@ -30,7 +32,8 @@ const ROLE_DESCRIPTIONS: Record<Role, string> = {
 
 export function SignUpForm() {
 	const [state, action, pending] = useActionState(signUp, {});
-
+	const [password, setPassword] = useState("");
+	const [visible, setVisible] = useState(false);
 	return (
 		<AuthCard
 			title="Create your account"
@@ -56,6 +59,7 @@ export function SignUpForm() {
 							autoComplete="name"
 							placeholder="Ada Lovelace"
 							required
+							defaultValue={state.values?.name}
 							aria-invalid={Boolean(state.fieldErrors?.name) || undefined}
 						/>
 
@@ -75,6 +79,7 @@ export function SignUpForm() {
 							autoComplete="email"
 							placeholder="you@wayne.edu"
 							required
+							defaultValue={state.values?.email}
 							aria-invalid={Boolean(state.fieldErrors?.email) || undefined}
 						/>
 
@@ -86,16 +91,29 @@ export function SignUpForm() {
 							Password
 						</FieldLabel>
 
-						<Input
-							className="h-11"
-							id="password"
-							name="password"
-							type="password"
-							autoComplete="new-password"
-							required
-							minLength={MIN_PASSWORD_LENGTH}
-							aria-invalid={Boolean(state.fieldErrors?.password) || undefined}
-						/>
+						<div className="relative">
+							<Input
+								className="h-11 pr-11"
+								id="password"
+								name="password"
+								type={visible ? "text" : "password"}
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								autoComplete="new-password"
+								required
+								minLength={MIN_PASSWORD_LENGTH}
+								aria-invalid={Boolean(state.fieldErrors?.password) || undefined}
+							/>
+
+							<button
+								type="button"
+								className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+								onClick={() => setVisible(!visible)}
+								aria-label={visible ? "Hide password" : "Show password"}
+							>
+								<HugeiconsIcon icon={visible ? EyeIcon : EyeClosedIcon} size={18} />
+							</button>
+						</div>
 
 						<FieldDescription className="text-caption">
 							At least {MIN_PASSWORD_LENGTH} characters.
@@ -109,7 +127,14 @@ export function SignUpForm() {
 							I&apos;m a
 						</FieldLegend>
 
-						<RadioGroup name="role" defaultValue="student" required>
+						{/* React resets the form after each submit, and Base UI's hidden
+						inputs only pick up defaultValue on mount, so remount them */}
+						<RadioGroup
+							key={state.values?.role}
+							name="role"
+							defaultValue={state.values?.role ?? "student"}
+							required
+						>
 							{ROLES.map((role) => (
 								<FieldLabel
 									className="w-full gap-3 rounded-2xl border border-input bg-input/20 p-4 transition-colors has-data-checked:border-primary has-data-checked:bg-primary/5"

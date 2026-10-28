@@ -1,7 +1,10 @@
 "use client";
 
+import { EyeClosedIcon as eye_closed } from "@hugeicons/core-free-icons";
+import { EyeIcon as eye_open } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { updatePassword } from "@/app/(auth)/actions";
 import { AuthCard, AuthFormError } from "@/components/auth-card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +16,8 @@ export default function ResetPassword() {
 		success: "",
 		error: "",
 	});
+	const [password, setPassword] = useState("");
+	const [visible, setVisible] = useState(false);
 
 	return (
 		<AuthCard
@@ -54,10 +59,15 @@ export default function ResetPassword() {
 								className="h-11"
 								id="password"
 								name="password"
-								type="password"
+								type={visible ? "text" : "password"}
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
 								autoComplete="new-password"
 								required
 							/>
+							<div p-2 onClick={() => setVisible(!visible)}>
+								<HugeiconsIcon icon={visible ? eye_open : eye_closed} />
+							</div>
 						</Field>
 
 						<Button type="submit" size="lg" className="w-full" disabled={pending}>

@@ -1,6 +1,8 @@
 "use client";
-
-import { useActionState } from "react";
+import { EyeClosedIcon as eye_closed } from "@hugeicons/core-free-icons";
+import { EyeIcon as eye_open } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { useActionState, useState } from "react";
 import { signIn } from "@/app/(auth)/actions";
 import { AuthCard, AuthFormError } from "@/components/auth-card";
 import { ForgotPasswordDialog } from "@/components/forgot-password-dialog";
@@ -11,7 +13,8 @@ import { Input } from "@/components/ui/input";
 
 export function SignInForm({ initialError }: { initialError?: string }) {
 	const [state, action, pending] = useActionState(signIn, {});
-
+	const [password, setPassword] = useState("");
+	const [visible, setVisible] = useState(false);
 	const error = state.error ?? initialError;
 
 	return (
@@ -39,6 +42,7 @@ export function SignInForm({ initialError }: { initialError?: string }) {
 							autoComplete="email"
 							placeholder="you@wayne.edu"
 							required
+							defaultValue={state.values?.email}
 							aria-invalid={Boolean(state.fieldErrors?.email) || undefined}
 						/>
 
@@ -50,22 +54,42 @@ export function SignInForm({ initialError }: { initialError?: string }) {
 							Password
 						</FieldLabel>
 
-						<Input
-							className="h-11"
-							id="password"
-							name="password"
-							type="password"
-							autoComplete="current-password"
-							required
-							aria-invalid={Boolean(state.fieldErrors?.password) || undefined}
-						/>
+						<div className="relative">
+							<Input
+								className="h-11 pr-11"
+								id="password"
+								name="password"
+								type={visible ? "text" : "password"}
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								autoComplete="current-password"
+								required
+								aria-invalid={Boolean(state.fieldErrors?.password) || undefined}
+							/>
+
+							<button
+								type="button"
+								className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+								onClick={() => setVisible(!visible)}
+								aria-label={visible ? "Hide password" : "Show password"}
+							>
+								<HugeiconsIcon icon={visible ? eye_open : eye_closed} size={18} />
+							</button>
+						</div>
 
 						<FieldError>{state.fieldErrors?.password}</FieldError>
 					</Field>
 
 					<Field orientation="horizontal">
 						<FieldLabel className="text-label" htmlFor="remember">
-							<Checkbox id="remember" name="remember" />
+							{/* React resets the form after each submit, and Base UI's hidden
+							input only picks up defaultChecked on mount, so remount it */}
+							<Checkbox
+								key={String(state.values?.remember)}
+								id="remember"
+								name="remember"
+								defaultChecked={state.values?.remember}
+							/>
 							Remember me
 						</FieldLabel>
 

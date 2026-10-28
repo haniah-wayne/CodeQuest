@@ -6,30 +6,30 @@ import * as v from "valibot";
 import { isRole, roleHome } from "@/lib/auth/roles";
 import { SignInSchema, SignUpSchema } from "@/lib/auth/schemas";
 import { createClient } from "@/lib/supabase/server";
+import { toFieldErrors } from "@/lib/validation";
 
-export interface AuthFormState {
+export interface AuthFormState<T> {
 	error?: string;
 	fieldErrors?: Partial<Record<"name" | "email" | "password" | "role", string>>;
+	// Passwords are excluded so they're not sent to the client.
+	values?: T;
 }
 
-function toFieldErrors(
-	nested: Partial<Record<string, [string, ...string[]]>>,
-): NonNullable<AuthFormState["fieldErrors"]> {
-	return Object.fromEntries(
-		Object.entries(nested).flatMap(([field, messages]) =>
-			messages?.[0] ? [[field, messages[0]]] : [],
-		),
-	);
-}
+export type SignInState = AuthFormState<{ email: string; remember: boolean }>;
 
-export async function signIn(
-	_prevState: AuthFormState,
-	formData: FormData,
-): Promise<AuthFormState> {
+export type SignUpState = AuthFormState<{ name: string; email: string; role: string }>;
+
+export async function signIn(_prevState: SignInState, formData: FormData): Promise<SignInState> {
+	const values = {
+		email: formData.get("email")?.toString() ?? "",
+		remember: formData.has("remember"),
+	};
+
 	const parsed = v.safeParse(SignInSchema, Object.fromEntries(formData));
 
 	if (!parsed.success) {
 		return {
+			values,
 			fieldErrors: toFieldErrors(v.flatten<typeof SignInSchema>(parsed.issues).nested ?? {}),
 		};
 	}
@@ -39,7 +39,7 @@ export async function signIn(
 	const { data, error } = await supabase.auth.signInWithPassword(parsed.output);
 
 	if (error) {
-		return { error: error.message };
+		return { values, error: error.message };
 	}
 
 	const role = data.user.user_metadata?.role;
@@ -47,14 +47,18 @@ export async function signIn(
 	redirect(roleHome(isRole(role) ? role : null));
 }
 
-export async function signUp(
-	_prevState: AuthFormState,
-	formData: FormData,
-): Promise<AuthFormState> {
+export async function signUp(_prevState: SignUpState, formData: FormData): Promise<SignUpState> {
+	const values = {
+		name: formData.get("name")?.toString() ?? "",
+		email: formData.get("email")?.toString() ?? "",
+		role: formData.get("role")?.toString() ?? "",
+	};
+
 	const parsed = v.safeParse(SignUpSchema, Object.fromEntries(formData));
 
 	if (!parsed.success) {
 		return {
+			values,
 			fieldErrors: toFieldErrors(v.flatten<typeof SignUpSchema>(parsed.issues).nested ?? {}),
 		};
 	}
@@ -75,7 +79,7 @@ export async function signUp(
 	});
 
 	if (error) {
-		return { error: error.message };
+		return { values, error: error.message };
 	}
 
 	redirect(roleHome(role));
@@ -96,6 +100,7 @@ export async function sendResetPasswordEmail(prevState: unknown, formData: FormD
 	const { error } = await supabase.auth.resetPasswordForEmail(
 		//the form data being sent is email as a string
 		formData.get("email") as string,
+		{ redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback?next=/reset-password` },
 	);
 
 	if (error) {
