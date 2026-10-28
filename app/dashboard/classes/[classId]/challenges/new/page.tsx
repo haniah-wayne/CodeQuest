@@ -117,15 +117,14 @@ export default function CreateChallengePage() {
 
 							<Field data-invalid={Boolean(state.fieldErrors?.solution) || undefined}>
 								<FieldLabel className="text-label" htmlFor="solution">
-									Answer
+									Expected output
 								</FieldLabel>
 
-								<Input
-									className="h-11 font-mono"
+								<Textarea
+									className="min-h-24 font-mono"
 									id="solution"
 									name="solution"
-									type="text"
-									placeholder="0 2 4"
+									placeholder={"0\n2\n4"}
 									defaultValue={state.values?.solution}
 									required
 									autoComplete="off"
@@ -139,7 +138,8 @@ export default function CreateChallengePage() {
 									className="flex items-center gap-1.5"
 								>
 									<HugeiconsIcon icon={ViewOffSlashIcon} className="size-3.5" />
-									Hidden from students. Their answer is checked against this.
+									Hidden from students. Their code&apos;s output is checked
+									against this.
 								</FieldDescription>
 
 								<FieldError>{state.fieldErrors?.solution}</FieldError>

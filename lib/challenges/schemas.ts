@@ -1,4 +1,5 @@
 import * as v from "valibot";
+import { LANGUAGE_IDS } from "./languages";
 
 // Prevent empty strings or strings like "0x10" from becoming coordinates
 const DECIMAL = /^-?\d+(\.\d+)?(e[-+]?\d+)?$/i;
@@ -27,7 +28,30 @@ export const CreateChallengeSchema = v.object({
 		v.trim(),
 		v.nonEmpty("Enter a description."),
 	),
-	solution: v.pipe(v.string("Enter the solution."), v.trim(), v.nonEmpty("Enter the solution.")),
+	solution: v.pipe(
+		v.string("Enter the expected output."),
+		v.check((s) => s.trim() !== "", "Enter the expected output."),
+	),
 	longitude: coordinate(180),
 	latitude: coordinate(90),
+});
+
+// Keeps junk off the code runner
+const MAX_CODE_LENGTH = 64 * 1024;
+
+const CodeSchema = v.pipe(
+	v.string(),
+	v.check((code) => code.trim() !== "", "Write some code first."),
+	v.maxLength(MAX_CODE_LENGTH, "That's too much code to run."),
+);
+
+export const RunCodeSchema = v.object({
+	language: v.picklist(LANGUAGE_IDS, "Pick a language."),
+	code: CodeSchema,
+});
+
+export const SubmitSolutionSchema = v.object({
+	challengeId: v.pipe(v.number(), v.safeInteger()),
+	language: v.picklist(LANGUAGE_IDS, "Pick a language."),
+	code: CodeSchema,
 });
