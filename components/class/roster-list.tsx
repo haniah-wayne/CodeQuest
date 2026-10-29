@@ -32,7 +32,7 @@ export function RosterList({
 					{students.map((student) => (
 						<li
 							key={student.id}
-							className="flex items-center gap-3 rounded-2xl px-3 py-2.5"
+							className="flex items-center gap-3 rounded-(--panel-inner-radius) px-3 py-2.5"
 						>
 							<StudentAvatar name={student.name} />
 

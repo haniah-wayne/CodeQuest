@@ -22,7 +22,7 @@ function DialogBackdrop({ className, ...props }: DialogPrimitive.Backdrop.Props)
 		<DialogPrimitive.Backdrop
 			data-slot="dialog-backdrop"
 			className={cn(
-				"fixed inset-0 z-50 bg-foreground/20 backdrop-blur-xs transition-opacity duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0",
+				"fixed inset-0 z-50 bg-foreground/40 backdrop-blur-xs transition-opacity duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0",
 				className,
 			)}
 			{...props}
@@ -43,7 +43,7 @@ function DialogPopup({
 			<DialogPrimitive.Popup
 				data-slot="dialog-popup"
 				className={cn(
-					"fixed top-1/2 left-1/2 z-50 flex w-[calc(100vw---spacing(8))] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col gap-6 rounded-3xl border border-accent bg-card p-8 text-card-foreground shadow-lg transition-all duration-200 outline-none data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0",
+					"fixed top-1/2 left-1/2 z-50 flex w-[calc(100vw---spacing(8))] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col gap-6 rounded-3xl bg-card p-8 text-card-foreground smooth-shadow-ring-xl transition-all duration-200 outline-none data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0",
 					className,
 				)}
 				{...props}

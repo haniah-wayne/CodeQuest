@@ -79,7 +79,7 @@ export default async function ChallengePage(
 						actions={
 							<>
 								{solved && (
-									<Badge className="bg-emerald-50 text-wsu-green">
+									<Badge>
 										<HugeiconsIcon
 											icon={CheckmarkCircle02Icon}
 											data-icon="inline-start"
@@ -88,7 +88,7 @@ export default async function ChallengePage(
 									</Badge>
 								)}
 
-								<Badge className="bg-emerald-50 text-wsu-green tabular-nums">
+								<Badge className="bg-wsu-gold text-wsu-green tabular-nums">
 									{challenge.Points} pts
 								</Badge>
 							</>

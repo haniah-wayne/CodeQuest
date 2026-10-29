@@ -54,9 +54,9 @@ export function ChallengeList({
 					{challenges.map((ch, i) => (
 						<li
 							key={ch.ChallengeID}
-							className="relative flex items-start gap-4 rounded-2xl px-3 py-3.5 transition-colors has-[a:hover]:bg-muted/60 sm:px-4"
+							className="relative flex items-start gap-4 rounded-(--panel-inner-radius) px-3 py-3.5 transition-colors has-[a:hover]:bg-accent sm:px-4"
 						>
-							<span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border text-caption text-muted-foreground tabular-nums">
+							<span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-card text-caption text-muted-foreground tabular-nums">
 								{i + 1}
 							</span>
 
@@ -64,7 +64,7 @@ export function ChallengeList({
 								<div className="flex min-w-0 flex-col gap-0.5 pt-1">
 									<h3 className="text-label">
 										<Link
-											className="rounded-sm outline-none after:absolute after:inset-0 after:rounded-2xl focus-visible:after:ring-[3px] focus-visible:after:ring-ring/50"
+											className="rounded-sm outline-none after:absolute after:inset-0 after:rounded-(--panel-inner-radius) focus-visible:after:ring-[3px] focus-visible:after:ring-ring/50"
 											href={`/dashboard/classes/${classId}/challenges/${ch.ChallengeID}`}
 										>
 											{ch.Title}
@@ -85,7 +85,7 @@ export function ChallengeList({
 										</Badge>
 									)}
 
-									<Badge className="bg-emerald-50 text-wsu-green tabular-nums">
+									<Badge className="bg-wsu-gold text-wsu-green tabular-nums">
 										{ch.Points} pts
 									</Badge>
 								</div>

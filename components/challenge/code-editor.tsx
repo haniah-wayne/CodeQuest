@@ -168,7 +168,7 @@ export function CodeEditor({
 	return (
 		<div className="flex flex-col">
 			<div
-				className="sticky top-20 z-10 hidden gap-1 overflow-x-auto border-b border-border/60 bg-white/90 px-3 py-2 backdrop-blur-sm sm:top-24 pointer-coarse:flex"
+				className="sticky top-20 z-10 hidden gap-1 overflow-x-auto border-b border-border bg-white/90 px-3 py-2 backdrop-blur-sm sm:top-24 pointer-coarse:flex"
 				role="toolbar"
 				aria-label="Insert symbol"
 			>
@@ -189,7 +189,7 @@ export function CodeEditor({
 
 			<div
 				ref={containerRef}
-				className="min-h-72 min-w-0 bg-background text-base sm:text-sm [&:has(.cm-editor)>pre]:hidden"
+				className="min-h-72 min-w-0 bg-card text-base sm:text-sm [&:has(.cm-editor)>pre]:hidden"
 			>
 				<pre className="m-0 py-4 pr-4 pl-12 font-mono leading-6 wrap-break-word whitespace-pre-wrap text-foreground">
 					{placeholder}
