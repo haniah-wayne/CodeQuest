@@ -1,5 +1,5 @@
 "use client";
-import { useActionState, useState } from "react";
+
 import { deleteAccount } from "@/app/(auth)/actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,25 +9,28 @@ import {
 	DialogHeader,
 	DialogPopup,
 	DialogTitle,
-	DialogTrigger,
 } from "@/components/ui/dialog";
-export function DeleteAccountDialog() {
-	const [open, setOpen] = useState(false);
+
+export function DeleteAccountDialog({
+	open,
+	onOpenChange,
+}: {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+}) {
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger
-				render={<Button type="button" className="px-3" size="sm" variant="destructive" />}
-			>
-				Delete account
-			</DialogTrigger>
+		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogPopup>
 				<DialogHeader>
 					<DialogTitle>Are you sure you want to delete your account?</DialogTitle>
+
 					<DialogDescription>
 						This action cannot be undone. All of your data will be permanently deleted.
 					</DialogDescription>
 				</DialogHeader>
+
 				<DialogClose render={<Button size="sm" className="px-3" />}>Cancel</DialogClose>
+
 				<form
 					action={async () => {
 						await deleteAccount();
