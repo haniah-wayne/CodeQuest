@@ -130,15 +130,7 @@ export async function deleteAccount() {
 	//deletes the account of a user
 	const supabase = await createClient();
 
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-
-	if (user == null) {
-		return { success: "", error: "User not found" };
-	} //prevents the function from running if the user is not found, somehow
-
-	const { error } = await supabase.from("Profile").delete().eq("ID", user.id); //deletes the profile of the user from the database
+	const { error } = await supabase.rpc("delete_own_account"); //deletes the login and a database trigger deletes the profile with it
 
 	if (error) {
 		return { success: "", error: error.message };
