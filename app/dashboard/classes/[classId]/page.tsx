@@ -3,11 +3,14 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChallengeList } from "@/components/class/challenge-list";
+import { ChallengeMap } from "@/components/class/challenge-map";
 import { JoinCode } from "@/components/class/join-code";
 import { LeaderboardList } from "@/components/class/leaderboard-list";
 import { RosterList } from "@/components/class/roster-list";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
 import { requireSessionUser } from "@/lib/auth/session";
+import { isWithinUnlockRadius } from "@/lib/challenges/location";
+import { getSavedPosition } from "@/lib/challenges/position";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ClassPage(props: PageProps<"/dashboard/classes/[classId]">) {
@@ -19,9 +22,18 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 	const user = await requireSessionUser();
 	const supabase = await createClient();
 
+	const isStudent = user.role === "student";
+
 	// RLS decides who can see the class and its rows, so a missing class means
 	// not found or not allowed
-	const [classResult, challengesResult, enrollmentResult, leaderboardResult] = await Promise.all([
+	const [
+		classResult,
+		challengesResult,
+		enrollmentResult,
+		leaderboardResult,
+		solvedResult,
+		position,
+	] = await Promise.all([
 		supabase
 			.from("Classes")
 			.select("ClassName, Description, ClassCode, ProfessorID")
@@ -29,7 +41,9 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 			.maybeSingle(),
 		supabase
 			.from("Challenges")
-			.select("ChallengeID, Title, Description, ChallengeType, Points")
+			.select(
+				"ChallengeID, Title, Description, ChallengeType, Points, Locations(Longitude, Latitude, Radius)",
+			)
 			.eq("ClassID", id)
 			.order("CreatedAt"),
 		supabase
@@ -38,19 +52,45 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 			.eq("ClassID", id)
 			.order("EnrolledAt"),
 		supabase.rpc("get_class_leaderboard", { p_class_id: id }),
+		isStudent
+			? supabase
+					.from("Submission")
+					.select("ChallengeID")
+					.eq("StudentID", user.id)
+					.eq("Status", "correct")
+			: null,
+		isStudent ? getSavedPosition() : null,
 	]);
 
 	const c = classResult.data;
 
 	if (!c) notFound();
 
-	for (const { error } of [challengesResult, enrollmentResult, leaderboardResult]) {
-		if (error) console.error(error);
+	for (const result of [challengesResult, enrollmentResult, leaderboardResult, solvedResult]) {
+		if (result?.error) console.error(result.error);
 	}
 
 	const isProfessor = c.ProfessorID === user.id;
 
-	const challenges = challengesResult.data ?? [];
+	const solved = new Set(solvedResult?.data?.map((s) => s.ChallengeID));
+
+	// Students only see challenges they're standing near or have already solved
+	const challenges = (challengesResult.data ?? []).filter(
+		(ch) =>
+			!isStudent ||
+			solved.has(ch.ChallengeID) ||
+			isWithinUnlockRadius(ch.Locations, position),
+	);
+
+	const mapChallenges = challenges.flatMap((ch) =>
+		ch.Locations.map((l) => ({
+			id: ch.ChallengeID,
+			title: ch.Title,
+			longitude: l.Longitude,
+			latitude: l.Latitude,
+			href: `/dashboard/classes/${classId}/challenges/${ch.ChallengeID}`,
+		})),
+	);
 
 	const roster = (enrollmentResult.data ?? []).map((e) => ({
 		id: e.StudentID,
@@ -78,11 +118,28 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 				</div>
 			</div>
 
+			{isStudent && <ChallengeMap challenges={mapChallenges} />}
+
 			<ChallengeList
 				challenges={challenges}
 				error={challengesResult.error}
 				classId={classId}
 				create={isProfessor}
+				empty={
+					!isStudent
+						? undefined
+						: position
+							? {
+									title: "No challenges nearby",
+									description:
+										"Walk around campus. Challenges show up here once you're close to one.",
+								}
+							: {
+									title: "Finding challenges near you",
+									description:
+										"Allow location access so challenges show up when you're close to one.",
+								}
+				}
 			/>
 
 			<div className="grid items-start gap-6 lg:grid-cols-2">
