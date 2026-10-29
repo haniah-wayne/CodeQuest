@@ -1,3 +1,4 @@
+"use client";
 import { useActionState, useState } from "react";
 import { deleteAccount } from "@/app/(auth)/actions";
 import { Button } from "@/components/ui/button";
