@@ -31,6 +31,7 @@ export async function createChallenge(
 		longitude: formData.get("longitude")?.toString() ?? "",
 		latitude: formData.get("latitude")?.toString() ?? "",
 		radius: formData.get("radius")?.toString() ?? "",
+		hidden: formData.has("hidden"),
 	};
 
 	const classId = Number(formData.get("classId"));
@@ -69,7 +70,7 @@ export async function createChallenge(
 		return { values, error: "You don't have permission to add challenges to this class." };
 	}
 
-	const { title, description, solution, longitude, latitude, radius } = parsed.output;
+	const { title, description, solution, longitude, latitude, radius, hidden } = parsed.output;
 
 	const { error } = await supabase.rpc("create_challenge", {
 		class_id: classId,
@@ -79,6 +80,7 @@ export async function createChallenge(
 		long: longitude,
 		lat: latitude,
 		radius,
+		hidden,
 	});
 
 	if (error) {

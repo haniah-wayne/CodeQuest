@@ -40,6 +40,7 @@ export const CreateChallengeSchema = v.object({
 		v.transform(Number),
 		v.picklist(UNLOCK_RADII, "Pick an unlock radius."),
 	),
+	hidden: v.boolean(),
 });
 
 // Positions reported by the browser are already numbers

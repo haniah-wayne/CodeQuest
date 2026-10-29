@@ -16,8 +16,10 @@ import type * as React from "react";
 import { AuthFormError } from "@/components/auth-card";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
 	Field,
+	FieldContent,
 	FieldDescription,
 	FieldError,
 	FieldGroup,
@@ -55,6 +57,9 @@ export default function CreateChallengePage() {
 	} | null>(null);
 
 	const [radius, setRadius] = useState<UnlockRadius>(DEFAULT_UNLOCK_RADIUS);
+
+	// Controlled so React's form reset after a failed submit doesn't uncheck it
+	const [hidden, setHidden] = useState(false);
 
 	const locationError = state.fieldErrors?.longitude ?? state.fieldErrors?.latitude;
 	const classHref = `/dashboard/classes/${classId}`;
@@ -253,6 +258,28 @@ export default function CreateChallengePage() {
 
 								<FieldError>{state.fieldErrors?.radius}</FieldError>
 							</FieldSet>
+
+							<Field orientation="horizontal">
+								<Checkbox
+									id="hidden"
+									name="hidden"
+									checked={hidden}
+									onCheckedChange={(checked) => setHidden(checked)}
+									aria-describedby="hidden-hint"
+								/>
+
+								<FieldContent>
+									<FieldLabel className="text-label" htmlFor="hidden">
+										Hide pin on the map
+									</FieldLabel>
+
+									<FieldDescription id="hidden-hint">
+										{hidden
+											? `Students won't see the pin until they're within ${radius} m.`
+											: "Students can see the pin from anywhere, but it stays locked until they reach it."}
+									</FieldDescription>
+								</FieldContent>
+							</Field>
 						</div>
 					</FormSection>
 				</div>

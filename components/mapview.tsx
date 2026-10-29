@@ -9,6 +9,7 @@ import {
 	removeChallengeMarker,
 	showChallengeLink,
 	showChallengeRadius,
+	showLockedChallenge,
 	showStudentLocation,
 	selectChallengeLocation,
 } from "@/lib/mapbox";
@@ -18,7 +19,9 @@ export interface MapChallenge {
 	title: string;
 	longitude: number;
 	latitude: number;
-	href: string;
+	radius: number;
+	// Null while the challenge is still locked
+	href: string | null;
 }
 
 interface MapViewProps {
@@ -53,9 +56,9 @@ export default function MapView({
 	const [pin, setPin] = useState<Position | null>(null);
 
 	// The server re-renders with a new array on every position update, so only
-	// redraw markers when the challenges actually change
+	// redraw markers when the challenges actually change or unlock
 	const challengesKey = challenges
-		.map((c) => `${c.id}:${c.longitude},${c.latitude}:${c.title}`)
+		.map((c) => `${c.id}:${c.longitude},${c.latitude}:${c.radius}:${c.title}:${c.href}`)
 		.join("|");
 
 	useEffect(() => {
@@ -133,7 +136,11 @@ export default function MapView({
 		const markers = challengesRef.current.map((challenge) => {
 			const marker = addChallengeMarker(map, challenge.longitude, challenge.latitude);
 
-			showChallengeLink(marker, challenge.title, challenge.href);
+			if (challenge.href) {
+				showChallengeLink(marker, challenge.title, challenge.href);
+			} else {
+				showLockedChallenge(marker, challenge.title, challenge.radius);
+			}
 
 			return marker;
 		});

@@ -42,7 +42,7 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 		supabase
 			.from("Challenges")
 			.select(
-				"ChallengeID, Title, Description, ChallengeType, Points, Locations(Longitude, Latitude, Radius)",
+				"ChallengeID, Title, Description, ChallengeType, Points, Hidden, Locations(Longitude, Latitude, Radius)",
 			)
 			.eq("ClassID", id)
 			.order("CreatedAt"),
@@ -74,23 +74,38 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 
 	const solved = new Set(solvedResult?.data?.map((s) => s.ChallengeID));
 
+	const allChallenges = challengesResult.data ?? [];
+
 	// Students only see challenges they're standing near or have already solved
-	const challenges = (challengesResult.data ?? []).filter(
-		(ch) =>
-			!isStudent ||
-			solved.has(ch.ChallengeID) ||
-			isWithinUnlockRadius(ch.Locations, position),
+	const unlocked = new Set(
+		allChallenges
+			.filter(
+				(ch) =>
+					!isStudent ||
+					solved.has(ch.ChallengeID) ||
+					isWithinUnlockRadius(ch.Locations, position),
+			)
+			.map((ch) => ch.ChallengeID),
 	);
 
-	const mapChallenges = challenges.flatMap((ch) =>
-		ch.Locations.map((l) => ({
-			id: ch.ChallengeID,
-			title: ch.Title,
-			longitude: l.Longitude,
-			latitude: l.Latitude,
-			href: `/dashboard/classes/${classId}/challenges/${ch.ChallengeID}`,
-		})),
-	);
+	const challenges = allChallenges.filter((ch) => unlocked.has(ch.ChallengeID));
+
+	// Pins show from the start unless the professor hid them, but locked ones
+	// don't link anywhere
+	const mapChallenges = allChallenges
+		.filter((ch) => !ch.Hidden || unlocked.has(ch.ChallengeID))
+		.flatMap((ch) =>
+			ch.Locations.map((l) => ({
+				id: ch.ChallengeID,
+				title: ch.Title,
+				longitude: l.Longitude,
+				latitude: l.Latitude,
+				radius: l.Radius,
+				href: unlocked.has(ch.ChallengeID)
+					? `/dashboard/classes/${classId}/challenges/${ch.ChallengeID}`
+					: null,
+			})),
+		);
 
 	const roster = (enrollmentResult.data ?? []).map((e) => ({
 		id: e.StudentID,

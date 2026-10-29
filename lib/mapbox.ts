@@ -67,6 +67,28 @@ export function showChallengeLink(marker: mapboxgl.Marker, title: string, href: 
 	return popup;
 }
 
+// The challenge page 404s until the student is in range, so locked pins only
+// say how close to get
+export function showLockedChallenge(marker: mapboxgl.Marker, title: string, radius: number) {
+	const content = document.createElement("div");
+	const heading = document.createElement("p");
+	const hint = document.createElement("p");
+
+	content.className = "flex flex-col gap-0.5";
+	heading.textContent = title;
+	heading.className = "text-label";
+	hint.textContent = `Get within ${radius} m to unlock`;
+	hint.className = "text-caption text-muted-foreground";
+
+	content.append(heading, hint);
+
+	const popup = new mapboxgl.Popup({ offset: 25 }).setDOMContent(content);
+
+	marker.setPopup(popup);
+
+	return popup;
+}
+
 const RADIUS_SOURCE = "challenge-radius";
 const RADIUS_STEPS = 64;
 const METERS_PER_DEGREE = 111_320;
