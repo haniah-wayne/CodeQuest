@@ -11,7 +11,7 @@ import { toFieldErrors } from "@/lib/validation";
 export interface CreateChallengeState {
 	error?: string;
 	fieldErrors?: Partial<
-		Record<"title" | "description" | "solution" | "longitude" | "latitude", string>
+		Record<"title" | "description" | "solution" | "longitude" | "latitude" | "radius", string>
 	>;
 	// Sent back on failure so the form doesn't clear what was typed
 	values?: { title: string; description: string; solution: string };
@@ -30,6 +30,7 @@ export async function createChallenge(
 	const location = {
 		longitude: formData.get("longitude")?.toString() ?? "",
 		latitude: formData.get("latitude")?.toString() ?? "",
+		radius: formData.get("radius")?.toString() ?? "",
 	};
 
 	const classId = Number(formData.get("classId"));
@@ -68,7 +69,7 @@ export async function createChallenge(
 		return { values, error: "You don't have permission to add challenges to this class." };
 	}
 
-	const { title, description, solution, longitude, latitude } = parsed.output;
+	const { title, description, solution, longitude, latitude, radius } = parsed.output;
 
 	const { error } = await supabase.rpc("create_challenge", {
 		class_id: classId,
@@ -77,7 +78,7 @@ export async function createChallenge(
 		solution,
 		long: longitude,
 		lat: latitude,
-		radius: 100,
+		radius,
 	});
 
 	if (error) {

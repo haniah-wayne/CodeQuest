@@ -1,5 +1,6 @@
 import * as v from "valibot";
 import { LANGUAGE_IDS } from "./languages";
+import { UNLOCK_RADII } from "./location";
 
 // Prevent empty strings or strings like "0x10" from becoming coordinates
 const DECIMAL = /^-?\d+(\.\d+)?(e[-+]?\d+)?$/i;
@@ -34,6 +35,11 @@ export const CreateChallengeSchema = v.object({
 	),
 	longitude: coordinate(180),
 	latitude: coordinate(90),
+	radius: v.pipe(
+		v.string("Pick an unlock radius."),
+		v.transform(Number),
+		v.picklist(UNLOCK_RADII, "Pick an unlock radius."),
+	),
 });
 
 // Keeps junk off the code runner
