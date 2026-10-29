@@ -1,64 +1,69 @@
 "use client";
 
 import "mapbox-gl/dist/mapbox-gl.css";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { DEFAULT_UNLOCK_RADIUS, type Position } from "@/lib/challenges/location";
 import {
 	createMap,
 	addChallengeMarker,
 	removeChallengeMarker,
-	showChallengePopup,
+	showChallengeLink,
+	showChallengeRadius,
 	showStudentLocation,
-	calculateDistance,
-	isWithinRadius,
 	selectChallengeLocation,
 } from "@/lib/mapbox";
+
+export interface MapChallenge {
+	id: number;
+	title: string;
+	longitude: number;
+	latitude: number;
+	href: string;
+}
 
 interface MapViewProps {
 	mode: "student" | "professor";
 	className?: string;
-	challengeLongitude?: number;
-	challengeLatitude?: number;
-	challengeTitle?: string;
-	challengeDescription?: string;
+	// Professor mode
 	radius?: number;
 	locationSelect?: (longitude: number, latitude: number) => void;
-	availableChange?: (available: boolean) => void;
+	// Student mode
+	challenges?: MapChallenge[];
+	positionChange?: (longitude: number, latitude: number) => void;
+	locationError?: (error: GeolocationPositionError) => void;
 }
 
 export default function MapView({
 	mode,
 	className = "h-80 w-full",
-	challengeLongitude,
-	challengeLatitude,
-	challengeTitle = "Challenge",
-	challengeDescription = "",
-	radius = 100,
+	radius = DEFAULT_UNLOCK_RADIUS,
 	locationSelect,
-	availableChange,
+	challenges = [],
+	positionChange,
+	locationError,
 }: MapViewProps) {
 	const mapContainerRef = useRef<HTMLDivElement>(null);
-	const mapRef = useRef<mapboxgl.Map | null>(null);
-	const markerRef = useRef<mapboxgl.Marker | null>(null);
 	const locationSelectRef = useRef(locationSelect);
-	const availableChangeRef = useRef(availableChange);
-	const challengeRef = useRef({
-		longitude: challengeLongitude,
-		latitude: challengeLatitude,
-		radius,
-	});
+	const positionChangeRef = useRef(positionChange);
+	const locationErrorRef = useRef(locationError);
+	const challengesRef = useRef(challenges);
+
+	// Set once the style loads, since sources and layers can't be added before
+	const [map, setMap] = useState<mapboxgl.Map | null>(null);
+	const [pin, setPin] = useState<Position | null>(null);
+
+	// The server re-renders with a new array on every position update, so only
+	// redraw markers when the challenges actually change
+	const challengesKey = challenges
+		.map((c) => `${c.id}:${c.longitude},${c.latitude}:${c.title}`)
+		.join("|");
 
 	useEffect(() => {
 		locationSelectRef.current = locationSelect;
-		availableChangeRef.current = availableChange;
-	}, [locationSelect, availableChange]);
-
-	useEffect(() => {
-		challengeRef.current = {
-			longitude: challengeLongitude,
-			latitude: challengeLatitude,
-			radius,
-		};
-	}, [challengeLongitude, challengeLatitude, radius]);
+		positionChangeRef.current = positionChange;
+		locationErrorRef.current = locationError;
+		challengesRef.current = challenges;
+	}, [locationSelect, positionChange, locationError, challenges]);
 
 	useEffect(() => {
 		if (!mapContainerRef.current) return;
@@ -71,80 +76,70 @@ export default function MapView({
 		}
 
 		const map = createMap(mapContainerRef.current, accessToken);
-		mapRef.current = map;
 
 		let removeClickListener: (() => void) | undefined;
 
 		if (mode === "student") {
 			const geolocate = showStudentLocation(map);
+			let centered = false;
 
 			geolocate.on("geolocate", (event) => {
-				const studentLongitude = event.coords.longitude;
-				const studentLatitude = event.coords.latitude;
+				const { longitude, latitude } = event.coords;
 
-				const { longitude, latitude, radius } = challengeRef.current;
-
-				if (longitude === undefined || latitude === undefined) {
-					availableChangeRef.current?.(false);
-					return;
+				// Center on the student once, then let them pan freely
+				if (!centered) {
+					centered = true;
+					map.easeTo({ center: [longitude, latitude] });
 				}
 
-				const distance = calculateDistance(
-					studentLongitude,
-					studentLatitude,
-					longitude,
-					latitude,
-				);
-
-				const available = isWithinRadius(distance, radius);
-				availableChangeRef.current?.(available);
+				positionChangeRef.current?.(longitude, latitude);
 			});
+
+			geolocate.on("error", (error) => locationErrorRef.current?.(error));
+
+			// Start tracking right away instead of waiting for the button
+			map.on("load", () => geolocate.trigger());
 		}
 
 		if (mode === "professor") {
 			removeClickListener = selectChallengeLocation(map, (longitude, latitude) => {
-				if (markerRef.current) {
-					removeChallengeMarker(markerRef.current);
-				}
-
-				markerRef.current = addChallengeMarker(map, longitude, latitude);
-
+				setPin({ longitude, latitude });
 				locationSelectRef.current?.(longitude, latitude);
 			});
 		}
 
+		map.on("load", () => setMap(map));
+
 		return () => {
 			removeClickListener?.();
-
-			if (markerRef.current) {
-				removeChallengeMarker(markerRef.current);
-				markerRef.current = null;
-			}
-
 			map.remove();
-			mapRef.current = null;
+			setMap(null);
 		};
 	}, [mode]);
 
 	useEffect(() => {
-		const map = mapRef.current;
+		if (!map || mode !== "professor" || !pin) return;
 
+		const marker = addChallengeMarker(map, pin.longitude, pin.latitude);
+
+		showChallengeRadius(map, pin.longitude, pin.latitude, radius);
+
+		return () => removeChallengeMarker(marker);
+	}, [map, mode, pin, radius]);
+
+	useEffect(() => {
 		if (!map || mode !== "student") return;
 
-		if (markerRef.current) {
-			removeChallengeMarker(markerRef.current);
-		}
+		const markers = challengesRef.current.map((challenge) => {
+			const marker = addChallengeMarker(map, challenge.longitude, challenge.latitude);
 
-		if (challengeLongitude === undefined || challengeLatitude === undefined) {
-			return;
-		}
+			showChallengeLink(marker, challenge.title, challenge.href);
 
-		const marker = addChallengeMarker(map, challengeLongitude, challengeLatitude);
+			return marker;
+		});
 
-		showChallengePopup(marker, challengeTitle, challengeDescription);
-
-		markerRef.current = marker;
-	}, [mode, challengeLongitude, challengeLatitude, challengeTitle, challengeDescription]);
+		return () => markers.forEach(removeChallengeMarker);
+	}, [map, mode, challengesKey]);
 
 	return <div ref={mapContainerRef} className={className} />;
 }

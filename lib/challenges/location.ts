@@ -11,3 +11,8 @@ export const UNLOCK_RADIUS_LABELS: Record<UnlockRadius, string> = {
 	50: "One building",
 	100: "Nearby",
 };
+
+export interface Position {
+	longitude: number;
+	latitude: number;
+}
