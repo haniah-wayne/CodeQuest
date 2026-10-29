@@ -1,6 +1,10 @@
 import * as v from "valibot";
 import { LANGUAGE_IDS } from "./languages";
 
+export const MIN_POINTS = 1;
+export const MAX_POINTS = 100;
+export const DEFAULT_POINTS = 10;
+
 // Prevent empty strings or strings like "0x10" from becoming coordinates
 const DECIMAL = /^-?\d+(\.\d+)?(e[-+]?\d+)?$/i;
 
@@ -31,6 +35,14 @@ export const CreateChallengeSchema = v.object({
 	solution: v.pipe(
 		v.string("Enter the expected output."),
 		v.check((s) => s.trim() !== "", "Enter the expected output."),
+	),
+	points: v.pipe(
+		v.string("Enter a point value."),
+		v.trim(),
+		v.regex(/^\d+$/, "Points must be a whole number."),
+		v.transform(Number),
+		v.minValue(MIN_POINTS, `Points must be at least ${MIN_POINTS}.`),
+		v.maxValue(MAX_POINTS, `Points can't be more than ${MAX_POINTS}.`),
 	),
 	longitude: coordinate(180),
 	latitude: coordinate(90),

@@ -359,6 +359,7 @@ export type Database = {
           description: string
           lat: number
           long: number
+          points: number
           radius: number
           solution: string
           title: string
