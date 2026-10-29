@@ -42,6 +42,12 @@ export const CreateChallengeSchema = v.object({
 	),
 });
 
+// Positions reported by the browser are already numbers
+export const PositionSchema = v.object({
+	longitude: v.pipe(v.number(), v.finite(), v.minValue(-180), v.maxValue(180)),
+	latitude: v.pipe(v.number(), v.finite(), v.minValue(-90), v.maxValue(90)),
+});
+
 // Keeps junk off the code runner
 const MAX_CODE_LENGTH = 64 * 1024;
 
