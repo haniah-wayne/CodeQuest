@@ -1,8 +1,22 @@
 import { Map } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
-import { signOut } from "@/app/(auth)/actions";
+import { deleteAccount, signOut } from "@/app/(auth)/actions";
 import { Button } from "@/components/ui/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuGroup,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuPortal,
+	DropdownMenuSeparator,
+	DropdownMenuShortcut,
+	DropdownMenuSub,
+	DropdownMenuSubContent,
+	DropdownMenuSubTrigger,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { getSessionUser } from "@/lib/auth/session";
 
 export async function SiteHeader() {
@@ -23,12 +37,37 @@ export async function SiteHeader() {
 					{user ? (
 						<>
 							<span className="mr-2">{user.name}</span>
-
-							<form action={signOut}>
-								<Button className="px-3" type="submit" size="sm" variant="outline">
-									Sign out
-								</Button>
-							</form>
+							<DropdownMenu>
+								<DropdownMenuTrigger
+									render={<Button variant="outline">Profile Options</Button>}
+								/>
+								<DropdownMenuContent>
+									<DropdownMenuItem>
+										<form action={signOut}>
+											<Button
+												className="px-3"
+												type="submit"
+												size="sm"
+												variant="outline"
+											>
+												Sign out
+											</Button>
+										</form>
+									</DropdownMenuItem>
+									<DropdownMenuItem>
+										<form>
+											<Button
+												className="px-3"
+												type="submit"
+												size="sm"
+												variant="destructive"
+											>
+												Delete account
+											</Button>
+										</form>
+									</DropdownMenuItem>
+								</DropdownMenuContent>
+							</DropdownMenu>
 						</>
 					) : (
 						<>
