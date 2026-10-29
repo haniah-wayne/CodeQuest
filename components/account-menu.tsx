@@ -29,9 +29,7 @@ export function AccountMenu() {
 				/>
 
 				<DropdownMenuContent>
-					<DropdownMenuItem>
-						<form action={signOut}>Sign out</form>
-					</DropdownMenuItem>
+					<DropdownMenuItem onClick={() => signOut()}>Sign out</DropdownMenuItem>
 
 					<DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
 						Delete account

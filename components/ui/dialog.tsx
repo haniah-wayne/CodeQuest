@@ -4,6 +4,7 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { Cancel01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "cn";
+import { Button } from "./button";
 
 function Dialog(props: DialogPrimitive.Root.Props) {
 	return <DialogPrimitive.Root {...props} />;
@@ -93,6 +94,30 @@ function DialogDescription({ className, ...props }: DialogPrimitive.Description.
 	);
 }
 
+function DialogFooter({
+	className,
+	showCloseButton = false,
+	children,
+	...props
+}: React.ComponentProps<"div"> & {
+	showCloseButton?: boolean;
+}) {
+	return (
+		<div
+			data-slot="dialog-footer"
+			className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end", className)}
+			{...props}
+		>
+			{children}
+			{showCloseButton && (
+				<DialogPrimitive.Close render={<Button variant="outline" />}>
+					Close
+				</DialogPrimitive.Close>
+			)}
+		</div>
+	);
+}
+
 export {
 	Dialog,
 	DialogBackdrop,
@@ -102,4 +127,5 @@ export {
 	DialogPopup,
 	DialogTitle,
 	DialogTrigger,
+	DialogFooter,
 };

@@ -1,5 +1,6 @@
 "use client";
 
+import { useActionState } from "react";
 import { deleteAccount } from "@/app/(auth)/actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,6 +9,7 @@ import {
 	DialogDescription,
 	DialogHeader,
 	DialogPopup,
+	DialogFooter,
 	DialogTitle,
 } from "@/components/ui/dialog";
 
@@ -18,6 +20,8 @@ export function DeleteAccountDialog({
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 }) {
+	const [state, formAction, pending] = useActionState(() => deleteAccount(), undefined);
+
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogPopup>
@@ -29,19 +33,25 @@ export function DeleteAccountDialog({
 					</DialogDescription>
 				</DialogHeader>
 
-				<DialogClose render={<Button size="sm" className="px-3" />}>Cancel</DialogClose>
+				<DialogFooter>
+					<DialogClose render={<Button size="sm" className="px-3" />}>Cancel</DialogClose>
 
-				<form
-					action={async () => {
-						await deleteAccount();
-					}}
-				>
-					<DialogClose
-						render={<Button size="sm" className="px-3" variant="destructive" />}
-					>
-						Delete.
-					</DialogClose>
-				</form>
+					<form action={formAction}>
+						<Button
+							type="submit"
+							size="sm"
+							className="px-3"
+							variant="destructive"
+							disabled={pending}
+						>
+							Confirm
+						</Button>
+
+						{state?.error && (
+							<p className="mt-2 text-sm text-destructive">{state.error}</p>
+						)}
+					</form>
+				</DialogFooter>
 			</DialogPopup>
 		</Dialog>
 	);
