@@ -36,6 +36,7 @@ import {
 	UNLOCK_RADIUS_LABELS,
 	type UnlockRadius,
 } from "@/lib/challenges/location";
+import { DEFAULT_POINTS, MAX_POINTS, MIN_POINTS } from "@/lib/challenges/schemas";
 import { type CreateChallengeState, createChallenge } from "./actions";
 
 const MapView = dynamic(() => import("@/components/mapview"), {
@@ -109,6 +110,33 @@ export default function CreateChallengePage() {
 								/>
 
 								<FieldError>{state.fieldErrors?.title}</FieldError>
+							</Field>
+
+							<Field data-invalid={Boolean(state.fieldErrors?.points) || undefined}>
+								<FieldLabel className="text-label" htmlFor="points">
+									Points
+								</FieldLabel>
+
+								<Input
+									className="h-11 w-32 tabular-nums"
+									id="points"
+									name="points"
+									type="number"
+									inputMode="numeric"
+									min={MIN_POINTS}
+									max={MAX_POINTS}
+									step={1}
+									defaultValue={state.values?.points ?? DEFAULT_POINTS}
+									required
+									aria-invalid={Boolean(state.fieldErrors?.points) || undefined}
+									aria-describedby="points-hint"
+								/>
+
+								<FieldDescription id="points-hint">
+									Awarded once to each student who solves it.
+								</FieldDescription>
+
+								<FieldError>{state.fieldErrors?.points}</FieldError>
 							</Field>
 
 							<Field
