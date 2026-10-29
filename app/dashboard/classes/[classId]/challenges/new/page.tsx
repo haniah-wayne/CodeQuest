@@ -252,6 +252,10 @@ export default function CreateChallengePage() {
 									Unlock radius
 								</FieldLegend>
 
+								<FieldDescription id="radius-hint">
+									Students must be within {radius} m of the pin to unlock it.
+								</FieldDescription>
+
 								<RadioGroup
 									className="sm:grid-cols-3"
 									value={String(radius)}
@@ -280,10 +284,6 @@ export default function CreateChallengePage() {
 									))}
 								</RadioGroup>
 
-								<FieldDescription id="radius-hint">
-									Students must be within {radius} m of the pin to unlock it.
-								</FieldDescription>
-
 								<FieldError>{state.fieldErrors?.radius}</FieldError>
 							</FieldSet>
 
@@ -302,9 +302,8 @@ export default function CreateChallengePage() {
 									</FieldLabel>
 
 									<FieldDescription id="hidden-hint">
-										{hidden
-											? `Students won't see the pin until they're within ${radius} m.`
-											: "Students can see the pin from anywhere, but it stays locked until they reach it."}
+										If this is checked, students won{"'"}t see the pin until
+										they{"'"}re the unlock radius.
 									</FieldDescription>
 								</FieldContent>
 							</Field>
