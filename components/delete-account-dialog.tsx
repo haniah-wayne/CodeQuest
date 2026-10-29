@@ -16,10 +16,9 @@ export function DeleteAccountDialog() {
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger
-				className="ml-auto rounded-sm text-caption text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
 				render={<Button type="button" className="px-3" size="sm" variant="destructive" />}
 			>
-				Delete account.
+				Delete account
 			</DialogTrigger>
 			<DialogPopup>
 				<DialogHeader>
@@ -28,9 +27,7 @@ export function DeleteAccountDialog() {
 						This action cannot be undone. All of your data will be permanently deleted.
 					</DialogDescription>
 				</DialogHeader>
-				<DialogClose render={<Button size="sm" className="px-3" variant="ghost" />}>
-					Cancel
-				</DialogClose>
+				<DialogClose render={<Button size="sm" className="px-3" />}>Cancel</DialogClose>
 				<form
 					action={async () => {
 						await deleteAccount();
