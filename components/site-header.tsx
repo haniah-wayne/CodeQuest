@@ -1,4 +1,4 @@
-import { Map } from "@hugeicons/core-free-icons";
+import { MapsLocation01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { signOut } from "@/app/(auth)/actions";
@@ -15,7 +15,7 @@ export async function SiteHeader() {
 					className="flex items-center gap-2.5 rounded-sm text-[1.0625rem] font-bold tracking-tight"
 					href="/"
 				>
-					<HugeiconsIcon icon={Map} />
+					<HugeiconsIcon icon={MapsLocation01Icon} />
 					CodeQuest
 				</Link>
 
