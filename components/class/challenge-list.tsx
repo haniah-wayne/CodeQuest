@@ -15,11 +15,16 @@ export function ChallengeList({
 	error,
 	classId,
 	create,
+	empty = {
+		title: "No challenges yet",
+		description: "Challenges added to this class will show up here.",
+	},
 }: {
 	challenges: Challenge[];
 	error: unknown;
 	classId: string;
 	create?: boolean;
+	empty?: { title: string; description: string };
 }) {
 	const createButton = create ? (
 		<Link
@@ -45,8 +50,8 @@ export function ChallengeList({
 			) : isEmpty ? (
 				<SectionEmpty
 					icon={Flag02Icon}
-					title="No challenges yet"
-					description="Challenges added to this class will show up here."
+					title={empty.title}
+					description={empty.description}
 					actions={createButton}
 				/>
 			) : (

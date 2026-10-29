@@ -19,8 +19,26 @@ import {
 import { CodeEditor } from "@/components/challenge/code-editor";
 import { Button } from "@/components/ui/button";
 import { LANGUAGE_IDS, LANGUAGES, type LanguageId } from "@/lib/challenges/languages";
+import type { Position } from "@/lib/challenges/location";
 
 type Outcome = SubmitSolutionState & { kind: "run" | "submit" };
+
+// Submissions are checked against where the student is right now
+function getCurrentPosition() {
+	return new Promise<Position>((resolve, reject) => {
+		navigator.geolocation.getCurrentPosition(
+			({ coords }) => resolve({ longitude: coords.longitude, latitude: coords.latitude }),
+			reject,
+			{ enableHighAccuracy: true, timeout: 10_000, maximumAge: 30_000 },
+		);
+	});
+}
+
+function locationErrorMessage(error: GeolocationPositionError) {
+	return error.code === error.PERMISSION_DENIED
+		? "Allow location access to submit. Challenges can only be solved on location."
+		: "We couldn't find your location. Try again in a moment.";
+}
 
 export function CodeWorkspace({
 	challengeId,
@@ -63,7 +81,12 @@ export function CodeWorkspace({
 				const state =
 					kind === "run"
 						? await runCode({ language, code })
-						: await submitSolution({ challengeId, language, code });
+						: await submitSolution({
+								challengeId,
+								language,
+								code,
+								position: await getCurrentPosition(),
+							});
 
 				setOutcome({ ...state, kind });
 			} catch (error) {
@@ -71,7 +94,10 @@ export function CodeWorkspace({
 
 				setOutcome({
 					kind,
-					error: "Something went wrong. Check your connection and try again.",
+					error:
+						error instanceof GeolocationPositionError
+							? locationErrorMessage(error)
+							: "Something went wrong. Check your connection and try again.",
 				});
 			}
 		});
