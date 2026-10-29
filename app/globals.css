@@ -160,6 +160,12 @@
 
 #hero {
 	min-height: min(800px, 100svh);
+
+	.map {
+		@variant max-lg {
+			mask-image: linear-gradient(to bottom, transparent, black --spacing(32));
+		}
+	}
 }
 
 #how-it-works .step {
