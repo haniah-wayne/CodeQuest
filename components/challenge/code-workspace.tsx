@@ -7,6 +7,7 @@ import {
 	PlayIcon,
 	SentIcon,
 	SourceCodeIcon,
+	SquareLock02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "cn";
@@ -55,6 +56,10 @@ export function CodeWorkspace({
 	const code = drafts[language];
 	const isSolved = solved || (outcome?.kind === "submit" && outcome.correct === true);
 
+	// Locked once solved, and while a submission is being graded so the code
+	// left in the editor is exactly what was submitted
+	const locked = isSolved || (pending && pendingKind === "submit");
+
 	function run(kind: Outcome["kind"]) {
 		setPendingKind(kind);
 
@@ -101,6 +106,13 @@ export function CodeWorkspace({
 						Your solution
 					</h2>
 
+					{isSolved && (
+						<span className="flex items-center gap-1 text-caption text-muted-foreground">
+							<HugeiconsIcon icon={SquareLock02Icon} className="size-3.5" />
+							Read-only
+						</span>
+					)}
+
 					<label className="ml-auto">
 						<span className="sr-only">Language</span>
 
@@ -108,7 +120,7 @@ export function CodeWorkspace({
 							className="h-9 rounded-4xl border border-input bg-input/30 pr-8 pl-3 text-base outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50 md:text-sm"
 							value={language}
 							onChange={(e) => setLanguage(e.target.value as LanguageId)}
-							disabled={pending}
+							disabled={pending || isSolved}
 						>
 							{LANGUAGE_IDS.map((id) => (
 								<option key={id} value={id}>
@@ -123,6 +135,7 @@ export function CodeWorkspace({
 					language={language}
 					value={code}
 					onChange={(value) => setDrafts((d) => ({ ...d, [language]: value }))}
+					readOnly={locked}
 				/>
 
 				<footer className="flex items-center justify-end gap-2 border-t border-border/60 px-4 py-3 sm:px-5">
@@ -131,7 +144,7 @@ export function CodeWorkspace({
 						size="lg"
 						className="flex-1 sm:flex-none"
 						onClick={() => run("run")}
-						disabled={pending}
+						disabled={pending || isSolved}
 					>
 						<HugeiconsIcon icon={PlayIcon} data-icon="inline-start" />
 						{pending && pendingKind === "run" ? "Running" : "Run"}
