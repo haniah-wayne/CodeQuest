@@ -66,4 +66,5 @@ export const SubmitSolutionSchema = v.object({
 	challengeId: v.pipe(v.number(), v.safeInteger()),
 	language: v.picklist(LANGUAGE_IDS, "Pick a language."),
 	code: CodeSchema,
+	position: PositionSchema,
 });
