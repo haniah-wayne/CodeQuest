@@ -34,7 +34,7 @@ export const CreateChallengeSchema = v.object({
 	),
 	longitude: coordinate(180),
 	latitude: coordinate(90),
-    hidden: v.boolean(),     //10.29.Haniah -> additonal schema field to show if the challenge is hidden or not
+	hidden: v.boolean(), //10.29.Haniah -> additonal schema field to show if the challenge is hidden or not
 });
 
 // Keeps junk off the code runner

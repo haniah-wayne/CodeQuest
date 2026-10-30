@@ -7,7 +7,6 @@ import { getSessionUser } from "@/lib/auth/session";
 import { CreateChallengeSchema } from "@/lib/challenges/schemas";
 import { createClient } from "@/lib/supabase/server";
 import { toFieldErrors } from "@/lib/validation";
-import { Hidden } from "@hugeicons/core-free-icons";
 
 export interface CreateChallengeState {
 	error?: string;
@@ -80,7 +79,8 @@ export async function createChallenge(
 		long: longitude,
 		lat: latitude,
 		radius: 100,
-       
+		points: 100,
+		hidden,
 	});
 
 	if (error) {
