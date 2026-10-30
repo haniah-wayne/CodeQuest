@@ -48,12 +48,15 @@ const audiences: Audience[] = [
 
 export function Audience() {
 	return (
-		<section id="audience" className="bg-linear-to-b/oklch from-white to-emerald-50/50 py-24">
+		<section
+			id="audience"
+			className="bg-linear-to-b from-wsu-green to-background py-24 text-white"
+		>
 			<div className="mx-auto flex w-full max-w-7xl flex-col gap-12 px-5 sm:px-8">
 				<hgroup className="mx-auto flex max-w-2xl flex-col items-center gap-2 text-center">
 					<h2 className="text-title">Built for Warriors, Guided by Professors</h2>
 
-					<p className="text-body-sm text-muted-foreground">
+					<p className="text-body-sm text-white/80">
 						Duis non anim ullamco ad velit anim commodo culpa nostrud qui aliquip id
 						incididunt minim.
 					</p>
@@ -62,7 +65,7 @@ export function Audience() {
 				<ul className="grid gap-12 sm:grid-cols-2">
 					{audiences.map((audience) => (
 						<li
-							className="flex flex-col gap-4 rounded-3xl border-border bg-white p-8 shadow-xs smooth-shadow-sm"
+							className="flex flex-col gap-4 rounded-3xl bg-card p-8 text-card-foreground smooth-shadow-xl"
 							key={audience.title}
 						>
 							<h3 className="text-heading">{audience.title}</h3>
@@ -74,7 +77,7 @@ export function Audience() {
 							<ul className="mt-3 flex flex-col gap-4">
 								{audience.points.map((point) => (
 									<li className="flex items-start gap-3" key={point.rest}>
-										<span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+										<span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-wsu-gold text-wsu-green">
 											<HugeiconsIcon
 												className="size-3.5"
 												icon={Tick}

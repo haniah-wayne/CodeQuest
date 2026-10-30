@@ -6,8 +6,6 @@ interface Step {
 	body: string;
 	tagline: string;
 	icon: IconSvgElement;
-	tileClass: string;
-	labelClass: string;
 }
 
 const steps: Step[] = [
@@ -16,33 +14,24 @@ const steps: Step[] = [
 		body: "Walk around different parts of campus serching for new challenges",
 		tagline: "Geofenced trigger",
 		icon: Cursor,
-		tileClass: "bg-pink-300/40 text-pink-800",
-		labelClass: "text-pink-900",
 	},
 	{
 		title: "Hack the Quest",
 		body: "Collaborate with team mates or work on your own to solve the challenges. Put your knowledge from classes to use!",
 		tagline: "Interactive debugging",
 		icon: Code,
-		tileClass: "bg-teal-400/40 text-teal-800",
-		labelClass: "text-teal-900",
 	},
 	{
 		title: "Climb the Leaderboard",
 		body: "View your score and compete with classmates to win the ultimate prize!",
 		tagline: "Live class standings",
 		icon: Trophy,
-		tileClass: "bg-amber-400/40 text-amber-800",
-		labelClass: "text-amber-900",
 	},
 ];
 
 export function HowItWorks() {
 	return (
-		<section
-			id="how-it-works"
-			className="bg-linear-to-b/oklch from-emerald-50/50 to-white py-24"
-		>
+		<section id="how-it-works" className="py-24">
 			<div className="mx-auto flex w-full max-w-7xl flex-col gap-12 px-5 sm:px-8">
 				<hgroup className="mx-auto flex max-w-2xl flex-col items-center gap-2 text-center">
 					<h2 className="text-title">How It Works</h2>
@@ -55,13 +44,11 @@ export function HowItWorks() {
 				<ol className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 					{steps.map((step, i) => (
 						<li
-							className="step flex flex-col justify-between rounded-3xl border border-accent bg-white p-8"
+							className="step flex flex-col justify-between rounded-3xl bg-card p-8"
 							key={i}
 						>
 							<div className="flex flex-col items-start gap-4">
-								<span
-									className={`flex size-14 items-center justify-center rounded-2xl text-heading ${step.tileClass}`}
-								>
+								<span className="flex size-14 items-center justify-center rounded-2xl bg-wsu-green text-heading text-wsu-gold">
 									{(i + 1).toString().padStart(2, "0")}
 								</span>
 
@@ -72,9 +59,7 @@ export function HowItWorks() {
 								</p>
 							</div>
 
-							<div
-								className={`mt-6 flex items-center gap-2 border-t border-muted pt-4 ${step.labelClass}`}
-							>
+							<div className="mt-6 flex items-center gap-2 border-t border-border pt-4 text-wsu-green">
 								<HugeiconsIcon className="size-6 shrink-0" icon={step.icon} />
 
 								<span className="text-label">{step.tagline}</span>

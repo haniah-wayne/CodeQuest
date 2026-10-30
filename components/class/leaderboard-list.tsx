@@ -50,14 +50,16 @@ export function LeaderboardList({
 							<li
 								key={entry.student_id}
 								className={cn(
-									"flex items-center gap-3 rounded-2xl px-3 py-2.5",
-									isViewer && "bg-emerald-50/70",
+									"flex items-center gap-3 rounded-(--panel-inner-radius) px-3 py-2.5",
+									isViewer && "bg-secondary",
 								)}
 							>
 								<span
 									className={cn(
-										"w-6 shrink-0 text-center text-label tabular-nums",
-										podium ? "text-foreground" : "text-muted-foreground",
+										"flex size-7 shrink-0 items-center justify-center rounded-full text-label tabular-nums",
+										!podium && "text-muted-foreground",
+										podium && entry.rank === 1 && "bg-wsu-gold text-wsu-green",
+										podium && entry.rank > 1 && "bg-wsu-green text-white",
 									)}
 								>
 									{entry.rank}
@@ -71,9 +73,7 @@ export function LeaderboardList({
 									</span>
 
 									{podium && entry.rank === 1 && (
-										<Badge className="bg-wsu-gold/25 text-foreground">
-											Top
-										</Badge>
+										<Badge className="bg-wsu-gold text-wsu-green">Top</Badge>
 									)}
 								</span>
 
