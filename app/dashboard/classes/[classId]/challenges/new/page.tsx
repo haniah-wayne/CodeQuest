@@ -16,10 +16,11 @@ import type * as React from "react";
 import { AuthFormError } from "@/components/auth-card";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldContent } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { type CreateChallengeState, createChallenge } from "./actions";
+import { Checkbox } from "@/components/ui/checkbox"; 
 
 const MapView = dynamic(() => import("@/components/mapview"), {
 	ssr: false,
@@ -138,11 +139,31 @@ export default function CreateChallengePage() {
 									className="flex items-center gap-1.5"
 								>
 									<HugeiconsIcon icon={ViewOffSlashIcon} className="size-3.5" />
-									Hidden from students. Their code&apos;s output is checked
+									Hidden from students. Their code output is checked
 									against this.
 								</FieldDescription>
 
 								<FieldError>{state.fieldErrors?.solution}</FieldError>
+							</Field>
+
+						
+                        </FieldGroup>   
+
+						<FieldGroup className="mx-auto w-72">
+							<Field orientation="horizontal">
+								<Checkbox
+									id="terms-checkbox-desc"
+									name="terms-checkbox-desc"
+									defaultChecked
+								/>
+								<FieldContent>
+									<FieldLabel htmlFor="terms-checkbox-desc">
+										Hide Pin From Students?
+									</FieldLabel>
+									<FieldDescription>
+                                        By clicking this checkbox, you are able to hide the pin from students. This means that students will not be able to see the pin on the map, but they will still be able to unlock and solve the challenge if they are within the radius of the pin.
+									</FieldDescription>
+								</FieldContent>
 							</Field>
 						</FieldGroup>
 					</FormSection>

@@ -7,14 +7,15 @@ import { getSessionUser } from "@/lib/auth/session";
 import { CreateChallengeSchema } from "@/lib/challenges/schemas";
 import { createClient } from "@/lib/supabase/server";
 import { toFieldErrors } from "@/lib/validation";
+import { Hidden } from "@hugeicons/core-free-icons";
 
 export interface CreateChallengeState {
 	error?: string;
 	fieldErrors?: Partial<
 		Record<"title" | "description" | "solution" | "longitude" | "latitude", string>
 	>;
-	// Sent back on failure so the form doesn't clear what was typed
-	values?: { title: string; description: string; solution: string };
+	// Sent back on failure so the form doesn't clear what was typed - 10/29.Haniah -> added the hidden bool
+	values?: { title: string; description: string; solution: string; hidden: boolean };
 }
 
 export async function createChallenge(
@@ -25,6 +26,7 @@ export async function createChallenge(
 		title: formData.get("title")?.toString() ?? "",
 		description: formData.get("description")?.toString() ?? "",
 		solution: formData.get("solution")?.toString() ?? "",
+        hidden: formData.get("hidden") === "true", //10.29.Haniah -> added the hidden bool, reads from form
 	};
 
 	const location = {
@@ -68,7 +70,7 @@ export async function createChallenge(
 		return { values, error: "You don't have permission to add challenges to this class." };
 	}
 
-	const { title, description, solution, longitude, latitude } = parsed.output;
+	const { title, description, solution, longitude, latitude, hidden } = parsed.output;
 
 	const { error } = await supabase.rpc("create_challenge", {
 		class_id: classId,
@@ -78,6 +80,7 @@ export async function createChallenge(
 		long: longitude,
 		lat: latitude,
 		radius: 100,
+       
 	});
 
 	if (error) {
