@@ -2,6 +2,8 @@
 import {
 	createColumnHelper,
 	createSortedRowModel,
+	createFilteredRowModel,
+	columnFilteringFeature,
 	rowSortingFeature,
 	sortFn_alphanumeric,
 	sortFn_datetime,
@@ -9,7 +11,7 @@ import {
 	tableFeatures,
 	useTable,
 } from "@tanstack/react-table";
-import type { SortingState } from "@tanstack/react-table";
+import type { SortingState, ColumnFiltersState } from "@tanstack/react-table";
 import React from "react";
 import {
 	Select,
@@ -18,22 +20,20 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { ChallengeList } from "./class/challenge-list";
 
-type Challenge = {
-	StudentID: number;
+type Submission = {
+	StudentID: string;
 	Name: string;
 	Score: number;
 	SubmittedAt: string;
-};
-
-type SortableChallenge = Challenge & {
-	SubmittedAt: string | null;
+	Status: string;
 };
 
 const features = tableFeatures({
 	rowSortingFeature,
+	columnFilteringFeature,
 	sortedRowModel: createSortedRowModel(),
+	filteredRowModel: createFilteredRowModel(),
 	sortFns: {
 		alphanumeric: sortFn_alphanumeric,
 		datetime: sortFn_datetime,
@@ -41,16 +41,16 @@ const features = tableFeatures({
 	},
 });
 
-type ChallengeListtableProps = {
-	data: SortableChallenge[];
-	error: unknown;
-	classId: string;
+type SubmissionListtableProps = {
+	data: Submission[];
 };
 
-export function ChallengeListtable({ data, error, classId }: ChallengeListtableProps) {
-	const [sorting, setSorting] = React.useState<SortingState>([{ id: "CreatedAt", desc: true }]);
+export function SubmissionListtable({ data }: SubmissionListtableProps) {
+	const [sorting, setSorting] = React.useState<SortingState>([{ id: "SubmittedAt", desc: true }]);
 
-	const columnHelper = createColumnHelper<typeof features, SortableChallenge>();
+	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+
+	const columnHelper = createColumnHelper<typeof features, Submission>();
 
 	const columns = React.useMemo(
 		() =>
@@ -60,21 +60,38 @@ export function ChallengeListtable({ data, error, classId }: ChallengeListtableP
 					header: "#",
 					cell: ({ row }) => row.getDisplayIndex() + 1,
 				}),
-				columnHelper.accessor("ChallengeID", {
+				columnHelper.accessor("StudentID", {
 					cell: (info) => info.getValue(),
 				}),
 
-				columnHelper.accessor("CreatedAt", {
-					header: "Date",
-					sortFn: "alphanumeric",
+				columnHelper.accessor("Name", {
+					header: "Name",
+					sortFn: "text",
 					sortUndefined: "last",
 				}),
-				columnHelper.accessor("IsPublished", {
+				columnHelper.accessor("Score", {
+					header: "Score",
+					sortUndefined: "last",
+				}),
+				columnHelper.accessor("Status", {
 					header: () => "Status",
+					filterFn: (row, columnId, filterValue) => {
+						const status = row.getValue(columnId);
+
+						if (filterValue === "completed") {
+							return status === "correct";
+						}
+
+						if (filterValue === "notCompleted") {
+							return status !== "correct";
+						}
+
+						return true;
+					},
 				}),
 				columnHelper.accessor((row) => row.SubmittedAt ?? undefined, {
 					id: "SubmittedAt",
-					header: () => "Completion",
+					header: () => "Time",
 					sortFn: "alphanumeric",
 					sortUndefined: "last",
 				}),
@@ -88,13 +105,15 @@ export function ChallengeListtable({ data, error, classId }: ChallengeListtableP
 		data,
 		state: {
 			sorting,
+			columnFilters,
 		},
 		onSortingChange: setSorting,
+		onColumnFiltersChange: setColumnFilters,
 	});
 
-	const sortedChallenges = table.getRowModel().rows.map((row) => row.original);
+	const sortedSubmissions = table.getRowModel().rows.map((row) => row.original);
 
-	const [sortBy, setSortBy] = React.useState("CreatedAt");
+	const [sortBy, setSortBy] = React.useState("SubmittedAt");
 
 	return (
 		<div className="space-y-4">
@@ -103,19 +122,43 @@ export function ChallengeListtable({ data, error, classId }: ChallengeListtableP
 				onValueChange={(value) => {
 					if (value === null) return;
 					setSortBy(value);
-					table.setSorting([{ id: value, desc: true }]);
+					table.setSorting([{ id: value, desc: value !== "Name" }]);
 				}}
 			>
 				<SelectTrigger>
 					<SelectValue placeholder="Sort by" />
 				</SelectTrigger>
 				<SelectContent>
-					<SelectItem value="CreatedAt">Date</SelectItem>
-					<SelectItem value="IsPublished">Status</SelectItem>
-					<SelectItem value="SubmittedAt">Completion</SelectItem>
+					<SelectItem value="StudentID">StudentID</SelectItem>
+					<SelectItem value="Name">Name</SelectItem>
+					<SelectItem value="Score">Score</SelectItem>
+					<SelectItem value="Status">Status</SelectItem>
+					<SelectItem value="SubmittedAt">Time</SelectItem>
 				</SelectContent>
 			</Select>
-			<ChallengeList challenges={sortedChallenges} error={error} classId={classId} />
+			<Select
+				defaultValue="all"
+				onValueChange={(value) => {
+					if (value === null) return;
+
+					if (value === "all") {
+						table.getColumn("Status")?.setFilterValue(undefined);
+					} else {
+						table.getColumn("Status")?.setFilterValue(value);
+					}
+				}}
+			>
+				<SelectTrigger>
+					<SelectValue placeholder="Filter by completion" />
+				</SelectTrigger>
+
+				<SelectContent>
+					<SelectItem value="all">All</SelectItem>
+					<SelectItem value="completed">Completed</SelectItem>
+					<SelectItem value="notCompleted">Not Completed</SelectItem>
+				</SelectContent>
+			</Select>
+			<pre>{JSON.stringify(sortedSubmissions, null, 2)}</pre>
 		</div>
 	);
 }
