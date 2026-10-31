@@ -3,13 +3,15 @@ import {
 	createColumnHelper,
 	createSortedRowModel,
 	rowSortingFeature,
+	createFilteredRowModel,
+	columnFilteringFeature,
 	sortFn_alphanumeric,
 	sortFn_datetime,
 	sortFn_text,
 	tableFeatures,
 	useTable,
 } from "@tanstack/react-table";
-import type { SortingState } from "@tanstack/react-table";
+import type { SortingState, ColumnFiltersState } from "@tanstack/react-table";
 import React from "react";
 import {
 	Select,
@@ -38,7 +40,9 @@ type SortableChallenge = Challenge & {
 
 const features = tableFeatures({
 	rowSortingFeature,
+	columnFilteringFeature,
 	sortedRowModel: createSortedRowModel(),
+	filteredRowModel: createFilteredRowModel(),
 	sortFns: {
 		alphanumeric: sortFn_alphanumeric,
 		datetime: sortFn_datetime,
@@ -54,6 +58,8 @@ type ChallengeListtableProps = {
 
 export function ChallengeListtable({ data, error, classId }: ChallengeListtableProps) {
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: "CreatedAt", desc: true }]);
+
+	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
 
 	const columnHelper = createColumnHelper<typeof features, SortableChallenge>();
 
@@ -82,6 +88,19 @@ export function ChallengeListtable({ data, error, classId }: ChallengeListtableP
 					header: () => "Completion",
 					sortFn: "alphanumeric",
 					sortUndefined: "last",
+					filterFn: (row, columnId, filterValue) => {
+						const submittedAt = row.getValue(columnId);
+
+						if (filterValue === "completed") {
+							return submittedAt != null;
+						}
+
+						if (filterValue === "notCompleted") {
+							return submittedAt == null;
+						}
+
+						return true;
+					},
 				}),
 			]),
 		[],
@@ -93,8 +112,10 @@ export function ChallengeListtable({ data, error, classId }: ChallengeListtableP
 		data,
 		state: {
 			sorting,
+			columnFilters,
 		},
 		onSortingChange: setSorting,
+		onColumnFiltersChange: setColumnFilters,
 	});
 
 	const sortedChallenges = table.getRowModel().rows.map((row) => row.original);
@@ -118,6 +139,28 @@ export function ChallengeListtable({ data, error, classId }: ChallengeListtableP
 					<SelectItem value="CreatedAt">Date</SelectItem>
 					<SelectItem value="IsPublished">Status</SelectItem>
 					<SelectItem value="SubmittedAt">Completion</SelectItem>
+				</SelectContent>
+			</Select>
+			<Select
+				defaultValue="all"
+				onValueChange={(value) => {
+					if (value === null) return;
+
+					if (value === "all") {
+						table.getColumn("SubmittedAt")?.setFilterValue(undefined);
+					} else {
+						table.getColumn("SubmittedAt")?.setFilterValue(value);
+					}
+				}}
+			>
+				<SelectTrigger>
+					<SelectValue placeholder="Filter by completion" />
+				</SelectTrigger>
+
+				<SelectContent>
+					<SelectItem value="all">All</SelectItem>
+					<SelectItem value="completed">Completed</SelectItem>
+					<SelectItem value="notCompleted">Not Completed</SelectItem>
 				</SelectContent>
 			</Select>
 			<ChallengeList challenges={sortedChallenges} error={error} classId={classId} />
