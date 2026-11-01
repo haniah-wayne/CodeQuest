@@ -4,6 +4,9 @@ import { ClassSection, SectionEmpty, SectionError } from "@/components/class/cla
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import type { Tables } from "@/supabase/database.types";
+import { DeleteChallengeButton } from "@/components/class/delete-challenge-button";
+
+//displays a list of all challenge using diff props
 
 type Challenge = Pick<
 	Tables<"Challenges">,
@@ -75,6 +78,18 @@ export function ChallengeList({
 										<p className="line-clamp-2 text-body-sm text-pretty text-muted-foreground">
 											{ch.Description}
 										</p>
+									)}
+								</div>
+
+								<div>
+									{create && (
+										<div className="relative z-10 flex items-center gap-1.5">
+											<DeleteChallengeButton
+												classId={classId}
+												challengeId={ch.ChallengeID}
+												title={ch.Title}
+											/>
+										</div>
 									)}
 								</div>
 

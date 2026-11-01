@@ -92,3 +92,70 @@ export async function createChallenge(
 	revalidatePath(`/dashboard/classes/${classId}`);
 	redirect(`/dashboard/classes/${classId}`);
 }
+
+//10.30 - functionality in updating any challenge
+export async function updateChallenge() {
+	//confirm challenge class and instructor
+	//get all the already stored information
+	
+}
+
+//export async function deleteChallenge() {
+	//confirm challenge class and instructor
+	//delete challnege from database
+//}
+
+export async function deleteChallenge(
+	_prevState: { error?: string },
+	formData: FormData,
+): Promise<{ error?: string }> {
+	const classId = Number(formData.get("classId"));
+	const challengeId = Number(formData.get("challengeId"));
+
+	if (!(await professorOwnsChallenge(classId, challengeId))) {
+		return { error: "You don't have permission to delete this challenge." };
+	}
+
+	const supabase = await createClient();
+
+	const { data, error } = await supabase
+		.from("Challenges")
+		.delete()
+		.eq("ChallengeID", challengeId)
+		.select("ChallengeID");
+
+	if (error || !data?.length) {
+		console.error(error);
+
+		return { error: "Something went wrong deleting that challenge." };
+	}
+
+	revalidatePath(`/dashboard/classes/${classId}`);
+
+	return {};
+}
+
+10.30.Haniah - added a function to check if the professor owns the challenge before deleting it
+async function professorOwnsChallenge(classId: number, challengeId: number) {
+	const user = await getSessionUser();
+
+	console.log("delete check: input", { classId, challengeId, userId: user?.id, role: user?.role });
+
+	if (user?.role !== "professor") return false;
+	if (!Number.isSafeInteger(classId) || !Number.isSafeInteger(challengeId)) return false;
+
+	const supabase = await createClient();
+
+	const { data: challenge, error } = await supabase
+		.from("Challenges")
+		.select("Classes(ProfessorID)")
+		.eq("ChallengeID", challengeId)
+		.eq("ClassID", classId)
+		.maybeSingle();
+
+	console.log("delete check: query", { challenge, error });
+
+	if (error) console.error(error);
+
+	return challenge?.Classes.ProfessorID === user.id;
+}
