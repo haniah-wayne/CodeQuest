@@ -43,9 +43,14 @@ const layout = EditorView.theme({
 	".cm-gutter": { minHeight: "18rem" },
 });
 
-// Keeps the text selectable
+// Blocks edits and content stays focusable
 function readOnlyExtension(readOnly: boolean) {
-	return [EditorState.readOnly.of(readOnly), EditorView.editable.of(!readOnly)];
+	if (!readOnly) return [];
+
+	return [
+		EditorState.readOnly.of(true),
+		EditorView.contentAttributes.of({ "aria-readonly": "true", inputmode: "none" }),
+	];
 }
 
 function insertIndent(view: EditorView) {
