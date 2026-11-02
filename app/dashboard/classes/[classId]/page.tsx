@@ -30,7 +30,7 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 				.maybeSingle(),
 			supabase
 				.from("Challenges")
-				.select("ChallengeID, ClassID, Title, Description, Points")
+				.select("ChallengeID, ClassID, Title, Description, Points, CreatedAt")
 				.eq("ClassID", id)
 				.order("CreatedAt"),
 			supabase

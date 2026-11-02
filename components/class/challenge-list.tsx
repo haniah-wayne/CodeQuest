@@ -18,10 +18,12 @@ export type ChallengeStatus = "not_started" | "attempted" | "solved";
 
 type Challenge = Pick<
 	Tables<"Challenges">,
-	"ChallengeID" | "ClassID" | "Title" | "Description" | "Points"
+	"ChallengeID" | "ClassID" | "Title" | "Description" | "Points" | "CreatedAt"
 > & { status: ChallengeStatus };
 
 const statusOrder: ChallengeStatus[] = ["not_started", "attempted", "solved"];
+
+const dateFormat = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
 
 const helper = createColumnHelper<DataTableFeatures, Challenge>();
 
@@ -66,8 +68,22 @@ const statusColumn = helper.accessor("status", {
 	cell: (info) => <StatusBadge status={info.getValue()} />,
 });
 
-const professorColumns = helper.columns([titleColumn, pointsColumn]);
-const studentColumns = helper.columns([titleColumn, pointsColumn, statusColumn]);
+const createdAtColumn = helper.accessor("CreatedAt", {
+	header: "Created",
+	sortFn: "basic",
+	cell: (info) => (
+		<time
+			className="text-muted-foreground tabular-nums"
+			dateTime={info.getValue()}
+			suppressHydrationWarning
+		>
+			{dateFormat.format(new Date(info.getValue()))}
+		</time>
+	),
+});
+
+const professorColumns = helper.columns([titleColumn, pointsColumn, createdAtColumn]);
+const studentColumns = helper.columns([titleColumn, pointsColumn, createdAtColumn, statusColumn]);
 
 export function ChallengeList({
 	challenges,
