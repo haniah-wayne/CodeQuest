@@ -4,13 +4,13 @@ import { CheckmarkCircle02Icon, Flag02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { createColumnHelper, useTable } from "@tanstack/react-table";
 import Link from "next/link";
+import { DeleteChallengeButton } from "@/components/challenge/delete-challenge-button";
 import { ClassSection, SectionEmpty, SectionError } from "@/components/class/class-section";
 import {
 	DataTable,
 	type DataTableFeatures,
 	dataTableFeatures,
 } from "@/components/class/data-table";
-import { DeleteChallengeButton } from "@/components/class/delete-challenge-button";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import type { Tables } from "@/supabase/database.types";
