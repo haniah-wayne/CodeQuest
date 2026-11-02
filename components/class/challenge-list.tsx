@@ -18,7 +18,7 @@ export type ChallengeStatus = "not_started" | "attempted" | "solved";
 
 type Challenge = Pick<
 	Tables<"Challenges">,
-	"ChallengeID" | "ClassID" | "Title" | "Description" | "Points" | "CreatedAt"
+	"ChallengeID" | "Title" | "Description" | "Points" | "CreatedAt"
 > & { status: ChallengeStatus };
 
 const statusOrder: ChallengeStatus[] = ["not_started", "attempted", "solved"];
@@ -27,30 +27,31 @@ const dateFormat = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
 
 const helper = createColumnHelper<DataTableFeatures, Challenge>();
 
-const titleColumn = helper.accessor("Title", {
-	header: "Title",
-	sortFn: "alphanumeric",
-	cell: (info) => {
-		const ch = info.row.original;
+const titleColumn = (classId: string) =>
+	helper.accessor("Title", {
+		header: "Title",
+		sortFn: "alphanumeric",
+		cell: (info) => {
+			const ch = info.row.original;
 
-		return (
-			<div className="flex max-w-md min-w-0 flex-col gap-0.5 py-1">
-				<Link
-					className="w-fit rounded-sm text-label whitespace-normal outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
-					href={`/dashboard/classes/${ch.ClassID}/challenges/${ch.ChallengeID}`}
-				>
-					{ch.Title}
-				</Link>
+			return (
+				<div className="flex max-w-md min-w-0 flex-col gap-0.5 py-1">
+					<Link
+						className="w-fit rounded-sm text-label whitespace-normal outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
+						href={`/dashboard/classes/${classId}/challenges/${ch.ChallengeID}`}
+					>
+						{ch.Title}
+					</Link>
 
-				{ch.Description && (
-					<p className="line-clamp-1 text-body-sm whitespace-normal text-muted-foreground">
-						{ch.Description}
-					</p>
-				)}
-			</div>
-		);
-	},
-});
+					{ch.Description && (
+						<p className="line-clamp-1 text-body-sm whitespace-normal text-muted-foreground">
+							{ch.Description}
+						</p>
+					)}
+				</div>
+			);
+		},
+	});
 
 const pointsColumn = helper.accessor("Points", {
 	header: "Points",
@@ -81,9 +82,6 @@ const createdAtColumn = helper.accessor("CreatedAt", {
 		</time>
 	),
 });
-
-const professorColumns = helper.columns([titleColumn, pointsColumn, createdAtColumn]);
-const studentColumns = helper.columns([titleColumn, pointsColumn, createdAtColumn, statusColumn]);
 
 export function ChallengeList({
 	challenges,
@@ -127,7 +125,7 @@ export function ChallengeList({
 					actions={createButton}
 				/>
 			) : (
-				<ChallengeTable challenges={challenges} showStatus={showStatus} />
+				<ChallengeTable challenges={challenges} classId={classId} showStatus={showStatus} />
 			)}
 		</ClassSection>
 	);
@@ -135,14 +133,21 @@ export function ChallengeList({
 
 function ChallengeTable({
 	challenges,
+	classId,
 	showStatus,
 }: {
 	challenges: Challenge[];
+	classId: string;
 	showStatus: boolean;
 }) {
+	const title = titleColumn(classId);
+	const columns = showStatus
+		? helper.columns([title, pointsColumn, createdAtColumn, statusColumn])
+		: helper.columns([title, pointsColumn, createdAtColumn]);
+
 	const table = useTable({
 		features: dataTableFeatures,
-		columns: showStatus ? studentColumns : professorColumns,
+		columns,
 		data: challenges,
 		getRowId: (ch) => String(ch.ChallengeID),
 	});

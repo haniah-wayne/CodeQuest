@@ -21,64 +21,50 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 
 	// RLS decides who can see the class and its rows, so a missing class means
 	// not found or not allowed
-	const [classResult, challengesResult, submissionsResult, rosterResult, leaderboardResult] =
-		await Promise.all([
-			supabase
-				.from("Classes")
-				.select("ClassName, Description, ClassCode, ProfessorID")
-				.eq("ClassID", id)
-				.maybeSingle(),
-			supabase
-				.from("Challenges")
-				.select("ChallengeID, ClassID, Title, Description, Points, CreatedAt")
-				.eq("ClassID", id)
-				.order("CreatedAt"),
-			supabase
-				.from("Submission")
-				.select("ChallengeID, Status, Challenges!inner(ClassID)")
-				.eq("StudentID", user.id)
-				.eq("Challenges.ClassID", id),
-			supabase.rpc("get_class_roster", { p_class_id: id }),
-			supabase.rpc("get_class_leaderboard", { p_class_id: id }),
-		]);
+	const [classResult, challengesResult, rosterResult, leaderboardResult] = await Promise.all([
+		supabase
+			.from("Classes")
+			.select("ClassName, Description, ClassCode, ProfessorID")
+			.eq("ClassID", id)
+			.maybeSingle(),
+		supabase
+			.from("Challenges")
+			.select("ChallengeID, Title, Description, Points, CreatedAt, Submission(Status)")
+			.eq("ClassID", id)
+			.eq("Submission.StudentID", user.id)
+			.order("CreatedAt"),
+		supabase.rpc("get_class_roster", { p_class_id: id }),
+		supabase.rpc("get_class_leaderboard", { p_class_id: id }),
+	]);
 
 	const c = classResult.data;
 
 	if (!c) notFound();
 
-	for (const { error } of [
-		challengesResult,
-		submissionsResult,
-		rosterResult,
-		leaderboardResult,
-	]) {
+	for (const { error } of [challengesResult, rosterResult, leaderboardResult]) {
 		if (error) console.error(error);
 	}
 
 	const isProfessor = c.ProfessorID === user.id;
 
-	const solved = new Set<number>();
-	const attempted = new Set<number>();
-
-	for (const s of submissionsResult.data ?? []) {
-		(s.Status === "correct" ? solved : attempted).add(s.ChallengeID);
-	}
-
-	const challenges = (challengesResult.data ?? []).map((ch) => {
-		const status: ChallengeStatus = solved.has(ch.ChallengeID)
+	const challenges = (challengesResult.data ?? []).map(({ Submission: submissions, ...ch }) => {
+		const status: ChallengeStatus = submissions.some((s) => s.Status === "correct")
 			? "solved"
-			: attempted.has(ch.ChallengeID)
+			: submissions.length > 0
 				? "attempted"
 				: "not_started";
 
 		return { ...ch, status };
 	});
 
-	const roster = (rosterResult.data ?? []).map((r) => ({
-		id: r.student_id,
-		name: r.student_name,
-		email: r.student_email,
-	}));
+	// only professors get emails
+	const roster = (rosterResult.data ?? [])
+		.map((r) => ({
+			id: r.student_id,
+			name: r.student_name,
+			email: isProfessor ? r.student_email : null,
+		}))
+		.sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
 
 	return (
 		<>
@@ -105,7 +91,7 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 				error={challengesResult.error !== null}
 				classId={classId}
 				create={isProfessor}
-				showStatus={!isProfessor && !submissionsResult.error}
+				showStatus={!isProfessor}
 			/>
 
 			<div className="grid items-start gap-6 lg:grid-cols-2">
