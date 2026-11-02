@@ -1,25 +1,86 @@
-import { Flag02Icon } from "@hugeicons/core-free-icons";
+"use client";
+
+import { CheckmarkCircle02Icon, Flag02Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { createColumnHelper, useTable } from "@tanstack/react-table";
 import Link from "next/link";
 import { ClassSection, SectionEmpty, SectionError } from "@/components/class/class-section";
+import {
+	DataTable,
+	type DataTableFeatures,
+	dataTableFeatures,
+} from "@/components/class/data-table";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import type { Tables } from "@/supabase/database.types";
 
+export type ChallengeStatus = "not_started" | "attempted" | "solved";
+
 type Challenge = Pick<
 	Tables<"Challenges">,
-	"ChallengeID" | "Title" | "Description" | "ChallengeType" | "Points"
->;
+	"ChallengeID" | "ClassID" | "Title" | "Description" | "Points"
+> & { status: ChallengeStatus };
+
+const statusOrder: ChallengeStatus[] = ["not_started", "attempted", "solved"];
+
+const helper = createColumnHelper<DataTableFeatures, Challenge>();
+
+const titleColumn = helper.accessor("Title", {
+	header: "Title",
+	sortFn: "alphanumeric",
+	cell: (info) => {
+		const ch = info.row.original;
+
+		return (
+			<div className="flex max-w-md min-w-0 flex-col gap-0.5 py-1">
+				<Link
+					className="w-fit rounded-sm text-label whitespace-normal outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
+					href={`/dashboard/classes/${ch.ClassID}/challenges/${ch.ChallengeID}`}
+				>
+					{ch.Title}
+				</Link>
+
+				{ch.Description && (
+					<p className="line-clamp-1 text-body-sm whitespace-normal text-muted-foreground">
+						{ch.Description}
+					</p>
+				)}
+			</div>
+		);
+	},
+});
+
+const pointsColumn = helper.accessor("Points", {
+	header: "Points",
+	sortFn: "basic",
+	cell: (info) => (
+		<Badge className="bg-emerald-50 text-wsu-green tabular-nums">{info.getValue()} pts</Badge>
+	),
+});
+
+const statusColumn = helper.accessor("status", {
+	header: "Status",
+	sortFn: (a, b, id) =>
+		statusOrder.indexOf(a.getValue<ChallengeStatus>(id)) -
+		statusOrder.indexOf(b.getValue<ChallengeStatus>(id)),
+	cell: (info) => <StatusBadge status={info.getValue()} />,
+});
+
+const professorColumns = helper.columns([titleColumn, pointsColumn]);
+const studentColumns = helper.columns([titleColumn, pointsColumn, statusColumn]);
 
 export function ChallengeList({
 	challenges,
 	error,
 	classId,
 	create,
+	showStatus,
 }: {
 	challenges: Challenge[];
-	error: unknown;
+	error: boolean;
 	classId: string;
 	create?: boolean;
+	showStatus: boolean;
 }) {
 	const createButton = create ? (
 		<Link
@@ -50,50 +111,41 @@ export function ChallengeList({
 					actions={createButton}
 				/>
 			) : (
-				<ol className="flex flex-col">
-					{challenges.map((ch, i) => (
-						<li
-							key={ch.ChallengeID}
-							className="relative flex items-start gap-4 rounded-2xl px-3 py-3.5 transition-colors has-[a:hover]:bg-muted/60 sm:px-4"
-						>
-							<span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border text-caption text-muted-foreground tabular-nums">
-								{i + 1}
-							</span>
-
-							<div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-								<div className="flex min-w-0 flex-col gap-0.5 pt-1">
-									<h3 className="text-label">
-										<Link
-											className="rounded-sm outline-none after:absolute after:inset-0 after:rounded-2xl focus-visible:after:ring-[3px] focus-visible:after:ring-ring/50"
-											href={`/dashboard/classes/${classId}/challenges/${ch.ChallengeID}`}
-										>
-											{ch.Title}
-										</Link>
-									</h3>
-
-									{ch.Description && (
-										<p className="line-clamp-2 text-body-sm text-pretty text-muted-foreground">
-											{ch.Description}
-										</p>
-									)}
-								</div>
-
-								<div className="flex shrink-0 items-center gap-1.5 sm:pt-1.5">
-									{ch.ChallengeType && (
-										<Badge className="capitalize" variant="outline">
-											{ch.ChallengeType}
-										</Badge>
-									)}
-
-									<Badge className="bg-emerald-50 text-wsu-green tabular-nums">
-										{ch.Points} pts
-									</Badge>
-								</div>
-							</div>
-						</li>
-					))}
-				</ol>
+				<ChallengeTable challenges={challenges} showStatus={showStatus} />
 			)}
 		</ClassSection>
 	);
+}
+
+function ChallengeTable({
+	challenges,
+	showStatus,
+}: {
+	challenges: Challenge[];
+	showStatus: boolean;
+}) {
+	const table = useTable({
+		features: dataTableFeatures,
+		columns: showStatus ? studentColumns : professorColumns,
+		data: challenges,
+		getRowId: (ch) => String(ch.ChallengeID),
+	});
+
+	return <DataTable table={table} emptyMessage="No challenges" />;
+}
+
+function StatusBadge({ status }: { status: ChallengeStatus }) {
+	switch (status) {
+		case "solved":
+			return (
+				<Badge className="bg-emerald-50 text-wsu-green">
+					<HugeiconsIcon icon={CheckmarkCircle02Icon} data-icon="inline-start" />
+					Solved
+				</Badge>
+			);
+		case "attempted":
+			return <Badge variant="outline">Attempted</Badge>;
+		case "not_started":
+			return <Badge variant="secondary">Not started</Badge>;
+	}
 }
