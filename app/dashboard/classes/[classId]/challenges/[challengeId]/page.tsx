@@ -54,12 +54,14 @@ export default async function ChallengePage(
 	if (submissionsResult.error) console.error(submissionsResult.error);
 
 	const submissions = submissionsResult.data ?? [];
-	const latest = submissions[0];
-	const solved = submissions.some((s) => s.Status === "correct");
+	const correct = submissions.find((s) => s.Status === "correct");
+	const solved = Boolean(correct);
 
-	// Pick up where the student left off with their last submission
-	const initialLanguage = isLanguageId(latest?.Language) ? latest.Language : DEFAULT_LANGUAGE;
-	const initialCode = latest && isLanguageId(latest.Language) ? latest.Code : null;
+	// Show the solution that was graded correct, otherwise pick up where the
+	// student left off with their last submission
+	const shown = correct ?? submissions[0];
+	const initialLanguage = isLanguageId(shown?.Language) ? shown.Language : DEFAULT_LANGUAGE;
+	const initialCode = shown && isLanguageId(shown.Language) ? shown.Code : null;
 
 	return (
 		<>
