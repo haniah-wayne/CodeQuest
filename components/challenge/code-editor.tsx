@@ -176,7 +176,12 @@ export function CodeEditor({
 
 	// Reconfigure in place so locking keeps the doc and undo history
 	useEffect(() => {
-		viewRef.current?.dispatch({
+		const view = viewRef.current;
+
+		// createState already applied on mount
+		if (!view || view.state.readOnly === readOnly) return;
+
+		view.dispatch({
 			effects: readOnlySlot.current.reconfigure(readOnlyExtension(readOnly)),
 		});
 	}, [readOnly]);
