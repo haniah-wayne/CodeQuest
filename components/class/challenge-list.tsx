@@ -1,10 +1,10 @@
 import { Flag02Icon } from "@hugeicons/core-free-icons";
 import Link from "next/link";
 import { ClassSection, SectionEmpty, SectionError } from "@/components/class/class-section";
+import { DeleteChallengeButton } from "@/components/class/delete-challenge-button";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import type { Tables } from "@/supabase/database.types";
-import { DeleteChallengeButton } from "@/components/class/delete-challenge-button";
 
 //displays a list of all challenge using diff props
 

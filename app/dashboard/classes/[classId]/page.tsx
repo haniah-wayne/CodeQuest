@@ -21,7 +21,7 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 
 	// RLS decides who can see the class and its rows, so a missing class means
 	// not found or not allowed
-	const [classResult, challengesResult, enrollmentResult, leaderboardResult] = await Promise.all([
+	const [classResult, challengesResult, rosterResult, leaderboardResult] = await Promise.all([
 		supabase
 			.from("Classes")
 			.select("ClassName, Description, ClassCode, ProfessorID")
@@ -32,11 +32,7 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 			.select("ChallengeID, Title, Description, ChallengeType, Points")
 			.eq("ClassID", id)
 			.order("CreatedAt"),
-		supabase
-			.from("Enrollment")
-			.select("StudentID, Profile(Name, Email)")
-			.eq("ClassID", id)
-			.order("EnrolledAt"),
+		supabase.rpc("get_class_roster", { p_class_id: id }),
 		supabase.rpc("get_class_leaderboard", { p_class_id: id }),
 	]);
 
@@ -44,7 +40,7 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 
 	if (!c) notFound();
 
-	for (const { error } of [challengesResult, enrollmentResult, leaderboardResult]) {
+	for (const { error } of [challengesResult, rosterResult, leaderboardResult]) {
 		if (error) console.error(error);
 	}
 
@@ -52,10 +48,10 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 
 	const challenges = challengesResult.data ?? [];
 
-	const roster = (enrollmentResult.data ?? []).map((e) => ({
-		id: e.StudentID,
-		name: e.Profile.Name,
-		email: e.Profile.Email,
+	const roster = (rosterResult.data ?? []).map((r) => ({
+		id: r.student_id,
+		name: r.student_name,
+		email: r.student_email,
 	}));
 
 	return (
@@ -92,11 +88,7 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 					viewerId={user.id}
 				/>
 
-				<RosterList
-					students={roster}
-					error={enrollmentResult.error}
-					showEmails={isProfessor}
-				/>
+				<RosterList students={roster} error={rosterResult.error} showEmails={isProfessor} />
 			</div>
 		</>
 	);

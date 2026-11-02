@@ -11,10 +11,10 @@ import { toFieldErrors } from "@/lib/validation";
 export interface CreateChallengeState {
 	error?: string;
 	fieldErrors?: Partial<
-		Record<"title" | "description" | "solution" | "longitude" | "latitude", string>
+		Record<"title" | "description" | "solution" | "points" | "longitude" | "latitude", string>
 	>;
-	// Sent back on failure so the form doesn't clear what was typed - 10/29.Haniah -> added the hidden bool
-	values?: { title: string; description: string; solution: string; hidden: boolean };
+	// Sent back on failure so the form doesn't clear what was typed
+	values?: { title: string; description: string; solution: string; points: string };
 }
 
 export async function createChallenge(
@@ -25,7 +25,7 @@ export async function createChallenge(
 		title: formData.get("title")?.toString() ?? "",
 		description: formData.get("description")?.toString() ?? "",
 		solution: formData.get("solution")?.toString() ?? "",
-        hidden: formData.get("hidden") === "true", //10.29.Haniah -> added the hidden bool, reads from form
+		points: formData.get("points")?.toString() ?? "",
 	};
 
 	const location = {
@@ -69,18 +69,17 @@ export async function createChallenge(
 		return { values, error: "You don't have permission to add challenges to this class." };
 	}
 
-	const { title, description, solution, longitude, latitude, hidden } = parsed.output;
+	const { title, description, solution, points, longitude, latitude } = parsed.output;
 
 	const { error } = await supabase.rpc("create_challenge", {
 		class_id: classId,
 		title,
 		description,
 		solution,
+		points,
 		long: longitude,
 		lat: latitude,
 		radius: 100,
-		points: 100,
-		hidden,
 	});
 
 	if (error) {
@@ -97,12 +96,11 @@ export async function createChallenge(
 export async function updateChallenge() {
 	//confirm challenge class and instructor
 	//get all the already stored information
-	
 }
 
 //export async function deleteChallenge() {
-	//confirm challenge class and instructor
-	//delete challnege from database
+//confirm challenge class and instructor
+//delete challnege from database
 //}
 
 export async function deleteChallenge(
@@ -135,11 +133,9 @@ export async function deleteChallenge(
 	return {};
 }
 
-10.30.Haniah - added a function to check if the professor owns the challenge before deleting it
+// 10.30.Haniah - added a function to check if the professor owns the challenge before deleting it
 async function professorOwnsChallenge(classId: number, challengeId: number) {
 	const user = await getSessionUser();
-
-	console.log("delete check: input", { classId, challengeId, userId: user?.id, role: user?.role });
 
 	if (user?.role !== "professor") return false;
 	if (!Number.isSafeInteger(classId) || !Number.isSafeInteger(challengeId)) return false;
@@ -152,8 +148,6 @@ async function professorOwnsChallenge(classId: number, challengeId: number) {
 		.eq("ChallengeID", challengeId)
 		.eq("ClassID", classId)
 		.maybeSingle();
-
-	console.log("delete check: query", { challenge, error });
 
 	if (error) console.error(error);
 
