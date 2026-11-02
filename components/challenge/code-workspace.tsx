@@ -48,13 +48,14 @@ export function CodeWorkspace({
 
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
 	const [pendingKind, setPendingKind] = useState<Outcome["kind"] | null>(null);
+	const [solvedHere, setSolvedHere] = useState(false);
 
 	const [pending, startTransition] = useTransition();
 
 	const outputRef = useRef<HTMLDivElement>(null);
 
 	const code = drafts[language];
-	const isSolved = solved || (outcome?.kind === "submit" && outcome.correct === true);
+	const isSolved = solved || solvedHere;
 
 	// Locked once solved, and while a submission is being graded so the code
 	// left in the editor is exactly what was submitted
@@ -65,10 +66,15 @@ export function CodeWorkspace({
 
 		startTransition(async () => {
 			try {
-				const state =
-					kind === "run"
-						? await runCode({ language, code })
-						: await submitSolution({ challengeId, language, code });
+				if (kind === "run") {
+					setOutcome({ ...(await runCode({ language, code })), kind });
+
+					return;
+				}
+
+				const state = await submitSolution({ challengeId, language, code });
+
+				if (state.correct || state.alreadySolved) setSolvedHere(true);
 
 				setOutcome({ ...state, kind });
 			} catch (error) {
@@ -144,7 +150,7 @@ export function CodeWorkspace({
 						size="lg"
 						className="flex-1 sm:flex-none"
 						onClick={() => run("run")}
-						disabled={pending || isSolved}
+						disabled={pending}
 					>
 						<HugeiconsIcon icon={PlayIcon} data-icon="inline-start" />
 						{pending && pendingKind === "run" ? "Running" : "Run"}
