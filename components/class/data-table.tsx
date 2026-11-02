@@ -9,13 +9,16 @@ import {
 	filterFn_includesString,
 	globalFilteringFeature,
 	type ReactTable,
+	type Row,
 	type RowData,
+	rowExpandingFeature,
 	rowSortingFeature,
 	sortFn_alphanumeric,
 	sortFn_basic,
 	tableFeatures,
 } from "@tanstack/react-table";
 import { cn } from "cn";
+import { Fragment } from "react";
 import type * as React from "react";
 import {
 	Table,
@@ -34,6 +37,7 @@ export const dataTableFeatures = tableFeatures({
 	globalFilteringFeature,
 	filteredRowModel: createFilteredRowModel(),
 	filterFns: { includesString: filterFn_includesString },
+	rowExpandingFeature,
 });
 
 export type DataTableFeatures = typeof dataTableFeatures;
@@ -43,11 +47,15 @@ const ariaSort = { asc: "ascending", desc: "descending" } as const;
 export function DataTable<TData extends RowData>({
 	table,
 	emptyMessage,
+	renderExpanded,
 }: {
 	table: ReactTable<DataTableFeatures, TData, unknown>;
 	emptyMessage: React.ReactNode;
+	// Detail panel shown under a row while it's expanded
+	renderExpanded?: (row: Row<DataTableFeatures, TData>) => React.ReactNode;
 }) {
 	const rows = table.getRowModel().rows;
+	const columnCount = table.getAllLeafColumns().length;
 
 	return (
 		<Table>
@@ -97,15 +105,36 @@ export function DataTable<TData extends RowData>({
 
 			<TableBody>
 				{rows.length > 0 ? (
-					rows.map((row) => (
-						<TableRow key={row.id}>
-							{row.getAllCells().map((cell) => (
-								<TableCell key={cell.id}>
-									<table.FlexRender cell={cell} />
-								</TableCell>
-							))}
-						</TableRow>
-					))
+					rows.map((row) => {
+						const expanded = renderExpanded && row.getIsExpanded();
+
+						return (
+							<Fragment key={row.id}>
+								<TableRow
+									data-state={expanded ? "expanded" : undefined}
+									className={cn(expanded && "border-b-0 bg-muted/50")}
+								>
+									{row.getAllCells().map((cell) => (
+										<TableCell key={cell.id}>
+											<table.FlexRender cell={cell} />
+										</TableCell>
+									))}
+								</TableRow>
+
+								{expanded && (
+									<TableRow className="bg-muted/50 hover:bg-muted/50">
+										<TableCell
+											id={expandedRowId(row.id)}
+											colSpan={columnCount}
+											className="p-2 pt-0 whitespace-normal sm:p-3 sm:pt-0"
+										>
+											{renderExpanded(row)}
+										</TableCell>
+									</TableRow>
+								)}
+							</Fragment>
+						);
+					})
 				) : (
 					<TableRow className="hover:bg-transparent">
 						<TableCell
@@ -119,4 +148,9 @@ export function DataTable<TData extends RowData>({
 			</TableBody>
 		</Table>
 	);
+}
+
+// Links a row's expand toggle to its detail panel
+export function expandedRowId(rowId: string) {
+	return `row-${rowId}-details`;
 }
