@@ -3,7 +3,9 @@
 import { CheckmarkCircle02Icon, Flag02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { createColumnHelper, useTable } from "@tanstack/react-table";
+import type { ColumnFiltersState } from "@tanstack/react-table";
 import Link from "next/link";
+import * as React from "react";
 import { ClassSection, SectionEmpty, SectionError } from "@/components/class/class-section";
 import {
 	DataTable,
@@ -12,6 +14,13 @@ import {
 } from "@/components/class/data-table";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import type { Tables } from "@/supabase/database.types";
 
 export type ChallengeStatus = "not_started" | "attempted" | "solved";
@@ -66,6 +75,21 @@ const statusColumn = helper.accessor("status", {
 	sortFn: (a, b, id) =>
 		statusOrder.indexOf(a.getValue<ChallengeStatus>(id)) -
 		statusOrder.indexOf(b.getValue<ChallengeStatus>(id)),
+
+	filterFn: (row, columnId, filterValue) => {
+		const status = row.getValue<ChallengeStatus>(columnId);
+
+		if (filterValue === "completed") {
+			return status === "solved";
+		}
+
+		if (filterValue === "notCompleted") {
+			return status !== "solved";
+		}
+
+		return true;
+	},
+
 	cell: (info) => <StatusBadge status={info.getValue()} />,
 });
 
@@ -140,6 +164,8 @@ function ChallengeTable({
 	classId: string;
 	showStatus: boolean;
 }) {
+	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+
 	const title = titleColumn(classId);
 	const columns = showStatus
 		? helper.columns([title, pointsColumn, createdAtColumn, statusColumn])
@@ -150,9 +176,39 @@ function ChallengeTable({
 		columns,
 		data: challenges,
 		getRowId: (ch) => String(ch.ChallengeID),
+		state: { columnFilters },
+		onColumnFiltersChange: setColumnFilters,
 	});
+	return (
+		<div className="space-y-4">
+			{showStatus && (
+				<Select
+					defaultValue="all"
+					onValueChange={(value) => {
+						if (value === null) return;
 
-	return <DataTable table={table} emptyMessage="No challenges" />;
+						if (value === "all") {
+							table.getColumn("status")?.setFilterValue(undefined);
+						} else {
+							table.getColumn("status")?.setFilterValue(value);
+						}
+					}}
+				>
+					<SelectTrigger>
+						<SelectValue placeholder="Filter by completion" />
+					</SelectTrigger>
+
+					<SelectContent>
+						<SelectItem value="all">All</SelectItem>
+						<SelectItem value="completed">Completed</SelectItem>
+						<SelectItem value="notCompleted">Not Completed</SelectItem>
+					</SelectContent>
+				</Select>
+			)}
+
+			<DataTable table={table} emptyMessage="No challenges" />
+		</div>
+	);
 }
 
 function StatusBadge({ status }: { status: ChallengeStatus }) {
