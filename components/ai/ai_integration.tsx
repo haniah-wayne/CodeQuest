@@ -1,3 +1,4 @@
+"use client";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 //this component will be used and called for all ai stuff in the project
 import React, { useState } from "react";
