@@ -2,7 +2,7 @@ import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChallengeList } from "@/components/class/challenge-list";
+import { type ChallengeStatus, ChallengeList } from "@/components/class/challenge-list";
 import { JoinCode } from "@/components/class/join-code";
 import { LeaderboardList } from "@/components/class/leaderboard-list";
 import { RosterList } from "@/components/class/roster-list";
@@ -21,7 +21,7 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 
 	// RLS decides who can see the class and its rows, so a missing class means
 	// not found or not allowed
-	const [classResult, challengesResult, enrollmentResult, leaderboardResult] = await Promise.all([
+	const [classResult, challengesResult, rosterResult, leaderboardResult] = await Promise.all([
 		supabase
 			.from("Classes")
 			.select("ClassName, Description, ClassCode, ProfessorID")
@@ -29,14 +29,11 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 			.maybeSingle(),
 		supabase
 			.from("Challenges")
-			.select("ChallengeID, Title, Description, ChallengeType, Points")
+			.select("ChallengeID, Title, Description, Points, CreatedAt, Submission(Status)")
 			.eq("ClassID", id)
+			.eq("Submission.StudentID", user.id)
 			.order("CreatedAt"),
-		supabase
-			.from("Enrollment")
-			.select("StudentID, Profile(Name, Email)")
-			.eq("ClassID", id)
-			.order("EnrolledAt"),
+		supabase.rpc("get_class_roster", { p_class_id: id }),
 		supabase.rpc("get_class_leaderboard", { p_class_id: id }),
 	]);
 
@@ -44,19 +41,30 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 
 	if (!c) notFound();
 
-	for (const { error } of [challengesResult, enrollmentResult, leaderboardResult]) {
+	for (const { error } of [challengesResult, rosterResult, leaderboardResult]) {
 		if (error) console.error(error);
 	}
 
 	const isProfessor = c.ProfessorID === user.id;
 
-	const challenges = challengesResult.data ?? [];
+	const challenges = (challengesResult.data ?? []).map(({ Submission: submissions, ...ch }) => {
+		const status: ChallengeStatus = submissions.some((s) => s.Status === "correct")
+			? "solved"
+			: submissions.length > 0
+				? "attempted"
+				: "not_started";
 
-	const roster = (enrollmentResult.data ?? []).map((e) => ({
-		id: e.StudentID,
-		name: e.Profile.Name,
-		email: e.Profile.Email,
-	}));
+		return { ...ch, status };
+	});
+
+	// only professors get emails
+	const roster = (rosterResult.data ?? [])
+		.map((r) => ({
+			id: r.student_id,
+			name: r.student_name,
+			email: isProfessor ? r.student_email : null,
+		}))
+		.sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
 
 	return (
 		<>
@@ -80,9 +88,10 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 
 			<ChallengeList
 				challenges={challenges}
-				error={challengesResult.error}
+				error={challengesResult.error !== null}
 				classId={classId}
 				create={isProfessor}
+				showStatus={!isProfessor}
 			/>
 
 			<div className="grid items-start gap-6 lg:grid-cols-2">
@@ -94,7 +103,7 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 
 				<RosterList
 					students={roster}
-					error={enrollmentResult.error}
+					error={rosterResult.error !== null}
 					showEmails={isProfessor}
 				/>
 			</div>
