@@ -366,6 +366,7 @@ export type Database = {
         }
         Returns: number
       }
+      delete_own_account: { Args: never; Returns: undefined }
       get_class_leaderboard: {
         Args: { p_class_id: number }
         Returns: {

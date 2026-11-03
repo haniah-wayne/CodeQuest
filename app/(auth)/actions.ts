@@ -125,3 +125,16 @@ export async function updatePassword(prevState: unknown, formData: FormData) {
 
 	return { success: "Password updated", error: "" };
 }
+
+export async function deleteAccount() {
+	//deletes the account of a user
+	const supabase = await createClient();
+
+	const { error } = await supabase.rpc("delete_own_account"); //deletes the login and a database trigger deletes the profile with it
+
+	if (error) {
+		return { success: "", error: error.message };
+	}
+
+	await signOut(); //signs user out last since it redirects, and getUser needs the session
+}
