@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CodeWorkspace } from "@/components/challenge/code-workspace";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
+import { SubmissionListtable } from "@/components/sort-submission";
 import { Badge } from "@/components/ui/badge";
 import { requireSessionUser } from "@/lib/auth/session";
 import { DEFAULT_LANGUAGE, isLanguageId } from "@/lib/challenges/languages";
@@ -48,7 +49,26 @@ export default async function ChallengePage(
 
 	if (challenge.Classes.ProfessorID === user.id) {
 		// TODO: professor view
-		return null;
+		const professorResult = await supabase
+			.from("Submission")
+			.select(`
+  					StudentID,
+  					Score,
+  					Status,
+  					SubmittedAt,
+  					Profile(Name)
+			`)
+			.eq("ChallengeID", challengeId)
+			.order("SubmittedAt", { ascending: false });
+
+		const submissions = (professorResult.data ?? []).map((row) => ({
+			StudentID: row.StudentID,
+			Name: row.Profile?.Name ?? "Unknown",
+			Score: row.Score,
+			SubmittedAt: row.SubmittedAt,
+			Status: row.Status,
+		}));
+		return <SubmissionListtable data={submissions} />;
 	}
 
 	if (submissionsResult.error) console.error(submissionsResult.error);

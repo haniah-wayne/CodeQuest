@@ -1,18 +1,9 @@
 "use client";
-import {
-	createColumnHelper,
-	createSortedRowModel,
-	createFilteredRowModel,
-	columnFilteringFeature,
-	rowSortingFeature,
-	sortFn_alphanumeric,
-	sortFn_datetime,
-	sortFn_text,
-	tableFeatures,
-	useTable,
-} from "@tanstack/react-table";
+
+import { createColumnHelper, useTable } from "@tanstack/react-table";
 import type { SortingState, ColumnFiltersState } from "@tanstack/react-table";
 import React from "react";
+import { DataTable, dataTableFeatures } from "@/components/class/data-table";
 import {
 	Select,
 	SelectContent,
@@ -24,22 +15,10 @@ import {
 type Submission = {
 	StudentID: string;
 	Name: string;
-	Score: number;
+	Score: number | null;
 	SubmittedAt: string;
-	Status: string;
+	Status: string | null;
 };
-
-const features = tableFeatures({
-	rowSortingFeature,
-	columnFilteringFeature,
-	sortedRowModel: createSortedRowModel(),
-	filteredRowModel: createFilteredRowModel(),
-	sortFns: {
-		alphanumeric: sortFn_alphanumeric,
-		datetime: sortFn_datetime,
-		text: sortFn_text,
-	},
-});
 
 type SubmissionListtableProps = {
 	data: Submission[];
@@ -50,7 +29,7 @@ export function SubmissionListtable({ data }: SubmissionListtableProps) {
 
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
 
-	const columnHelper = createColumnHelper<typeof features, Submission>();
+	const columnHelper = createColumnHelper<typeof dataTableFeatures, Submission>();
 
 	const columns = React.useMemo(
 		() =>
@@ -66,11 +45,12 @@ export function SubmissionListtable({ data }: SubmissionListtableProps) {
 
 				columnHelper.accessor("Name", {
 					header: "Name",
-					sortFn: "text",
+					sortFn: "alphanumeric",
 					sortUndefined: "last",
 				}),
 				columnHelper.accessor("Score", {
 					header: "Score",
+					sortFn: "basic",
 					sortUndefined: "last",
 				}),
 				columnHelper.accessor("Status", {
@@ -90,9 +70,8 @@ export function SubmissionListtable({ data }: SubmissionListtableProps) {
 					},
 				}),
 				columnHelper.accessor((row) => row.SubmittedAt ?? undefined, {
-					id: "SubmittedAt",
-					header: () => "Time",
-					sortFn: "alphanumeric",
+					header: "Time",
+					sortFn: "basic",
 					sortUndefined: "last",
 				}),
 			]),
@@ -100,7 +79,7 @@ export function SubmissionListtable({ data }: SubmissionListtableProps) {
 	);
 
 	const table = useTable({
-		features,
+		features: dataTableFeatures,
 		columns,
 		data,
 		state: {
@@ -111,31 +90,8 @@ export function SubmissionListtable({ data }: SubmissionListtableProps) {
 		onColumnFiltersChange: setColumnFilters,
 	});
 
-	const sortedSubmissions = table.getRowModel().rows.map((row) => row.original);
-
-	const [sortBy, setSortBy] = React.useState("SubmittedAt");
-
 	return (
 		<div className="space-y-4">
-			<Select
-				value={sortBy}
-				onValueChange={(value) => {
-					if (value === null) return;
-					setSortBy(value);
-					table.setSorting([{ id: value, desc: value !== "Name" }]);
-				}}
-			>
-				<SelectTrigger>
-					<SelectValue placeholder="Sort by" />
-				</SelectTrigger>
-				<SelectContent>
-					<SelectItem value="StudentID">StudentID</SelectItem>
-					<SelectItem value="Name">Name</SelectItem>
-					<SelectItem value="Score">Score</SelectItem>
-					<SelectItem value="Status">Status</SelectItem>
-					<SelectItem value="SubmittedAt">Time</SelectItem>
-				</SelectContent>
-			</Select>
 			<Select
 				defaultValue="all"
 				onValueChange={(value) => {
@@ -158,7 +114,7 @@ export function SubmissionListtable({ data }: SubmissionListtableProps) {
 					<SelectItem value="notCompleted">Not Completed</SelectItem>
 				</SelectContent>
 			</Select>
-			<pre>{JSON.stringify(sortedSubmissions, null, 2)}</pre>
+			<DataTable table={table} emptyMessage="No submissions" />
 		</div>
 	);
 }
