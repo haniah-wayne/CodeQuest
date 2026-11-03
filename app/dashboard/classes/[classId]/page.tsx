@@ -92,6 +92,7 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 				classId={classId}
 				create={isProfessor}
 				showStatus={!isProfessor}
+				showActions={isProfessor}
 			/>
 
 			<div className="grid items-start gap-6 lg:grid-cols-2">

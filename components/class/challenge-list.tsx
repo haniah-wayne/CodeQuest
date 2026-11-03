@@ -1,6 +1,11 @@
 "use client";
 
-import { CheckmarkCircle02Icon, Flag02Icon } from "@hugeicons/core-free-icons";
+import {
+	CheckmarkCircle02Icon,
+	Flag02Icon,
+	MoreHorizontalIcon,
+	TaskDone01Icon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { createColumnHelper, useTable } from "@tanstack/react-table";
 import Link from "next/link";
@@ -11,7 +16,13 @@ import {
 	dataTableFeatures,
 } from "@/components/class/data-table";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { Tables } from "@/supabase/database.types";
 
 export type ChallengeStatus = "not_started" | "attempted" | "solved";
@@ -83,18 +94,27 @@ const createdAtColumn = helper.accessor("CreatedAt", {
 	),
 });
 
+const actionsColumn = (classId: string) =>
+	helper.display({
+		id: "actions",
+		header: () => <span className="sr-only">Actions</span>,
+		cell: (info) => <ChallengeActions classId={classId} challenge={info.row.original} />,
+	});
+
 export function ChallengeList({
 	challenges,
 	error,
 	classId,
 	create,
 	showStatus,
+	showActions,
 }: {
 	challenges: Challenge[];
 	error: boolean;
 	classId: string;
 	create?: boolean;
 	showStatus: boolean;
+	showActions: boolean;
 }) {
 	const createButton = create ? (
 		<Link
@@ -125,7 +145,12 @@ export function ChallengeList({
 					actions={createButton}
 				/>
 			) : (
-				<ChallengeTable challenges={challenges} classId={classId} showStatus={showStatus} />
+				<ChallengeTable
+					challenges={challenges}
+					classId={classId}
+					showStatus={showStatus}
+					showActions={showActions}
+				/>
 			)}
 		</ClassSection>
 	);
@@ -135,15 +160,20 @@ function ChallengeTable({
 	challenges,
 	classId,
 	showStatus,
+	showActions,
 }: {
 	challenges: Challenge[];
 	classId: string;
 	showStatus: boolean;
+	showActions: boolean;
 }) {
-	const title = titleColumn(classId);
-	const columns = showStatus
-		? helper.columns([title, pointsColumn, createdAtColumn, statusColumn])
-		: helper.columns([title, pointsColumn, createdAtColumn]);
+	const columns = helper.columns([
+		titleColumn(classId),
+		pointsColumn,
+		createdAtColumn,
+		...(showStatus ? [statusColumn] : []),
+		...(showActions ? [actionsColumn(classId)] : []),
+	]);
 
 	const table = useTable({
 		features: dataTableFeatures,
@@ -153,6 +183,35 @@ function ChallengeTable({
 	});
 
 	return <DataTable table={table} emptyMessage="No challenges" />;
+}
+
+function ChallengeActions({ classId, challenge }: { classId: string; challenge: Challenge }) {
+	const base = `/dashboard/classes/${classId}/challenges/${challenge.ChallengeID}`;
+
+	return (
+		<div className="flex justify-end">
+			<DropdownMenu>
+				<DropdownMenuTrigger
+					render={
+						<Button
+							variant="ghost"
+							size="icon-sm"
+							aria-label={`Actions for ${challenge.Title}`}
+						/>
+					}
+				>
+					<HugeiconsIcon icon={MoreHorizontalIcon} />
+				</DropdownMenuTrigger>
+
+				<DropdownMenuContent align="end" className="w-auto">
+					<DropdownMenuItem render={<Link href={`${base}/submissions`} />}>
+						<HugeiconsIcon icon={TaskDone01Icon} />
+						View submissions
+					</DropdownMenuItem>
+				</DropdownMenuContent>
+			</DropdownMenu>
+		</div>
+	);
 }
 
 function StatusBadge({ status }: { status: ChallengeStatus }) {
