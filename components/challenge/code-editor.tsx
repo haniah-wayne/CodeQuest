@@ -43,6 +43,16 @@ const layout = EditorView.theme({
 	".cm-gutter": { minHeight: "18rem" },
 });
 
+// Blocks edits and content stays focusable
+function readOnlyExtension(readOnly: boolean) {
+	if (!readOnly) return [];
+
+	return [
+		EditorState.readOnly.of(true),
+		EditorView.contentAttributes.of({ "aria-readonly": "true", inputmode: "none" }),
+	];
+}
+
 function insertIndent(view: EditorView) {
 	if (view.state.selection.ranges.some((r) => !r.empty)) return indentMore(view);
 
@@ -59,14 +69,17 @@ export function CodeEditor({
 	language,
 	value,
 	onChange,
+	readOnly = false,
 }: {
 	language: LanguageId;
 	value: string;
 	onChange: (value: string) => void;
+	readOnly?: boolean;
 }) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const viewRef = useRef<EditorView | null>(null);
 	const languageSlot = useRef(new Compartment());
+	const readOnlySlot = useRef(new Compartment());
 
 	const statesRef = useRef(new Map<LanguageId, EditorState>());
 	const [placeholder] = useState(value);
@@ -91,6 +104,7 @@ export function CodeEditor({
 				layout,
 				githubLight,
 				languageSlot.current.of([]),
+				readOnlySlot.current.of(readOnlyExtension(readOnly)),
 				keymap.of([
 					...closeBracketsKeymap,
 					{ key: "Tab", run: insertIndent, shift: indentLess },
@@ -165,27 +179,41 @@ export function CodeEditor({
 		};
 	}, [language]);
 
+	// Reconfigure in place so locking keeps the doc and undo history
+	useEffect(() => {
+		const view = viewRef.current;
+
+		// createState already applied on mount
+		if (!view || view.state.readOnly === readOnly) return;
+
+		view.dispatch({
+			effects: readOnlySlot.current.reconfigure(readOnlyExtension(readOnly)),
+		});
+	}, [readOnly]);
+
 	return (
 		<div className="flex flex-col">
-			<div
-				className="sticky top-20 z-10 hidden gap-1 overflow-x-auto border-b border-border/60 bg-white/90 px-3 py-2 backdrop-blur-sm sm:top-24 pointer-coarse:flex"
-				role="toolbar"
-				aria-label="Insert symbol"
-			>
-				{["Tab", ...SYMBOL_KEYS].map((key) => (
-					<button
-						key={key}
-						type="button"
-						tabIndex={-1}
-						className="h-9 min-w-9 shrink-0 rounded-lg border border-border bg-muted/50 px-2 font-mono text-sm active:bg-muted"
-						onMouseDown={(e) => e.preventDefault()}
-						onClick={() => insertSymbol(key)}
-					>
-						{key === "Tab" ? "⇥" : key}
-						{key === "Tab" && <span className="sr-only">Tab</span>}
-					</button>
-				))}
-			</div>
+			{!readOnly && (
+				<div
+					className="sticky top-20 z-10 hidden gap-1 overflow-x-auto border-b border-border/60 bg-white/90 px-3 py-2 backdrop-blur-sm sm:top-24 pointer-coarse:flex"
+					role="toolbar"
+					aria-label="Insert symbol"
+				>
+					{["Tab", ...SYMBOL_KEYS].map((key) => (
+						<button
+							key={key}
+							type="button"
+							tabIndex={-1}
+							className="h-9 min-w-9 shrink-0 rounded-lg border border-border bg-muted/50 px-2 font-mono text-sm active:bg-muted"
+							onMouseDown={(e) => e.preventDefault()}
+							onClick={() => insertSymbol(key)}
+						>
+							{key === "Tab" ? "⇥" : key}
+							{key === "Tab" && <span className="sr-only">Tab</span>}
+						</button>
+					))}
+				</div>
+			)}
 
 			<div
 				ref={containerRef}

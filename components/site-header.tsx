@@ -1,7 +1,7 @@
 import { MapsLocation01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
-import { signOut } from "@/app/(auth)/actions";
+import { AccountMenu } from "@/components/account-menu";
 import { Button } from "@/components/ui/button";
 import { getSessionUser } from "@/lib/auth/session";
 
@@ -22,13 +22,9 @@ export async function SiteHeader() {
 				<div className="ml-auto flex items-center gap-1 sm:gap-2">
 					{user ? (
 						<>
-							<span className="mr-2">{user.name}</span>
+							<span>{user.name}</span>
 
-							<form action={signOut}>
-								<Button className="px-3" type="submit" size="sm" variant="outline">
-									Sign out
-								</Button>
-							</form>
+							<AccountMenu />
 						</>
 					) : (
 						<>
