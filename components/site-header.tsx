@@ -3,12 +3,6 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { AccountMenu } from "@/components/account-menu";
 import { Button } from "@/components/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { getSessionUser } from "@/lib/auth/session";
 
 export async function SiteHeader() {
