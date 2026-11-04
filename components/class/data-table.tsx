@@ -6,6 +6,7 @@ import {
 	columnFilteringFeature,
 	createFilteredRowModel,
 	createSortedRowModel,
+	filterFn_arrHas,
 	filterFn_includesString,
 	globalFilteringFeature,
 	type ReactTable,
@@ -36,7 +37,7 @@ export const dataTableFeatures = tableFeatures({
 	columnFilteringFeature,
 	globalFilteringFeature,
 	filteredRowModel: createFilteredRowModel(),
-	filterFns: { includesString: filterFn_includesString },
+	filterFns: { arrHas: filterFn_arrHas, includesString: filterFn_includesString },
 	rowExpandingFeature,
 });
 
