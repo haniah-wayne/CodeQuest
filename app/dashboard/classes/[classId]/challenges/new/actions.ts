@@ -13,6 +13,7 @@ export interface CreateChallengeState {
 	fieldErrors?: Partial<
 		Record<"title" | "description" | "solution" | "points" | "longitude" | "latitude", string>
 	>;
+<<<<<<< HEAD
 	// Sent back on failure so the form doesn't clear what was typed - 10/29.Haniah -> added the hidden bool
 	values?: {
 		title: string;
@@ -21,6 +22,10 @@ export interface CreateChallengeState {
 		points: string;
 		hidden: boolean;
 	};
+=======
+	// Sent back on failure so the form doesn't clear what was typed
+	values?: { title: string; description: string; solution: string; points: string };
+>>>>>>> 15ba4eec28d670e4a2e0ad97d48b1a10c206c5ab
 }
 
 export async function createChallenge(
@@ -32,7 +37,10 @@ export async function createChallenge(
 		description: formData.get("description")?.toString() ?? "",
 		solution: formData.get("solution")?.toString() ?? "",
 		points: formData.get("points")?.toString() ?? "",
+<<<<<<< HEAD
 		hidden: formData.get("hidden") === "true", //10.29.Haniah -> added the hidden bool, reads from form
+=======
+>>>>>>> 15ba4eec28d670e4a2e0ad97d48b1a10c206c5ab
 	};
 
 	const location = {
@@ -76,7 +84,11 @@ export async function createChallenge(
 		return { values, error: "You don't have permission to add challenges to this class." };
 	}
 
+<<<<<<< HEAD
 	const { title, description, solution, points, longitude, latitude, hidden } = parsed.output;
+=======
+	const { title, description, solution, points, longitude, latitude } = parsed.output;
+>>>>>>> 15ba4eec28d670e4a2e0ad97d48b1a10c206c5ab
 
 	const { error } = await supabase.rpc("create_challenge", {
 		class_id: classId,
@@ -87,7 +99,10 @@ export async function createChallenge(
 		long: longitude,
 		lat: latitude,
 		radius: 100,
+<<<<<<< HEAD
 		hidden,
+=======
+>>>>>>> 15ba4eec28d670e4a2e0ad97d48b1a10c206c5ab
 	});
 
 	if (error) {
@@ -100,6 +115,7 @@ export async function createChallenge(
 	redirect(`/dashboard/classes/${classId}`);
 }
 
+<<<<<<< HEAD
 export async function updateChallenge(
 	_prevState: CreateChallengeState,
 	formData: FormData,
@@ -161,6 +177,18 @@ export async function updateChallenge(
 	revalidatePath(`/dashboard/classes/${classId}/challenges/${challengeId}`);
 	redirect(`/dashboard/classes/${classId}`);
 }
+=======
+//10.30 - functionality in updating any challenge
+export async function updateChallenge() {
+	//confirm challenge class and instructor
+	//get all the already stored information
+}
+
+//export async function deleteChallenge() {
+//confirm challenge class and instructor
+//delete challnege from database
+//}
+>>>>>>> 15ba4eec28d670e4a2e0ad97d48b1a10c206c5ab
 
 export async function deleteChallenge(
 	_prevState: { error?: string },
@@ -192,7 +220,11 @@ export async function deleteChallenge(
 	return {};
 }
 
+<<<<<<< HEAD
 // 10.30.Haniah added a function to check if the professor owns the challenge
+=======
+// 10.30.Haniah - added a function to check if the professor owns the challenge before deleting it
+>>>>>>> 15ba4eec28d670e4a2e0ad97d48b1a10c206c5ab
 async function professorOwnsChallenge(classId: number, challengeId: number) {
 	const user = await getSessionUser();
 

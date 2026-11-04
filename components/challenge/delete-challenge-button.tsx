@@ -13,19 +13,20 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 
-export function DeleteChallengeButton({     //values from challenge list
+export function DeleteChallengeButton({
+	//values from challenge list
 	classId,
 	challengeId,
 	title,
 }: {
-	classId: string;                        //types for the values
+	classId: string; //types for the values
 	challengeId: number;
 	title: string;
 }) {
-	const [state, action, pending] = useActionState(deleteChallenge, {});    //action state of the function
+	const [state, action, pending] = useActionState(deleteChallenge, {}); //action state of the function
 
 	return (
-		<Dialog>       
+		<Dialog>
 			<DialogTrigger render={<Button type="button" variant="outline" size="sm" />}>
 				Delete
 			</DialogTrigger>
@@ -35,7 +36,8 @@ export function DeleteChallengeButton({     //values from challenge list
 					<DialogTitle>Delete this challenge?</DialogTitle>
 
 					<DialogDescription>
-						&quot;{title}&quot; and its student submissions and points will be permanently removed.
+						&quot;{title}&quot; and its student submissions and points will be
+						permanently removed.
 					</DialogDescription>
 				</DialogHeader>
 
