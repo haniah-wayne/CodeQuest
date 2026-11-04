@@ -66,12 +66,16 @@ export function ChallengeList({
 							<div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
 								<div className="flex min-w-0 flex-col gap-0.5 pt-1">
 									<h3 className="text-label">
-										<Link
-											className="rounded-sm outline-none after:absolute after:inset-0 after:rounded-2xl focus-visible:after:ring-[3px] focus-visible:after:ring-ring/50"
-											href={`/dashboard/classes/${classId}/challenges/${ch.ChallengeID}`}
-										>
-											{ch.Title}
-										</Link>
+										{create ? (
+											ch.Title
+										) : (
+											<Link
+												className="rounded-sm outline-none after:absolute after:inset-0 after:rounded-2xl focus-visible:after:ring-[3px] focus-visible:after:ring-ring/50"
+												href={`/dashboard/classes/${classId}/challenges/${ch.ChallengeID}`}
+											>
+												{ch.Title}
+											</Link>
+										)}
 									</h3>
 
 									{ch.Description && (
@@ -84,6 +88,13 @@ export function ChallengeList({
 								<div>
 									{create && (
 										<div className="relative z-10 flex items-center gap-1.5">
+											<Link
+												className={buttonVariants({ variant: "outline", size: "sm" })}
+												href={`/dashboard/classes/${classId}/challenges/${ch.ChallengeID}/edit`}
+											>
+												Edit
+											</Link>
+
 											<DeleteChallengeButton
 												classId={classId}
 												challengeId={ch.ChallengeID}

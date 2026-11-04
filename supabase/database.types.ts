@@ -380,7 +380,7 @@ export type Database = {
       get_class_roster: {
         Args: { p_class_id: number }
         Returns: {
-          student_email: string
+          student_email: string | null
           student_id: string
           student_name: string
         }[]

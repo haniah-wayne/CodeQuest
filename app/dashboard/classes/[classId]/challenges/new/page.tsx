@@ -1,3 +1,5 @@
+/*
+
 "use client";
 
 import {
@@ -27,6 +29,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { DEFAULT_POINTS, MAX_POINTS, MIN_POINTS } from "@/lib/challenges/schemas";
 import { type CreateChallengeState, createChallenge } from "./actions";
 
 const MapView = dynamic(() => import("@/components/mapview"), {
@@ -94,6 +97,33 @@ export default function CreateChallengePage() {
 								/>
 
 								<FieldError>{state.fieldErrors?.title}</FieldError>
+							</Field>
+
+							<Field data-invalid={Boolean(state.fieldErrors?.points) || undefined}>
+								<FieldLabel className="text-label" htmlFor="points">
+									Points
+								</FieldLabel>
+
+								<Input
+									className="h-11 w-32 tabular-nums"
+									id="points"
+									name="points"
+									type="number"
+									inputMode="numeric"
+									min={MIN_POINTS}
+									max={MAX_POINTS}
+									step={1}
+									defaultValue={state.values?.points ?? DEFAULT_POINTS}
+									required
+									aria-invalid={Boolean(state.fieldErrors?.points) || undefined}
+									aria-describedby="points-hint"
+								/>
+
+								<FieldDescription id="points-hint">
+									Awarded once to each student who solves it.
+								</FieldDescription>
+
+								<FieldError>{state.fieldErrors?.points}</FieldError>
 							</Field>
 
 							<Field
@@ -216,7 +246,7 @@ export default function CreateChallengePage() {
 							</div>
 						</div>
 
-						{/* TODO: update radius description when radius field is added */}
+						// TODO: update radius description when radius field is added 
 						<div className="flex flex-col gap-1 border-t border-border/60 px-5 py-3 sm:px-6">
 							<p className="text-body-sm text-muted-foreground">
 								Students must be within 100 m of the pin to unlock it.
@@ -279,5 +309,47 @@ function FormSection({
 
 			{children}
 		</section>
+	);
+}
+
+*/
+
+"use client";
+
+import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { ChallengeForm } from "@/components/challenge/challenge-form";
+import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
+import { createChallenge } from "./actions";
+
+export default function CreateChallengePage() {
+	const { classId } = useParams<{ classId: string }>();
+
+	return (
+		<>
+			<div className="flex flex-col gap-6">
+				<Link
+					className="flex w-fit items-center gap-1.5 rounded-sm text-caption text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+					href={`/dashboard/classes/${classId}`}
+				>
+					<HugeiconsIcon icon={ArrowLeft01Icon} className="size-3.5" />
+					Back to class
+				</Link>
+
+				<DashboardPageHeader
+					title="New challenge"
+					description="Write a problem, then pin it somewhere on campus. Students have to be within the radius to unlock and solve it."
+				/>
+			</div>
+
+			<ChallengeForm
+				classId={classId}
+				action={createChallenge}
+				submitLabel="Create challenge"
+				pendingLabel="Creating challenge…"
+			/>
+		</>
 	);
 }

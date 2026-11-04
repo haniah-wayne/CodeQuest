@@ -102,6 +102,25 @@ export default function MapView({
 		}
 
 		if (mode === "professor") {
+			const { longitude, latitude } = challengeRef.current;
+
+			if (longitude !== undefined && latitude !== undefined) {
+				markerRef.current = addChallengeMarker(map, longitude, latitude);
+				map.setCenter([longitude, latitude]);
+			}
+
+			removeClickListener = selectChallengeLocation(map, (longitude, latitude) => {
+				if (markerRef.current) {
+					removeChallengeMarker(markerRef.current);
+				}
+
+				markerRef.current = addChallengeMarker(map, longitude, latitude);
+
+				locationSelectRef.current?.(longitude, latitude);
+			});
+		}
+
+		if (mode === "professor") {
 			removeClickListener = selectChallengeLocation(map, (longitude, latitude) => {
 				if (markerRef.current) {
 					removeChallengeMarker(markerRef.current);
