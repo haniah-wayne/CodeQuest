@@ -8,6 +8,8 @@ import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-heade
 import { Badge } from "@/components/ui/badge";
 import { requireSessionUser } from "@/lib/auth/session";
 import { DEFAULT_LANGUAGE, isLanguageId } from "@/lib/challenges/languages";
+import { isWithinUnlockRadius } from "@/lib/challenges/location";
+import { getSavedPosition } from "@/lib/challenges/position";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ChallengePage(
@@ -24,10 +26,12 @@ export default async function ChallengePage(
 
 	// RLS decides who can see the challenge, so a missing row means not found
 	// or not allowed
-	const [challengeResult, submissionsResult] = await Promise.all([
+	const [challengeResult, submissionsResult, position] = await Promise.all([
 		supabase
 			.from("Challenges")
-			.select("Title, Description, Points, Classes(ClassName, ProfessorID)")
+			.select(
+				"Title, Description, Points, Classes(ClassName, ProfessorID), Locations(Longitude, Latitude, Radius)",
+			)
 			.eq("ChallengeID", challengeId)
 			.eq("ClassID", classId)
 			.maybeSingle(),
@@ -37,6 +41,7 @@ export default async function ChallengePage(
 			.eq("ChallengeID", challengeId)
 			.eq("StudentID", user.id)
 			.order("SubmittedAt", { ascending: false }),
+		getSavedPosition(),
 	]);
 
 	const challenge = challengeResult.data;
@@ -56,6 +61,9 @@ export default async function ChallengePage(
 	const submissions = submissionsResult.data ?? [];
 	const correct = submissions.find((s) => s.Status === "correct");
 	const solved = Boolean(correct);
+
+	// Locked challenges stay hidden even if the student has the link
+	if (!solved && !isWithinUnlockRadius(challenge.Locations, position)) notFound();
 
 	// Show the solution that was graded correct, otherwise pick up where the
 	// student left off with their last submission
