@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CodeWorkspace } from "@/components/challenge/code-workspace";
 import { SubmissionList } from "@/components/challenge/submission-list";
-import { ClassRealtime } from "@/components/class/class-realtime.js";
+import { ClassRealtime } from "@/components/class/class-realtime";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
 import { Badge } from "@/components/ui/badge";
 import { requireSessionUser } from "@/lib/auth/session";
