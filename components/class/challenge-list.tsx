@@ -1,13 +1,9 @@
 "use client";
 
-import {
-	CheckmarkCircle02Icon,
-	Flag02Icon,
-	MoreHorizontalIcon,
-	TaskDone01Icon,
-} from "@hugeicons/core-free-icons";
+import { CheckmarkCircle02Icon, Flag02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { createColumnHelper, useTable } from "@tanstack/react-table";
+import { cn } from "cn";
 import Link from "next/link";
 import { ClassSection, SectionEmpty, SectionError } from "@/components/class/class-section";
 import {
@@ -16,13 +12,7 @@ import {
 	dataTableFeatures,
 } from "@/components/class/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { buttonVariants } from "@/components/ui/button";
 import type { Tables } from "@/supabase/database.types";
 
 export type ChallengeStatus = "not_started" | "attempted" | "solved";
@@ -38,7 +28,7 @@ const dateFormat = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
 
 const helper = createColumnHelper<DataTableFeatures, Challenge>();
 
-const titleColumn = (classId: string) =>
+const titleColumn = (classId: string, linkRows: boolean) =>
 	helper.accessor("Title", {
 		header: "Title",
 		sortFn: "alphanumeric",
@@ -48,7 +38,10 @@ const titleColumn = (classId: string) =>
 			return (
 				<div className="flex max-w-md min-w-0 flex-col gap-0.5 py-1">
 					<Link
-						className="w-fit rounded-sm text-label whitespace-normal outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
+						className={cn(
+							"w-fit rounded-sm text-label whitespace-normal outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50",
+							linkRows && "after:absolute after:inset-0",
+						)}
 						href={`/dashboard/classes/${classId}/challenges/${ch.ChallengeID}`}
 					>
 						{ch.Title}
@@ -94,27 +87,20 @@ const createdAtColumn = helper.accessor("CreatedAt", {
 	),
 });
 
-const actionsColumn = (classId: string) =>
-	helper.display({
-		id: "actions",
-		header: () => <span className="sr-only">Actions</span>,
-		cell: (info) => <ChallengeActions classId={classId} challenge={info.row.original} />,
-	});
-
 export function ChallengeList({
 	challenges,
 	error,
 	classId,
 	create,
 	showStatus,
-	showActions,
+	linkRows,
 }: {
 	challenges: Challenge[];
 	error: boolean;
 	classId: string;
 	create?: boolean;
 	showStatus: boolean;
-	showActions: boolean;
+	linkRows: boolean;
 }) {
 	const createButton = create ? (
 		<Link
@@ -149,7 +135,7 @@ export function ChallengeList({
 					challenges={challenges}
 					classId={classId}
 					showStatus={showStatus}
-					showActions={showActions}
+					linkRows={linkRows}
 				/>
 			)}
 		</ClassSection>
@@ -160,19 +146,18 @@ function ChallengeTable({
 	challenges,
 	classId,
 	showStatus,
-	showActions,
+	linkRows,
 }: {
 	challenges: Challenge[];
 	classId: string;
 	showStatus: boolean;
-	showActions: boolean;
+	linkRows: boolean;
 }) {
 	const columns = helper.columns([
-		titleColumn(classId),
+		titleColumn(classId, linkRows),
 		pointsColumn,
 		createdAtColumn,
 		...(showStatus ? [statusColumn] : []),
-		...(showActions ? [actionsColumn(classId)] : []),
 	]);
 
 	const table = useTable({
@@ -183,35 +168,6 @@ function ChallengeTable({
 	});
 
 	return <DataTable table={table} emptyMessage="No challenges" />;
-}
-
-function ChallengeActions({ classId, challenge }: { classId: string; challenge: Challenge }) {
-	const base = `/dashboard/classes/${classId}/challenges/${challenge.ChallengeID}`;
-
-	return (
-		<div className="flex justify-end">
-			<DropdownMenu>
-				<DropdownMenuTrigger
-					render={
-						<Button
-							variant="ghost"
-							size="icon-sm"
-							aria-label={`Actions for ${challenge.Title}`}
-						/>
-					}
-				>
-					<HugeiconsIcon icon={MoreHorizontalIcon} />
-				</DropdownMenuTrigger>
-
-				<DropdownMenuContent align="end" className="w-auto">
-					<DropdownMenuItem render={<Link href={`${base}/submissions`} />}>
-						<HugeiconsIcon icon={TaskDone01Icon} />
-						View submissions
-					</DropdownMenuItem>
-				</DropdownMenuContent>
-			</DropdownMenu>
-		</div>
-	);
 }
 
 function StatusBadge({ status }: { status: ChallengeStatus }) {

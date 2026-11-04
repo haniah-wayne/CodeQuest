@@ -112,7 +112,8 @@ export function DataTable<TData extends RowData>({
 							<Fragment key={row.id}>
 								<TableRow
 									data-state={expanded ? "expanded" : undefined}
-									className={cn(expanded && "border-b-0 bg-muted/50")}
+									// relative lets a cell's link stretch over the whole row
+									className={cn("relative", expanded && "border-b-0 bg-muted/50")}
 								>
 									{row.getAllCells().map((cell) => (
 										<TableCell key={cell.id}>
