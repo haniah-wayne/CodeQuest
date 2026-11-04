@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CodeWorkspace } from "@/components/challenge/code-workspace";
 import { SubmissionList } from "@/components/challenge/submission-list";
+import { ClassRealtime } from "@/components/class/class-realtime.js";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
 import { Badge } from "@/components/ui/badge";
 import { requireSessionUser } from "@/lib/auth/session";
@@ -158,6 +159,8 @@ async function ProfessorView({
 
 	return (
 		<>
+			<ClassRealtime classId={classId} />
+
 			<div className="flex flex-col gap-6">
 				<Link
 					className="flex w-fit items-center gap-1.5 rounded-sm text-caption text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
