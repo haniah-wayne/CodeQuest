@@ -136,6 +136,7 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 				classId={classId}
 				create={isProfessor}
 				showStatus={!isProfessor}
+				linkRows={isProfessor}
 				empty={
 					!isStudent
 						? undefined
