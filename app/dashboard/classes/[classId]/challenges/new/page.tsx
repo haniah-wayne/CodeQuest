@@ -11,7 +11,7 @@ import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useActionState, useState } from "react";
+import { useActionState, useState, useRef } from "react";
 import type * as React from "react";
 import { AuthFormError } from "@/components/auth-card";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
@@ -21,11 +21,32 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { DEFAULT_POINTS, MAX_POINTS, MIN_POINTS } from "@/lib/challenges/schemas";
 import { type CreateChallengeState, createChallenge } from "./actions";
+//adding the necessary imports for the test cases, additional
+import {
+	Add01Icon, 
+	Delete02Icon, 
+	TestTube01Icon, 
+} from "@hugeicons/core-free-icons";
+
+
+import { Checkbox } from "@/components/ui/checkbox"; 
 
 const MapView = dynamic(() => import("@/components/mapview"), {
 	ssr: false,
 	loading: () => <div className="size-full animate-pulse bg-muted" />,
 });
+
+
+// caps how long a submission can take
+const MAX_TEST_CASES = 20;
+
+// test case sample setup
+interface TestCaseDraft {
+	id: number;
+	input: string; // input for student code
+	expectedOutput: string; // expected output
+	hidden: boolean; // test case hidden from students
+}
 
 export default function CreateChallengePage() {
 	const { classId } = useParams<{ classId: string }>();
@@ -42,6 +63,35 @@ export default function CreateChallengePage() {
 
 	const locationError = state.fieldErrors?.longitude ?? state.fieldErrors?.latitude;
 	const classHref = `/dashboard/classes/${classId}`;
+	const nextTestId = useRef(1);  //value to remeber bw renders
+
+	function newTestCase(hidden: boolean): TestCaseDraft {
+		return { id: nextTestId.current++, input: "", expectedOutput: "", hidden };
+	}
+
+	// one visible test case
+	const [testCases, setTestCases] = useState<TestCaseDraft[]>(() => [newTestCase(false)]);
+
+	
+	function updateTestCase(id: number, changes: Partial<Omit<TestCaseDraft, "id">>) {
+		setTestCases((current) =>
+			current.map((tc) => (tc.id === id ? { ...tc, ...changes } : tc)),
+		);
+	}
+
+	function removeTestCase(id: number) {
+		setTestCases((current) => current.filter((tc) => tc.id !== id));
+	}
+
+	function addTestCase() {
+		
+		setTestCases((current) => [...current, newTestCase(true)]);
+	}
+
+	// exported as a json
+	const serializedTestCases = JSON.stringify(testCases.map(({ id: _id, ...tc }) => tc));
+
+
 
 	return (
 		<>
@@ -64,6 +114,10 @@ export default function CreateChallengePage() {
 				<input type="hidden" name="classId" value={classId} />
 				<input type="hidden" name="longitude" value={location?.longitude ?? ""} />
 				<input type="hidden" name="latitude" value={location?.latitude ?? ""} />
+
+				{/* Sends every test case with the form. The server doesn't read
+				    it yet; that's the next step */}
+				<input type="hidden" name="testCases" value={serializedTestCases} />
 
 				{state.error && <AuthFormError>{state.error}</AuthFormError>}
 
@@ -228,6 +282,105 @@ export default function CreateChallengePage() {
 						</div>
 					</FormSection>
 				</div>
+
+				{/* Full width under the grid: test cases need room, and code-like
+				    text would be cramped beside the map */}
+				<FormSection id="challenge-tests" title="Test cases" icon={TestTube01Icon}>
+					<div className="flex flex-col gap-4 p-5 sm:p-6">
+						<p className="text-body-sm text-muted-foreground">
+							Each test gives the input to the student&apos;s program (as stdin) and
+							checks what it prints. Hidden tests are never shown to students.
+						</p>
+
+						<ol className="flex flex-col gap-4">
+							{testCases.map((tc, index) => {
+								// Unique IDs link each label to own textarea,
+								const inputId = `test-${tc.id}-input`;
+								const outputId = `test-${tc.id}-output`;
+								const hiddenId = `test-${tc.id}-hidden`;
+
+								return (
+									<li
+										key={tc.id}
+										className="flex flex-col gap-3 rounded-2xl border border-border/60 p-4"
+									>
+										<div className="flex items-center justify-between gap-3">
+											<h3 className="text-label">Test {index + 1}</h3>
+
+											<Button
+												
+												type="button"
+												variant="ghost"
+												size="icon-sm"
+												aria-label={`Remove test ${index + 1}`}
+												disabled={testCases.length === 2}
+												onClick={() => removeTestCase(tc.id)}
+											>
+												<HugeiconsIcon icon={Delete02Icon} />
+											</Button>
+										</div>
+
+										<div className="grid gap-3 sm:grid-cols-2">
+											<Field>
+												<FieldLabel htmlFor={inputId}>Input</FieldLabel>
+
+												<Textarea
+													className="min-h-24 font-mono"
+													id={inputId}
+													value={tc.input}
+													onChange={(e) =>
+														updateTestCase(tc.id, { input: e.target.value })
+													}
+													placeholder={"3\n1 2 3"}
+												/>
+											</Field>
+
+											<Field>
+												<FieldLabel htmlFor={outputId}>Expected output</FieldLabel>
+
+												<Textarea
+													className="min-h-24 font-mono"
+													id={outputId}
+													value={tc.expectedOutput}
+													onChange={(e) =>
+														updateTestCase(tc.id, { expectedOutput: e.target.value })
+													}
+													placeholder="6"
+													required
+												/>
+											</Field>
+										</div>
+
+										<Field orientation="horizontal">
+											<Checkbox
+												id={hiddenId}
+												checked={tc.hidden}
+												// passing new checked value
+												onCheckedChange={(checked) =>
+													updateTestCase(tc.id, { hidden: checked })
+												}
+											/>
+
+											<FieldLabel htmlFor={hiddenId}>Hidden from students</FieldLabel>
+										</Field>
+									</li>
+								);
+							})}
+						</ol>
+
+						<Button
+							type="button"
+							variant="outline"
+							className="w-fit"
+							onClick={addTestCase}
+							// Stop at the limit
+							disabled={testCases.length >= MAX_TEST_CASES}
+						>
+							<HugeiconsIcon icon={Add01Icon} data-icon="inline-start" />
+							Add test case
+						</Button>
+					</div>
+				</FormSection>
 
 				<div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
 					<Link
