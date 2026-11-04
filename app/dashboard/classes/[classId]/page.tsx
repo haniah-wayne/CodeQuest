@@ -2,7 +2,7 @@ import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChallengeList } from "@/components/class/challenge-list";
+import { type ChallengeStatus, ChallengeList } from "@/components/class/challenge-list";
 import { ChallengeMap } from "@/components/class/challenge-map";
 import { JoinCode } from "@/components/class/join-code";
 import { LeaderboardList } from "@/components/class/leaderboard-list";
@@ -26,55 +26,47 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 
 	// RLS decides who can see the class and its rows, so a missing class means
 	// not found or not allowed
-	const [
-		classResult,
-		challengesResult,
-		enrollmentResult,
-		leaderboardResult,
-		solvedResult,
-		position,
-	] = await Promise.all([
-		supabase
-			.from("Classes")
-			.select("ClassName, Description, ClassCode, ProfessorID")
-			.eq("ClassID", id)
-			.maybeSingle(),
-		supabase
-			.from("Challenges")
-			.select(
-				"ChallengeID, Title, Description, ChallengeType, Points, Hidden, Locations(Longitude, Latitude, Radius)",
-			)
-			.eq("ClassID", id)
-			.order("CreatedAt"),
-		supabase
-			.from("Enrollment")
-			.select("StudentID, Profile(Name, Email)")
-			.eq("ClassID", id)
-			.order("EnrolledAt"),
-		supabase.rpc("get_class_leaderboard", { p_class_id: id }),
-		isStudent
-			? supabase
-					.from("Submission")
-					.select("ChallengeID")
-					.eq("StudentID", user.id)
-					.eq("Status", "correct")
-			: null,
-		isStudent ? getSavedPosition() : null,
-	]);
+	const [classResult, challengesResult, rosterResult, leaderboardResult, position] =
+		await Promise.all([
+			supabase
+				.from("Classes")
+				.select("ClassName, Description, ClassCode, ProfessorID")
+				.eq("ClassID", id)
+				.maybeSingle(),
+			supabase
+				.from("Challenges")
+				.select(
+					"ChallengeID, Title, Description, Points, CreatedAt, Hidden, Locations(Longitude, Latitude, Radius), Submission(Status)",
+				)
+				.eq("ClassID", id)
+				.eq("Submission.StudentID", user.id)
+				.order("CreatedAt"),
+			supabase.rpc("get_class_roster", { p_class_id: id }),
+			supabase.rpc("get_class_leaderboard", { p_class_id: id }),
+			isStudent ? getSavedPosition() : null,
+		]);
 
 	const c = classResult.data;
 
 	if (!c) notFound();
 
-	for (const result of [challengesResult, enrollmentResult, leaderboardResult, solvedResult]) {
-		if (result?.error) console.error(result.error);
+	for (const { error } of [challengesResult, rosterResult, leaderboardResult]) {
+		if (error) console.error(error);
 	}
 
 	const isProfessor = c.ProfessorID === user.id;
 
-	const solved = new Set(solvedResult?.data?.map((s) => s.ChallengeID));
+	const allChallenges = (challengesResult.data ?? []).map(
+		({ Submission: submissions, ...ch }) => {
+			const status: ChallengeStatus = submissions.some((s) => s.Status === "correct")
+				? "solved"
+				: submissions.length > 0
+					? "attempted"
+					: "not_started";
 
-	const allChallenges = challengesResult.data ?? [];
+			return { ...ch, status };
+		},
+	);
 
 	// Students only see challenges they're standing near or have already solved
 	const unlocked = new Set(
@@ -82,7 +74,7 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 			.filter(
 				(ch) =>
 					!isStudent ||
-					solved.has(ch.ChallengeID) ||
+					ch.status === "solved" ||
 					isWithinUnlockRadius(ch.Locations, position),
 			)
 			.map((ch) => ch.ChallengeID),
@@ -107,11 +99,14 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 			})),
 		);
 
-	const roster = (enrollmentResult.data ?? []).map((e) => ({
-		id: e.StudentID,
-		name: e.Profile.Name,
-		email: e.Profile.Email,
-	}));
+	// only professors get emails
+	const roster = (rosterResult.data ?? [])
+		.map((r) => ({
+			id: r.student_id,
+			name: r.student_name,
+			email: isProfessor ? r.student_email : null,
+		}))
+		.sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
 
 	return (
 		<>
@@ -137,9 +132,10 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 
 			<ChallengeList
 				challenges={challenges}
-				error={challengesResult.error}
+				error={challengesResult.error !== null}
 				classId={classId}
 				create={isProfessor}
+				showStatus={!isProfessor}
 				empty={
 					!isStudent
 						? undefined
@@ -166,7 +162,7 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 
 				<RosterList
 					students={roster}
-					error={enrollmentResult.error}
+					error={rosterResult.error !== null}
 					showEmails={isProfessor}
 				/>
 			</div>

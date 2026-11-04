@@ -17,6 +17,8 @@ export interface RunCodeState {
 export interface SubmitSolutionState extends RunCodeState {
 	correct?: boolean;
 	points?: number;
+	// Set when a correct submission already exists, e.g. from another tab
+	alreadySolved?: boolean;
 }
 
 const RUNNER_DOWN = "The code runner isn't responding. Try again in a moment.";
@@ -106,7 +108,11 @@ export async function submitSolution(input: {
 	}
 
 	if (solvedResult.data?.length) {
-		return { error: "You've already solved this challenge." };
+		// This page may have been rendered before the solve so refresh it
+		revalidatePath(`/dashboard/classes/${challenge.ClassID}`);
+		revalidatePath(`/dashboard/classes/${challenge.ClassID}/challenges/${challengeId}`);
+
+		return { error: "You've already solved this challenge.", alreadySolved: true };
 	}
 
 	// Checked against where the student is now, not where they opened the page
