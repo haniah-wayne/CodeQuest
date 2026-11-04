@@ -3,11 +3,14 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { type ChallengeStatus, ChallengeList } from "@/components/class/challenge-list";
+import { ChallengeMap } from "@/components/class/challenge-map";
 import { JoinCode } from "@/components/class/join-code";
 import { LeaderboardList } from "@/components/class/leaderboard-list";
 import { RosterList } from "@/components/class/roster-list";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
 import { requireSessionUser } from "@/lib/auth/session";
+import { isWithinUnlockRadius } from "@/lib/challenges/location";
+import { getSavedPosition } from "@/lib/challenges/position";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ClassPage(props: PageProps<"/dashboard/classes/[classId]">) {
@@ -19,23 +22,29 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 	const user = await requireSessionUser();
 	const supabase = await createClient();
 
+	const isStudent = user.role === "student";
+
 	// RLS decides who can see the class and its rows, so a missing class means
 	// not found or not allowed
-	const [classResult, challengesResult, rosterResult, leaderboardResult] = await Promise.all([
-		supabase
-			.from("Classes")
-			.select("ClassName, Description, ClassCode, ProfessorID")
-			.eq("ClassID", id)
-			.maybeSingle(),
-		supabase
-			.from("Challenges")
-			.select("ChallengeID, Title, Description, Points, CreatedAt, Submission(Status)")
-			.eq("ClassID", id)
-			.eq("Submission.StudentID", user.id)
-			.order("CreatedAt"),
-		supabase.rpc("get_class_roster", { p_class_id: id }),
-		supabase.rpc("get_class_leaderboard", { p_class_id: id }),
-	]);
+	const [classResult, challengesResult, rosterResult, leaderboardResult, position] =
+		await Promise.all([
+			supabase
+				.from("Classes")
+				.select("ClassName, Description, ClassCode, ProfessorID")
+				.eq("ClassID", id)
+				.maybeSingle(),
+			supabase
+				.from("Challenges")
+				.select(
+					"ChallengeID, Title, Description, Points, CreatedAt, Hidden, Locations(Longitude, Latitude, Radius), Submission(Status)",
+				)
+				.eq("ClassID", id)
+				.eq("Submission.StudentID", user.id)
+				.order("CreatedAt"),
+			supabase.rpc("get_class_roster", { p_class_id: id }),
+			supabase.rpc("get_class_leaderboard", { p_class_id: id }),
+			isStudent ? getSavedPosition() : null,
+		]);
 
 	const c = classResult.data;
 
@@ -47,15 +56,48 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 
 	const isProfessor = c.ProfessorID === user.id;
 
-	const challenges = (challengesResult.data ?? []).map(({ Submission: submissions, ...ch }) => {
-		const status: ChallengeStatus = submissions.some((s) => s.Status === "correct")
-			? "solved"
-			: submissions.length > 0
-				? "attempted"
-				: "not_started";
+	const allChallenges = (challengesResult.data ?? []).map(
+		({ Submission: submissions, ...ch }) => {
+			const status: ChallengeStatus = submissions.some((s) => s.Status === "correct")
+				? "solved"
+				: submissions.length > 0
+					? "attempted"
+					: "not_started";
 
-		return { ...ch, status };
-	});
+			return { ...ch, status };
+		},
+	);
+
+	// Students only see challenges they're standing near or have already solved
+	const unlocked = new Set(
+		allChallenges
+			.filter(
+				(ch) =>
+					!isStudent ||
+					ch.status === "solved" ||
+					isWithinUnlockRadius(ch.Locations, position),
+			)
+			.map((ch) => ch.ChallengeID),
+	);
+
+	const challenges = allChallenges.filter((ch) => unlocked.has(ch.ChallengeID));
+
+	// Pins show from the start unless the professor hid them, but locked ones
+	// don't link anywhere
+	const mapChallenges = allChallenges
+		.filter((ch) => !ch.Hidden || unlocked.has(ch.ChallengeID))
+		.flatMap((ch) =>
+			ch.Locations.map((l) => ({
+				id: ch.ChallengeID,
+				title: ch.Title,
+				longitude: l.Longitude,
+				latitude: l.Latitude,
+				radius: l.Radius,
+				href: unlocked.has(ch.ChallengeID)
+					? `/dashboard/classes/${classId}/challenges/${ch.ChallengeID}`
+					: null,
+			})),
+		);
 
 	// only professors get emails
 	const roster = (rosterResult.data ?? [])
@@ -86,12 +128,29 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 				</div>
 			</div>
 
+			{isStudent && <ChallengeMap challenges={mapChallenges} />}
+
 			<ChallengeList
 				challenges={challenges}
 				error={challengesResult.error !== null}
 				classId={classId}
 				create={isProfessor}
 				showStatus={!isProfessor}
+				empty={
+					!isStudent
+						? undefined
+						: position
+							? {
+									title: "No challenges nearby",
+									description:
+										"Walk around campus. Challenges show up here once you're close to one.",
+								}
+							: {
+									title: "Finding challenges near you",
+									description:
+										"Allow location access so challenges show up when you're close to one.",
+								}
+				}
 			/>
 
 			<div className="grid items-start gap-6 lg:grid-cols-2">
