@@ -3,7 +3,11 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 //this component will be used and called for all ai stuff in the project
 import React, { useState } from "react";
 //initialized the API using key from .env
-const genAI = new GoogleGenerativeAI(process.env.REACT_APP_GEMINI_API_KEY);
+const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
+if (!apiKey) {
+	throw new Error("API key is not defined");
+}
+const genAI = new GoogleGenerativeAI(apiKey);
 export default function AI_Chat() {
 	//setup usestates
 	const [prompt, setPrompt] = useState("");
