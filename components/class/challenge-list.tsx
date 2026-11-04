@@ -3,6 +3,7 @@
 import { CheckmarkCircle02Icon, Flag02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { createColumnHelper, useTable } from "@tanstack/react-table";
+import { cn } from "cn";
 import Link from "next/link";
 import { ClassSection, SectionEmpty, SectionError } from "@/components/class/class-section";
 import {
@@ -27,7 +28,7 @@ const dateFormat = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
 
 const helper = createColumnHelper<DataTableFeatures, Challenge>();
 
-const titleColumn = (classId: string) =>
+const titleColumn = (classId: string, linkRows: boolean) =>
 	helper.accessor("Title", {
 		header: "Title",
 		sortFn: "alphanumeric",
@@ -37,7 +38,10 @@ const titleColumn = (classId: string) =>
 			return (
 				<div className="flex max-w-md min-w-0 flex-col gap-0.5 py-1">
 					<Link
-						className="w-fit rounded-sm text-label whitespace-normal outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
+						className={cn(
+							"w-fit rounded-sm text-label whitespace-normal outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50",
+							linkRows && "after:absolute after:inset-0",
+						)}
 						href={`/dashboard/classes/${classId}/challenges/${ch.ChallengeID}`}
 					>
 						{ch.Title}
@@ -89,12 +93,14 @@ export function ChallengeList({
 	classId,
 	create,
 	showStatus,
+	linkRows,
 }: {
 	challenges: Challenge[];
 	error: boolean;
 	classId: string;
 	create?: boolean;
 	showStatus: boolean;
+	linkRows: boolean;
 }) {
 	const createButton = create ? (
 		<Link
@@ -125,7 +131,12 @@ export function ChallengeList({
 					actions={createButton}
 				/>
 			) : (
-				<ChallengeTable challenges={challenges} classId={classId} showStatus={showStatus} />
+				<ChallengeTable
+					challenges={challenges}
+					classId={classId}
+					showStatus={showStatus}
+					linkRows={linkRows}
+				/>
 			)}
 		</ClassSection>
 	);
@@ -135,15 +146,19 @@ function ChallengeTable({
 	challenges,
 	classId,
 	showStatus,
+	linkRows,
 }: {
 	challenges: Challenge[];
 	classId: string;
 	showStatus: boolean;
+	linkRows: boolean;
 }) {
-	const title = titleColumn(classId);
-	const columns = showStatus
-		? helper.columns([title, pointsColumn, createdAtColumn, statusColumn])
-		: helper.columns([title, pointsColumn, createdAtColumn]);
+	const columns = helper.columns([
+		titleColumn(classId, linkRows),
+		pointsColumn,
+		createdAtColumn,
+		...(showStatus ? [statusColumn] : []),
+	]);
 
 	const table = useTable({
 		features: dataTableFeatures,
