@@ -16,9 +16,26 @@ import type * as React from "react";
 import { AuthFormError } from "@/components/auth-card";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+	Field,
+	FieldContent,
+	FieldDescription,
+	FieldError,
+	FieldGroup,
+	FieldLabel,
+	FieldLegend,
+	FieldSet,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Radio, RadioGroup } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import {
+	DEFAULT_UNLOCK_RADIUS,
+	UNLOCK_RADII,
+	UNLOCK_RADIUS_LABELS,
+	type UnlockRadius,
+} from "@/lib/challenges/location";
 import { DEFAULT_POINTS, MAX_POINTS, MIN_POINTS } from "@/lib/challenges/schemas";
 import { type CreateChallengeState, createChallenge } from "./actions";
 
@@ -39,6 +56,11 @@ export default function CreateChallengePage() {
 		longitude: number;
 		latitude: number;
 	} | null>(null);
+
+	const [radius, setRadius] = useState<UnlockRadius>(DEFAULT_UNLOCK_RADIUS);
+
+	// Controlled so React's form reset after a failed submit doesn't uncheck it
+	const [hidden, setHidden] = useState(false);
 
 	const locationError = state.fieldErrors?.longitude ?? state.fieldErrors?.latitude;
 	const classHref = `/dashboard/classes/${classId}`;
@@ -64,6 +86,7 @@ export default function CreateChallengePage() {
 				<input type="hidden" name="classId" value={classId} />
 				<input type="hidden" name="longitude" value={location?.longitude ?? ""} />
 				<input type="hidden" name="latitude" value={location?.latitude ?? ""} />
+				<input type="hidden" name="radius" value={radius} />
 
 				{state.error && <AuthFormError>{state.error}</AuthFormError>}
 
@@ -186,6 +209,7 @@ export default function CreateChallengePage() {
 								<MapView
 									mode="professor"
 									className="size-full"
+									radius={radius}
 									locationSelect={(longitude, latitude) =>
 										setLocation({ longitude, latitude })
 									}
@@ -214,17 +238,75 @@ export default function CreateChallengePage() {
 							</div>
 						</div>
 
-						{/* TODO: update radius description when radius field is added */}
-						<div className="flex flex-col gap-1 border-t border-border/60 px-5 py-3 sm:px-6">
-							<p className="text-body-sm text-muted-foreground">
-								Students must be within 100 m of the pin to unlock it.
-							</p>
-
+						<div className="flex flex-col gap-3 border-t border-border/60 px-5 py-4 sm:px-6">
 							{locationError && !location && (
 								<p role="alert" className="text-body-sm text-destructive">
 									{locationError}
 								</p>
 							)}
+
+							<FieldSet
+								data-invalid={Boolean(state.fieldErrors?.radius) || undefined}
+							>
+								<FieldLegend variant="label" className="text-label">
+									Unlock radius
+								</FieldLegend>
+
+								<FieldDescription id="radius-hint">
+									Students must be within {radius} m of the pin to unlock it.
+								</FieldDescription>
+
+								<RadioGroup
+									className="sm:grid-cols-3"
+									value={String(radius)}
+									onValueChange={(value) =>
+										setRadius(Number(value) as UnlockRadius)
+									}
+									aria-describedby="radius-hint"
+								>
+									{UNLOCK_RADII.map((r) => (
+										<FieldLabel
+											className="w-full gap-2.5 rounded-2xl border border-input bg-input/20 px-3 py-2.5 transition-colors has-data-checked:border-primary has-data-checked:bg-primary/5"
+											key={r}
+										>
+											<Radio value={String(r)} className="mt-0.5" />
+
+											<span className="flex flex-col gap-0.5">
+												<span className="text-label tabular-nums">
+													{r} m
+												</span>
+
+												<span className="text-caption font-normal text-muted-foreground">
+													{UNLOCK_RADIUS_LABELS[r]}
+												</span>
+											</span>
+										</FieldLabel>
+									))}
+								</RadioGroup>
+
+								<FieldError>{state.fieldErrors?.radius}</FieldError>
+							</FieldSet>
+
+							<Field orientation="horizontal">
+								<Checkbox
+									id="hidden"
+									name="hidden"
+									checked={hidden}
+									onCheckedChange={(checked) => setHidden(checked)}
+									aria-describedby="hidden-hint"
+								/>
+
+								<FieldContent>
+									<FieldLabel className="text-label" htmlFor="hidden">
+										Hide pin on the map
+									</FieldLabel>
+
+									<FieldDescription id="hidden-hint">
+										If this is checked, students won{"'"}t see the pin until
+										they{"'"}re the unlock radius.
+									</FieldDescription>
+								</FieldContent>
+							</Field>
 						</div>
 					</FormSection>
 				</div>

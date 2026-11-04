@@ -22,7 +22,7 @@ export type Database = {
           CodeLanguage: string | null
           CreatedAt: string
           Description: string | null
-          IsPublished: boolean | null
+          Hidden: boolean
           MaxAttempts: number | null
           Points: number
           Title: string
@@ -34,7 +34,7 @@ export type Database = {
           CodeLanguage?: string | null
           CreatedAt?: string
           Description?: string | null
-          IsPublished?: boolean | null
+          Hidden?: boolean
           MaxAttempts?: number | null
           Points?: number
           Title: string
@@ -46,7 +46,7 @@ export type Database = {
           CodeLanguage?: string | null
           CreatedAt?: string
           Description?: string | null
-          IsPublished?: boolean | null
+          Hidden?: boolean
           MaxAttempts?: number | null
           Points?: number
           Title?: string
@@ -217,21 +217,18 @@ export type Database = {
           Email: string | null
           ID: string
           Name: string
-          Password: string | null
           Role: string
         }
         Insert: {
           Email?: string | null
           ID: string
           Name: string
-          Password?: string | null
           Role: string
         }
         Update: {
           Email?: string | null
           ID?: string
           Name?: string
-          Password?: string | null
           Role?: string
         }
         Relationships: []
@@ -357,6 +354,7 @@ export type Database = {
         Args: {
           class_id: number
           description: string
+          hidden?: boolean
           lat: number
           long: number
           points: number
