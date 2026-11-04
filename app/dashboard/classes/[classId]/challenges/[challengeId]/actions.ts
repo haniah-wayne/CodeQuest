@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import * as v from "valibot";
 import { getSessionUser } from "@/lib/auth/session";
 import type { LanguageId } from "@/lib/challenges/languages";
+import { isWithinUnlockRadius, type Position } from "@/lib/challenges/location";
 import { RunCodeSchema, SubmitSolutionSchema } from "@/lib/challenges/schemas";
 import { type ExecutionResult, execute } from "@/lib/piston";
 import { createClient } from "@/lib/supabase/server";
@@ -16,6 +17,8 @@ export interface RunCodeState {
 export interface SubmitSolutionState extends RunCodeState {
 	correct?: boolean;
 	points?: number;
+	// Set when a correct submission already exists, e.g. from another tab
+	alreadySolved?: boolean;
 }
 
 const RUNNER_DOWN = "The code runner isn't responding. Try again in a moment.";
@@ -61,6 +64,7 @@ export async function submitSolution(input: {
 	challengeId: number;
 	language: LanguageId;
 	code: string;
+	position: Position;
 }): Promise<SubmitSolutionState> {
 	const user = await getSessionUser();
 
@@ -74,14 +78,14 @@ export async function submitSolution(input: {
 		return { error: parsed.issues[0].message };
 	}
 
-	const { challengeId, language, code } = parsed.output;
+	const { challengeId, language, code, position } = parsed.output;
 
 	const supabase = await createClient();
 
 	const [challengeResult, solvedResult] = await Promise.all([
 		supabase
 			.from("Challenges")
-			.select("ClassID, Points, Solutions(Solution)")
+			.select("ClassID, Points, Solutions(Solution), Locations(Longitude, Latitude, Radius)")
 			.eq("ChallengeID", challengeId)
 			.maybeSingle(),
 		supabase
@@ -104,7 +108,18 @@ export async function submitSolution(input: {
 	}
 
 	if (solvedResult.data?.length) {
-		return { error: "You've already solved this challenge." };
+		// This page may have been rendered before the solve so refresh it
+		revalidatePath(`/dashboard/classes/${challenge.ClassID}`);
+		revalidatePath(`/dashboard/classes/${challenge.ClassID}/challenges/${challengeId}`);
+
+		return { error: "You've already solved this challenge.", alreadySolved: true };
+	}
+
+	// Checked against where the student is now, not where they opened the page
+	if (!isWithinUnlockRadius(challenge.Locations, position)) {
+		return {
+			error: "You need to be at the challenge location to submit. Head back and try again.",
+		};
 	}
 
 	const expected = challenge.Solutions?.Solution;

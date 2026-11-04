@@ -22,7 +22,7 @@ export type Database = {
           CodeLanguage: string | null
           CreatedAt: string
           Description: string | null
-          IsPublished: boolean | null
+          Hidden: boolean
           MaxAttempts: number | null
           Points: number
           Title: string
@@ -34,7 +34,7 @@ export type Database = {
           CodeLanguage?: string | null
           CreatedAt?: string
           Description?: string | null
-          IsPublished?: boolean | null
+          Hidden?: boolean
           MaxAttempts?: number | null
           Points?: number
           Title: string
@@ -46,7 +46,7 @@ export type Database = {
           CodeLanguage?: string | null
           CreatedAt?: string
           Description?: string | null
-          IsPublished?: boolean | null
+          Hidden?: boolean
           MaxAttempts?: number | null
           Points?: number
           Title?: string
@@ -217,21 +217,18 @@ export type Database = {
           Email: string | null
           ID: string
           Name: string
-          Password: string | null
           Role: string
         }
         Insert: {
           Email?: string | null
           ID: string
           Name: string
-          Password?: string | null
           Role: string
         }
         Update: {
           Email?: string | null
           ID?: string
           Name?: string
-          Password?: string | null
           Role?: string
         }
         Relationships: []
@@ -357,14 +354,17 @@ export type Database = {
         Args: {
           class_id: number
           description: string
+          hidden?: boolean
           lat: number
           long: number
+          points: number
           radius: number
           solution: string
           title: string
         }
         Returns: number
       }
+      delete_own_account: { Args: never; Returns: undefined }
       get_class_leaderboard: {
         Args: { p_class_id: number }
         Returns: {
@@ -372,6 +372,14 @@ export type Database = {
           student_id: string
           student_name: string
           total_score: number
+        }[]
+      }
+      get_class_roster: {
+        Args: { p_class_id: number }
+        Returns: {
+          student_email: string | null
+          student_id: string
+          student_name: string
         }[]
       }
       get_global_leaderboard: { Args: never; Returns: undefined }

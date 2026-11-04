@@ -1,5 +1,10 @@
 import * as v from "valibot";
 import { LANGUAGE_IDS } from "./languages";
+import { UNLOCK_RADII } from "./location";
+
+export const MIN_POINTS = 1;
+export const MAX_POINTS = 100;
+export const DEFAULT_POINTS = 10;
 
 // Prevent empty strings or strings like "0x10" from becoming coordinates
 const DECIMAL = /^-?\d+(\.\d+)?(e[-+]?\d+)?$/i;
@@ -32,8 +37,28 @@ export const CreateChallengeSchema = v.object({
 		v.string("Enter the expected output."),
 		v.check((s) => s.trim() !== "", "Enter the expected output."),
 	),
+	points: v.pipe(
+		v.string("Enter a point value."),
+		v.trim(),
+		v.regex(/^\d+$/, "Points must be a whole number."),
+		v.transform(Number),
+		v.minValue(MIN_POINTS, `Points must be at least ${MIN_POINTS}.`),
+		v.maxValue(MAX_POINTS, `Points can't be more than ${MAX_POINTS}.`),
+	),
 	longitude: coordinate(180),
 	latitude: coordinate(90),
+	radius: v.pipe(
+		v.string("Pick an unlock radius."),
+		v.transform(Number),
+		v.picklist(UNLOCK_RADII, "Pick an unlock radius."),
+	),
+	hidden: v.boolean(),
+});
+
+// Positions reported by the browser are already numbers
+export const PositionSchema = v.object({
+	longitude: v.pipe(v.number(), v.finite(), v.minValue(-180), v.maxValue(180)),
+	latitude: v.pipe(v.number(), v.finite(), v.minValue(-90), v.maxValue(90)),
 });
 
 // Keeps junk off the code runner
@@ -54,4 +79,5 @@ export const SubmitSolutionSchema = v.object({
 	challengeId: v.pipe(v.number(), v.safeInteger()),
 	language: v.picklist(LANGUAGE_IDS, "Pick a language."),
 	code: CodeSchema,
+	position: PositionSchema,
 });
