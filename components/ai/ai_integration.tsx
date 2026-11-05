@@ -1,4 +1,5 @@
 "use client";
+//import { createClient } from "@/lib/supabase/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 //this component will be used and called for all ai stuff in the project
 import React, { useState } from "react";
@@ -8,7 +9,9 @@ if (!apiKey) {
 	throw new Error("API key is not defined");
 }
 const genAI = new GoogleGenerativeAI(apiKey);
-export default function AI_Chat() {
+//const supabase = await createClient();
+export function AI_Problem_Creator() {
+	//this function injects "create me a problem" into the prompt and sends it to gemini for processing
 	//setup usestates
 	const [prompt, setPrompt] = useState("");
 	const [response, setResponse] = useState("");
@@ -20,6 +23,7 @@ export default function AI_Chat() {
 			//attempts to send prompt and handle response. Actual functionality of the component.
 			e.preventDefault(); //prevents defaulting
 			if (!prompt.trim()) return; //prevents sending empty prompts
+			setPrompt((prev) => "Create me a coding problem with these features: " + prev); //injects "create me a problem" into the prompt
 			const model = genAI.getGenerativeModel({ model: "gemini-3.8-flash" }); //loads the model we want. can be changed if need be,
 			const result = await model.generateContent(prompt); //gets the result from the prompt
 			const text = result.response.text(); //extracts the response from the prompt result
@@ -34,9 +38,14 @@ export default function AI_Chat() {
 	//this part actually displays the component.
 	return (
 		<div>
-			<h2>Prompt Area</h2>
+			<h2>AI Problem Creator</h2>
+			<p>Ask generative AI to create a problem for you!</p>
 			<form onSubmit={sendPrompt}>
-				<textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} />
+				<textarea
+					value={prompt}
+					placeholder="Describe your coding problem here..."
+					onChange={(e) => setPrompt(e.target.value)}
+				/>
 				<button type="submit" disabled={loading}>
 					{loading ? "Loading..." : "Submit"}
 				</button>
