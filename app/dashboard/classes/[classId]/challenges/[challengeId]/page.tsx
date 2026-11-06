@@ -90,7 +90,7 @@ export default async function ChallengePage(
 						actions={
 							<>
 								{solved && (
-									<Badge className="bg-emerald-50 text-wsu-green">
+									<Badge>
 										<HugeiconsIcon
 											icon={CheckmarkCircle02Icon}
 											data-icon="inline-start"
@@ -99,7 +99,7 @@ export default async function ChallengePage(
 									</Badge>
 								)}
 
-								<Badge className="bg-emerald-50 text-wsu-green tabular-nums">
+								<Badge className="bg-wsu-gold text-wsu-green tabular-nums">
 									{challenge.Points} pts
 								</Badge>
 							</>
@@ -175,7 +175,7 @@ async function ProfessorView({
 						title={challenge.Title}
 						description="Review every submission students have made for this challenge."
 						actions={
-							<Badge className="bg-emerald-50 text-wsu-green tabular-nums">
+							<Badge className="bg-wsu-gold text-wsu-green tabular-nums">
 								{challenge.Points} pts
 							</Badge>
 						}

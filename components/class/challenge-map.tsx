@@ -93,7 +93,7 @@ export function ChallengeMap({ challenges }: { challenges: MapChallenge[] }) {
 				</span>
 			}
 		>
-			<div className="relative h-80 overflow-hidden rounded-2xl sm:h-96">
+			<div className="relative h-80 overflow-hidden rounded-(--panel-inner-radius) sm:h-96">
 				<MapView
 					mode="student"
 					className="size-full"

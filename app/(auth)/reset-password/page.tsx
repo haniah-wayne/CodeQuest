@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useActionState, useState } from "react";
 import { updatePassword } from "@/app/(auth)/actions";
 import { AuthCard, AuthFormError } from "@/components/auth-card";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
@@ -36,14 +36,9 @@ export default function ResetPassword() {
 						{state.success}
 					</p>
 
-					<Button
-						className="w-full"
-						size="lg"
-						nativeButton={false}
-						render={<Link href="/" />}
-					>
+					<Link className={buttonVariants({ size: "lg", className: "w-full" })} href="/">
 						Continue
-					</Button>
+					</Link>
 				</div>
 			) : (
 				<form action={action}>

@@ -13,7 +13,7 @@ function initials(name: string) {
 export function StudentAvatar({ name, size }: { name: string; size?: "default" | "sm" | "lg" }) {
 	return (
 		<Avatar size={size} aria-hidden>
-			<AvatarFallback className="bg-emerald-50 text-xs font-medium text-wsu-green">
+			<AvatarFallback className="bg-card text-xs font-medium text-wsu-green">
 				{initials(name) || "?"}
 			</AvatarFallback>
 		</Avatar>

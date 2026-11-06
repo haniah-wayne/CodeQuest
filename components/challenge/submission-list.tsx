@@ -189,7 +189,7 @@ export function SubmissionList({
 					<div className="flex items-center gap-2">
 						<Input
 							type="search"
-							className="h-8 w-36 sm:w-56"
+							className="h-8 w-36 bg-card sm:w-56"
 							placeholder="Search by student"
 							aria-label="Search by student"
 							value={search}
@@ -260,6 +260,7 @@ function SubmissionFilters({
 			<DropdownMenuTrigger
 				render={
 					<Button
+						className="bg-card"
 						variant="outline"
 						size="sm"
 						aria-label={
@@ -318,7 +319,7 @@ function SubmittedCode({ submission }: { submission: SubmissionRow }) {
 	}
 
 	return (
-		<div className="overflow-hidden rounded-2xl border border-border/60 bg-background">
+		<div className="overflow-hidden rounded-(--panel-inner-radius) bg-card smooth-shadow-ring-sm">
 			{isLanguageId(language) ? (
 				<CodeEditor language={language} value={code} onChange={() => {}} readOnly />
 			) : (
@@ -334,7 +335,7 @@ function StatusBadge({ status }: { status: string | null }) {
 	switch (status) {
 		case "correct":
 			return (
-				<Badge className="bg-emerald-50 text-wsu-green">
+				<Badge>
 					<HugeiconsIcon icon={CheckmarkCircle02Icon} data-icon="inline-start" />
 					Correct
 				</Badge>
