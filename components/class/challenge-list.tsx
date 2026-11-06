@@ -1,12 +1,15 @@
 "use client";
 
-import { CheckmarkCircle02Icon, Flag02Icon } from "@hugeicons/core-free-icons";
+import {
+	CheckmarkCircle02Icon,
+	FilterHorizontalIcon,
+	Flag02Icon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { createColumnHelper, useTable } from "@tanstack/react-table";
-import type { ColumnFiltersState } from "@tanstack/react-table";
+import { createColumnHelper, type ReactTable, useTable } from "@tanstack/react-table";
 import { cn } from "cn";
 import Link from "next/link";
-import * as React from "react";
+import { useMemo } from "react";
 import { ChallengeActions } from "@/components/challenge/challenge-actions";
 import { ClassSection, SectionEmpty, SectionError } from "@/components/class/class-section";
 import {
@@ -15,14 +18,16 @@ import {
 	dataTableFeatures,
 } from "@/components/class/data-table";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuGroup,
+	DropdownMenuLabel,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { Tables } from "@/supabase/database.types";
 
 export type ChallengeStatus = "not_started" | "attempted" | "solved";
@@ -31,6 +36,8 @@ type Challenge = Pick<
 	Tables<"Challenges">,
 	"ChallengeID" | "Title" | "Description" | "Points" | "CreatedAt"
 > & { status: ChallengeStatus };
+
+type CompletionFilterValue = "all" | "completed" | "notCompleted";
 
 const statusOrder: ChallengeStatus[] = ["not_started", "attempted", "solved"];
 
@@ -157,7 +164,35 @@ export function ChallengeList({
 		</Link>
 	) : null;
 
+	const columns = useMemo(
+		() =>
+			helper.columns([
+				titleColumn(classId, linkRows),
+				pointsColumn,
+				createdAtColumn,
+				...(showStatus ? [statusColumn] : []),
+				...(create ? [actionsColumn(classId)] : []),
+			]),
+		[classId, linkRows, showStatus, create],
+	);
+
+	const table = useTable({
+		features: dataTableFeatures,
+		columns,
+		data: challenges,
+		getRowId: (ch) => String(ch.ChallengeID),
+	});
+
 	const isEmpty = !error && challenges.length === 0;
+	const filtered = table.state.columnFilters.length > 0;
+
+	const action =
+		error || isEmpty ? null : (
+			<div className="flex items-center gap-2">
+				{showStatus && <CompletionFilter table={table} />}
+				{createButton}
+			</div>
+		);
 
 	return (
 		<ClassSection
@@ -165,7 +200,7 @@ export function ChallengeList({
 			title="Challenges"
 			icon={Flag02Icon}
 			count={challenges.length}
-			action={isEmpty ? null : createButton}
+			action={isEmpty ? null : action}
 		>
 			{error ? (
 				<SectionError what="challenges" />
@@ -177,78 +212,62 @@ export function ChallengeList({
 					actions={createButton}
 				/>
 			) : (
-				<ChallengeTable
-					challenges={challenges}
-					classId={classId}
-					showStatus={showStatus}
-					linkRows={linkRows}
-					showActions={create ?? false}
+				<DataTable
+					table={table}
+					emptyMessage={
+						filtered ? "No challenges match the selected filter" : "No challenges"
+					}
 				/>
 			)}
 		</ClassSection>
 	);
 }
 
-function ChallengeTable({
-	challenges,
-	classId,
-	showStatus,
-	linkRows,
-	showActions,
-}: {
-	challenges: Challenge[];
-	classId: string;
-	showStatus: boolean;
-	linkRows: boolean;
-	showActions: boolean;
-}) {
-	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+const completionOptions = [
+	{ value: "all", label: "All" },
+	{ value: "completed", label: "Completed" },
+	{ value: "notCompleted", label: "Not completed" },
+] as const;
 
-	const columns = helper.columns([
-		titleColumn(classId, linkRows),
-		pointsColumn,
-		createdAtColumn,
-		...(showStatus ? [statusColumn] : []),
-		...(showActions ? [actionsColumn(classId)] : []),
-	]);
+function CompletionFilter({ table }: { table: ReactTable<DataTableFeatures, Challenge, unknown> }) {
+	const column = table.getColumn("status");
+	const value = (column?.getFilterValue() as CompletionFilterValue | undefined) ?? "all";
+	const active = value !== "all";
 
-	const table = useTable({
-		features: dataTableFeatures,
-		columns,
-		data: challenges,
-		getRowId: (ch) => String(ch.ChallengeID),
-		state: { columnFilters },
-		onColumnFiltersChange: setColumnFilters,
-	});
 	return (
-		<div className="space-y-4">
-			{showStatus && (
-				<Select
-					defaultValue="all"
-					onValueChange={(value) => {
-						if (value === null) return;
+		<DropdownMenu>
+			<DropdownMenuTrigger
+				render={
+					<Button
+						variant="outline"
+						size="sm"
+						aria-label={active ? "Filter challenges, 1 active" : "Filter challenges"}
+					>
+						<HugeiconsIcon icon={FilterHorizontalIcon} data-icon="inline-start" />
+						Filter
+						{active && <Badge className="h-4 min-w-4 px-1 tabular-nums">1</Badge>}
+					</Button>
+				}
+			/>
 
-						if (value === "all") {
-							table.getColumn("status")?.setFilterValue(undefined);
-						} else {
-							table.getColumn("status")?.setFilterValue(value);
+			<DropdownMenuContent align="end" className="w-auto">
+				<DropdownMenuGroup>
+					<DropdownMenuLabel>Completion</DropdownMenuLabel>
+					<DropdownMenuRadioGroup
+						value={value}
+						onValueChange={(next: CompletionFilterValue) =>
+							column?.setFilterValue(next === "all" ? undefined : next)
 						}
-					}}
-				>
-					<SelectTrigger>
-						<SelectValue placeholder="Filter by completion" />
-					</SelectTrigger>
-
-					<SelectContent>
-						<SelectItem value="all">All</SelectItem>
-						<SelectItem value="completed">Completed</SelectItem>
-						<SelectItem value="notCompleted">Not Completed</SelectItem>
-					</SelectContent>
-				</Select>
-			)}
-
-			<DataTable table={table} emptyMessage="No challenges" />
-		</div>
+					>
+						{completionOptions.map((option) => (
+							<DropdownMenuRadioItem key={option.value} value={option.value}>
+								{option.label}
+							</DropdownMenuRadioItem>
+						))}
+					</DropdownMenuRadioGroup>
+				</DropdownMenuGroup>
+			</DropdownMenuContent>
+		</DropdownMenu>
 	);
 }
 
