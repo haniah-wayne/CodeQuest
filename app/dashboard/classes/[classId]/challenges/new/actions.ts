@@ -8,19 +8,19 @@ import { CreateChallengeSchema } from "@/lib/challenges/schemas";
 import { createClient } from "@/lib/supabase/server";
 import { toFieldErrors } from "@/lib/validation";
 
-export interface CreateChallengeState {
+export interface ChallengeFormState {
 	error?: string;
 	fieldErrors?: Partial<
-		Record<"title" | "description" | "solution" | "points" | "longitude" | "latitude", string>
+		Record<
+			"title" | "description" | "solution" | "points" | "longitude" | "latitude" | "radius",
+			string
+		>
 	>;
 	// Sent back on failure so the form doesn't clear what was typed
 	values?: { title: string; description: string; solution: string; points: string };
 }
 
-export async function createChallenge(
-	_prevState: CreateChallengeState,
-	formData: FormData,
-): Promise<CreateChallengeState> {
+function readForm(formData: FormData) {
 	const values = {
 		title: formData.get("title")?.toString() ?? "",
 		description: formData.get("description")?.toString() ?? "",
@@ -31,8 +31,18 @@ export async function createChallenge(
 	const location = {
 		longitude: formData.get("longitude")?.toString() ?? "",
 		latitude: formData.get("latitude")?.toString() ?? "",
+		radius: formData.get("radius")?.toString() ?? "",
+		hidden: formData.has("hidden"),
 	};
 
+	return { values, parsed: v.safeParse(CreateChallengeSchema, { ...values, ...location }) };
+}
+
+export async function createChallenge(
+	_prevState: ChallengeFormState,
+	formData: FormData,
+): Promise<ChallengeFormState> {
+	const { values, parsed } = readForm(formData);
 	const classId = Number(formData.get("classId"));
 
 	const user = await getSessionUser();
@@ -44,8 +54,6 @@ export async function createChallenge(
 	if (!Number.isSafeInteger(classId)) {
 		return { values, error: "That class doesn't exist." };
 	}
-
-	const parsed = v.safeParse(CreateChallengeSchema, { ...values, ...location });
 
 	if (!parsed.success) {
 		return {
@@ -69,7 +77,8 @@ export async function createChallenge(
 		return { values, error: "You don't have permission to add challenges to this class." };
 	}
 
-	const { title, description, solution, points, longitude, latitude } = parsed.output;
+	const { title, description, solution, points, longitude, latitude, radius, hidden } =
+		parsed.output;
 
 	const { error } = await supabase.rpc("create_challenge", {
 		class_id: classId,
@@ -79,7 +88,8 @@ export async function createChallenge(
 		points,
 		long: longitude,
 		lat: latitude,
-		radius: 100,
+		radius,
+		hidden,
 	});
 
 	if (error) {
@@ -90,4 +100,119 @@ export async function createChallenge(
 
 	revalidatePath(`/dashboard/classes/${classId}`);
 	redirect(`/dashboard/classes/${classId}`);
+}
+
+export async function updateChallenge(
+	_prevState: ChallengeFormState,
+	formData: FormData,
+): Promise<ChallengeFormState> {
+	const { values, parsed } = readForm(formData);
+	const classId = Number(formData.get("classId"));
+	const challengeId = Number(formData.get("challengeId"));
+
+	// The IDs come from the form, so confirm this professor owns the challenge
+	if (!(await professorOwnsChallenge(classId, challengeId))) {
+		return { values, error: "You don't have permission to edit this challenge." };
+	}
+
+	if (!parsed.success) {
+		return {
+			values,
+			fieldErrors: toFieldErrors(
+				v.flatten<typeof CreateChallengeSchema>(parsed.issues).nested ?? {},
+			),
+		};
+	}
+
+	const { title, description, solution, points, longitude, latitude, radius, hidden } =
+		parsed.output;
+
+	const supabase = await createClient();
+
+	// There's no update_challenge RPC, so this is three separate writes and a
+	// failure partway through can leave the challenge half updated
+	const [challengeResult, solutionResult, locationResult] = await Promise.all([
+		supabase
+			.from("Challenges")
+			.update({ Title: title, Description: description, Points: points, Hidden: hidden })
+			.eq("ChallengeID", challengeId)
+			.select("ChallengeID"),
+		supabase
+			.from("Solutions")
+			.update({ Solution: solution })
+			.eq("ChallengeID", challengeId)
+			.select("ChallengeID"),
+		supabase
+			.from("Locations")
+			.update({ Longitude: longitude, Latitude: latitude, Radius: radius })
+			.eq("ChallengeID", challengeId)
+			.select("ChallengeID"),
+	]);
+
+	// RLS skips rows it won't let us update instead of erroring, so check that
+	// each write actually hit a row
+	const failed = [challengeResult, solutionResult, locationResult].find(
+		(result) => result.error || !result.data?.length,
+	);
+
+	if (failed) {
+		console.error(failed.error ?? `Challenge ${challengeId} update matched no rows`);
+
+		return { values, error: "Something went wrong saving your changes." };
+	}
+
+	revalidatePath(`/dashboard/classes/${classId}`);
+	revalidatePath(`/dashboard/classes/${classId}/challenges/${challengeId}`);
+	redirect(`/dashboard/classes/${classId}`);
+}
+
+export async function deleteChallenge(
+	_prevState: { error?: string },
+	formData: FormData,
+): Promise<{ error?: string }> {
+	const classId = Number(formData.get("classId"));
+	const challengeId = Number(formData.get("challengeId"));
+
+	if (!(await professorOwnsChallenge(classId, challengeId))) {
+		return { error: "You don't have permission to delete this challenge." };
+	}
+
+	const supabase = await createClient();
+
+	const { data, error } = await supabase
+		.from("Challenges")
+		.delete()
+		.eq("ChallengeID", challengeId)
+		.select("ChallengeID");
+
+	if (error || !data?.length) {
+		console.error(error);
+
+		return { error: "Something went wrong deleting that challenge." };
+	}
+
+	revalidatePath(`/dashboard/classes/${classId}`);
+
+	return {};
+}
+
+// 10.30.Haniah added a function to check if the professor owns the challenge
+async function professorOwnsChallenge(classId: number, challengeId: number) {
+	const user = await getSessionUser();
+
+	if (user?.role !== "professor") return false;
+	if (!Number.isSafeInteger(classId) || !Number.isSafeInteger(challengeId)) return false;
+
+	const supabase = await createClient();
+
+	const { data: challenge, error } = await supabase
+		.from("Challenges")
+		.select("Classes(ProfessorID)")
+		.eq("ChallengeID", challengeId)
+		.eq("ClassID", classId)
+		.maybeSingle();
+
+	if (error) console.error(error);
+
+	return challenge?.Classes.ProfessorID === user.id;
 }

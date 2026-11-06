@@ -4,8 +4,10 @@ import { CheckmarkCircle02Icon, Flag02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { createColumnHelper, useTable } from "@tanstack/react-table";
 import type { ColumnFiltersState } from "@tanstack/react-table";
+import { cn } from "cn";
 import Link from "next/link";
 import * as React from "react";
+import { ChallengeActions } from "@/components/challenge/challenge-actions";
 import { ClassSection, SectionEmpty, SectionError } from "@/components/class/class-section";
 import {
 	DataTable,
@@ -36,7 +38,7 @@ const dateFormat = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
 
 const helper = createColumnHelper<DataTableFeatures, Challenge>();
 
-const titleColumn = (classId: string) =>
+const titleColumn = (classId: string, linkRows: boolean) =>
 	helper.accessor("Title", {
 		header: "Title",
 		sortFn: "alphanumeric",
@@ -46,7 +48,10 @@ const titleColumn = (classId: string) =>
 			return (
 				<div className="flex max-w-md min-w-0 flex-col gap-0.5 py-1">
 					<Link
-						className="w-fit rounded-sm text-label whitespace-normal outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
+						className={cn(
+							"w-fit rounded-sm text-label whitespace-normal outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50",
+							linkRows && "after:absolute after:inset-0",
+						)}
 						href={`/dashboard/classes/${classId}/challenges/${ch.ChallengeID}`}
 					>
 						{ch.Title}
@@ -107,18 +112,41 @@ const createdAtColumn = helper.accessor("CreatedAt", {
 	),
 });
 
+const actionsColumn = (classId: string) =>
+	helper.display({
+		id: "actions",
+		header: () => <span className="sr-only">Actions</span>,
+		cell: (info) => (
+			// Sits above the row-wide title link so the menu stays clickable
+			<div className="relative z-10 flex justify-end">
+				<ChallengeActions
+					classId={classId}
+					challengeId={info.row.original.ChallengeID}
+					title={info.row.original.Title}
+				/>
+			</div>
+		),
+	});
+
 export function ChallengeList({
 	challenges,
 	error,
 	classId,
 	create,
 	showStatus,
+	linkRows,
+	empty = {
+		title: "No challenges yet",
+		description: "Challenges added to this class will show up here.",
+	},
 }: {
 	challenges: Challenge[];
 	error: boolean;
 	classId: string;
 	create?: boolean;
 	showStatus: boolean;
+	linkRows: boolean;
+	empty?: { title: string; description: string };
 }) {
 	const createButton = create ? (
 		<Link
@@ -144,12 +172,18 @@ export function ChallengeList({
 			) : isEmpty ? (
 				<SectionEmpty
 					icon={Flag02Icon}
-					title="No challenges yet"
-					description="Challenges added to this class will show up here."
+					title={empty.title}
+					description={empty.description}
 					actions={createButton}
 				/>
 			) : (
-				<ChallengeTable challenges={challenges} classId={classId} showStatus={showStatus} />
+				<ChallengeTable
+					challenges={challenges}
+					classId={classId}
+					showStatus={showStatus}
+					linkRows={linkRows}
+					showActions={create ?? false}
+				/>
 			)}
 		</ClassSection>
 	);
@@ -159,17 +193,24 @@ function ChallengeTable({
 	challenges,
 	classId,
 	showStatus,
+	linkRows,
+	showActions,
 }: {
 	challenges: Challenge[];
 	classId: string;
 	showStatus: boolean;
+	linkRows: boolean;
+	showActions: boolean;
 }) {
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
 
-	const title = titleColumn(classId);
-	const columns = showStatus
-		? helper.columns([title, pointsColumn, createdAtColumn, statusColumn])
-		: helper.columns([title, pointsColumn, createdAtColumn]);
+	const columns = helper.columns([
+		titleColumn(classId, linkRows),
+		pointsColumn,
+		createdAtColumn,
+		...(showStatus ? [statusColumn] : []),
+		...(showActions ? [actionsColumn(classId)] : []),
+	]);
 
 	const table = useTable({
 		features: dataTableFeatures,
