@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { type ChallengeStatus, ChallengeList } from "@/components/class/challenge-list";
 import { ChallengeMap } from "@/components/class/challenge-map";
+import { ClassRealtime } from "@/components/class/class-realtime";
 import { JoinCode } from "@/components/class/join-code";
 import { LeaderboardList } from "@/components/class/leaderboard-list";
 import { RosterList } from "@/components/class/roster-list";
@@ -110,6 +111,8 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 
 	return (
 		<>
+			<ClassRealtime classId={id} />
+
 			<div className="flex flex-col gap-6">
 				<Link
 					className="flex w-fit items-center gap-1.5 rounded-sm text-caption text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
