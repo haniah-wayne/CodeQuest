@@ -239,6 +239,7 @@ function CompletionFilter({ table }: { table: ReactTable<DataTableFeatures, Chal
 			<DropdownMenuTrigger
 				render={
 					<Button
+						className="bg-card"
 						variant="outline"
 						size="sm"
 						aria-label={active ? "Filter challenges, 1 active" : "Filter challenges"}

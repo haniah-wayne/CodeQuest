@@ -189,7 +189,7 @@ export function SubmissionList({
 					<div className="flex items-center gap-2">
 						<Input
 							type="search"
-							className="h-8 w-36 sm:w-56"
+							className="h-8 w-36 bg-card sm:w-56"
 							placeholder="Search by student"
 							aria-label="Search by student"
 							value={search}
@@ -260,6 +260,7 @@ function SubmissionFilters({
 			<DropdownMenuTrigger
 				render={
 					<Button
+						className="bg-card"
 						variant="outline"
 						size="sm"
 						aria-label={
