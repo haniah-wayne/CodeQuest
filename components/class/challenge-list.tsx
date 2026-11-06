@@ -5,6 +5,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { createColumnHelper, useTable } from "@tanstack/react-table";
 import { cn } from "cn";
 import Link from "next/link";
+import { ChallengeActions } from "@/components/challenge/challenge-actions";
 import { ClassSection, SectionEmpty, SectionError } from "@/components/class/class-section";
 import {
 	DataTable,
@@ -87,6 +88,22 @@ const createdAtColumn = helper.accessor("CreatedAt", {
 	),
 });
 
+const actionsColumn = (classId: string) =>
+	helper.display({
+		id: "actions",
+		header: () => <span className="sr-only">Actions</span>,
+		cell: (info) => (
+			// Sits above the row-wide title link so the menu stays clickable
+			<div className="relative z-10 flex justify-end">
+				<ChallengeActions
+					classId={classId}
+					challengeId={info.row.original.ChallengeID}
+					title={info.row.original.Title}
+				/>
+			</div>
+		),
+	});
+
 export function ChallengeList({
 	challenges,
 	error,
@@ -141,6 +158,7 @@ export function ChallengeList({
 					classId={classId}
 					showStatus={showStatus}
 					linkRows={linkRows}
+					showActions={create ?? false}
 				/>
 			)}
 		</ClassSection>
@@ -152,17 +170,20 @@ function ChallengeTable({
 	classId,
 	showStatus,
 	linkRows,
+	showActions,
 }: {
 	challenges: Challenge[];
 	classId: string;
 	showStatus: boolean;
 	linkRows: boolean;
+	showActions: boolean;
 }) {
 	const columns = helper.columns([
 		titleColumn(classId, linkRows),
 		pointsColumn,
 		createdAtColumn,
 		...(showStatus ? [statusColumn] : []),
+		...(showActions ? [actionsColumn(classId)] : []),
 	]);
 
 	const table = useTable({

@@ -29,6 +29,8 @@ interface MapViewProps {
 	className?: string;
 	// Professor mode
 	radius?: number;
+	// Where the pin starts when editing an existing challenge
+	initialPin?: Position;
 	locationSelect?: (longitude: number, latitude: number) => void;
 	// Student mode
 	challenges?: MapChallenge[];
@@ -40,6 +42,7 @@ export default function MapView({
 	mode,
 	className = "h-80 w-full",
 	radius = DEFAULT_UNLOCK_RADIUS,
+	initialPin,
 	locationSelect,
 	challenges = [],
 	positionChange,
@@ -50,10 +53,11 @@ export default function MapView({
 	const positionChangeRef = useRef(positionChange);
 	const locationErrorRef = useRef(locationError);
 	const challengesRef = useRef(challenges);
+	const initialPinRef = useRef(initialPin);
 
 	// Set once the style loads, since sources and layers can't be added before
 	const [map, setMap] = useState<mapboxgl.Map | null>(null);
-	const [pin, setPin] = useState<Position | null>(null);
+	const [pin, setPin] = useState<Position | null>(initialPin ?? null);
 
 	// The server re-renders with a new array on every position update, so only
 	// redraw markers when the challenges actually change or unlock
@@ -79,6 +83,10 @@ export default function MapView({
 		}
 
 		const map = createMap(mapContainerRef.current, accessToken);
+
+		if (initialPinRef.current) {
+			map.setCenter([initialPinRef.current.longitude, initialPinRef.current.latitude]);
+		}
 
 		let removeClickListener: (() => void) | undefined;
 
