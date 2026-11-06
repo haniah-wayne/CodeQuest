@@ -3,8 +3,9 @@
 import { CheckmarkCircle02Icon, Flag02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { createColumnHelper, useTable } from "@tanstack/react-table";
+import { cn } from "cn";
 import Link from "next/link";
-import { DeleteChallengeButton } from "@/components/challenge/delete-challenge-button";
+import { ChallengeActions } from "@/components/challenge/challenge-actions";
 import { ClassSection, SectionEmpty, SectionError } from "@/components/class/class-section";
 import {
 	DataTable,
@@ -28,7 +29,7 @@ const dateFormat = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
 
 const helper = createColumnHelper<DataTableFeatures, Challenge>();
 
-const titleColumn = (classId: string) =>
+const titleColumn = (classId: string, linkRows: boolean) =>
 	helper.accessor("Title", {
 		header: "Title",
 		sortFn: "alphanumeric",
@@ -38,7 +39,10 @@ const titleColumn = (classId: string) =>
 			return (
 				<div className="flex max-w-md min-w-0 flex-col gap-0.5 py-1">
 					<Link
-						className="w-fit rounded-sm text-label whitespace-normal outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
+						className={cn(
+							"w-fit rounded-sm text-label whitespace-normal outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50",
+							linkRows && "after:absolute after:inset-0",
+						)}
 						href={`/dashboard/classes/${classId}/challenges/${ch.ChallengeID}`}
 					>
 						{ch.Title}
@@ -84,13 +88,14 @@ const createdAtColumn = helper.accessor("CreatedAt", {
 	),
 });
 
-const deleteColumn = (classId: string) =>
+const actionsColumn = (classId: string) =>
 	helper.display({
-		id: "delete",
+		id: "actions",
 		header: () => <span className="sr-only">Actions</span>,
 		cell: (info) => (
-			<div className="flex justify-end">
-				<DeleteChallengeButton
+			// Sits above the row-wide title link so the menu stays clickable
+			<div className="relative z-10 flex justify-end">
+				<ChallengeActions
 					classId={classId}
 					challengeId={info.row.original.ChallengeID}
 					title={info.row.original.Title}
@@ -105,12 +110,19 @@ export function ChallengeList({
 	classId,
 	create,
 	showStatus,
+	linkRows,
+	empty = {
+		title: "No challenges yet",
+		description: "Challenges added to this class will show up here.",
+	},
 }: {
 	challenges: Challenge[];
 	error: boolean;
 	classId: string;
 	create?: boolean;
 	showStatus: boolean;
+	linkRows: boolean;
+	empty?: { title: string; description: string };
 }) {
 	const createButton = create ? (
 		<Link
@@ -136,86 +148,18 @@ export function ChallengeList({
 			) : isEmpty ? (
 				<SectionEmpty
 					icon={Flag02Icon}
-					title="No challenges yet"
-					description="Challenges added to this class will show up here."
+					title={empty.title}
+					description={empty.description}
 					actions={createButton}
 				/>
 			) : (
-<<<<<<< HEAD
-				<ol className="flex flex-col">
-					{challenges.map((ch, i) => (
-						<li
-							key={ch.ChallengeID}
-							className="relative flex items-start gap-4 rounded-2xl px-3 py-3.5 transition-colors has-[a:hover]:bg-muted/60 sm:px-4"
-						>
-							<span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border text-caption text-muted-foreground tabular-nums">
-								{i + 1}
-							</span>
-
-							<div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-								<div className="flex min-w-0 flex-col gap-0.5 pt-1">
-									<h3 className="text-label">
-										{create ? (
-											ch.Title
-										) : (
-											<Link
-												className="rounded-sm outline-none after:absolute after:inset-0 after:rounded-2xl focus-visible:after:ring-[3px] focus-visible:after:ring-ring/50"
-												href={`/dashboard/classes/${classId}/challenges/${ch.ChallengeID}`}
-											>
-												{ch.Title}
-											</Link>
-										)}
-									</h3>
-
-									{ch.Description && (
-										<p className="line-clamp-2 text-body-sm text-pretty text-muted-foreground">
-											{ch.Description}
-										</p>
-									)}
-								</div>
-
-								<div>
-									{create && (
-										<div className="relative z-10 flex items-center gap-1.5">
-											<Link
-												className={buttonVariants({ variant: "outline", size: "sm" })}
-												href={`/dashboard/classes/${classId}/challenges/${ch.ChallengeID}/edit`}
-											>
-												Edit
-											</Link>
-
-											<DeleteChallengeButton
-												classId={classId}
-												challengeId={ch.ChallengeID}
-												title={ch.Title}
-											/>
-										</div>
-									)}
-								</div>
-
-								<div className="flex shrink-0 items-center gap-1.5 sm:pt-1.5">
-									{ch.ChallengeType && (
-										<Badge className="capitalize" variant="outline">
-											{ch.ChallengeType}
-										</Badge>
-									)}
-
-									<Badge className="bg-emerald-50 text-wsu-green tabular-nums">
-										{ch.Points} pts
-									</Badge>
-								</div>
-							</div>
-						</li>
-					))}
-				</ol>
-=======
 				<ChallengeTable
 					challenges={challenges}
 					classId={classId}
 					showStatus={showStatus}
-					showDelete={create ?? false}
+					linkRows={linkRows}
+					showActions={create ?? false}
 				/>
->>>>>>> 15ba4eec28d670e4a2e0ad97d48b1a10c206c5ab
 			)}
 		</ClassSection>
 	);
@@ -225,19 +169,21 @@ function ChallengeTable({
 	challenges,
 	classId,
 	showStatus,
-	showDelete,
+	linkRows,
+	showActions,
 }: {
 	challenges: Challenge[];
 	classId: string;
 	showStatus: boolean;
-	showDelete: boolean;
+	linkRows: boolean;
+	showActions: boolean;
 }) {
 	const columns = helper.columns([
-		titleColumn(classId),
+		titleColumn(classId, linkRows),
 		pointsColumn,
 		createdAtColumn,
 		...(showStatus ? [statusColumn] : []),
-		...(showDelete ? [deleteColumn(classId)] : []),
+		...(showActions ? [actionsColumn(classId)] : []),
 	]);
 
 	const table = useTable({

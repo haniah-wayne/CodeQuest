@@ -1,5 +1,6 @@
 import * as v from "valibot";
 import { LANGUAGE_IDS } from "./languages";
+import { UNLOCK_RADII } from "./location";
 
 export const MIN_POINTS = 1;
 export const MAX_POINTS = 100;
@@ -46,7 +47,18 @@ export const CreateChallengeSchema = v.object({
 	),
 	longitude: coordinate(180),
 	latitude: coordinate(90),
-	hidden: v.boolean(), //10.29.Haniah -> additonal schema field to show if the challenge is hidden or not
+	radius: v.pipe(
+		v.string("Pick an unlock radius."),
+		v.transform(Number),
+		v.picklist(UNLOCK_RADII, "Pick an unlock radius."),
+	),
+	hidden: v.boolean(),
+});
+
+// Positions reported by the browser are already numbers
+export const PositionSchema = v.object({
+	longitude: v.pipe(v.number(), v.finite(), v.minValue(-180), v.maxValue(180)),
+	latitude: v.pipe(v.number(), v.finite(), v.minValue(-90), v.maxValue(90)),
 });
 
 // Keeps junk off the code runner
@@ -67,4 +79,5 @@ export const SubmitSolutionSchema = v.object({
 	challengeId: v.pipe(v.number(), v.safeInteger()),
 	language: v.picklist(LANGUAGE_IDS, "Pick a language."),
 	code: CodeSchema,
+	position: PositionSchema,
 });

@@ -11,7 +11,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import type * as React from "react";
-import type { CreateChallengeState } from "@/app/dashboard/classes/[classId]/challenges/new/actions";
+import type { ChallengeFormState } from "@/app/dashboard/classes/[classId]/challenges/new/actions";
 import { AuthFormError } from "@/components/auth-card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -22,9 +22,19 @@ import {
 	FieldError,
 	FieldGroup,
 	FieldLabel,
+	FieldLegend,
+	FieldSet,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Radio, RadioGroup } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import {
+	DEFAULT_UNLOCK_RADIUS,
+	UNLOCK_RADII,
+	UNLOCK_RADIUS_LABELS,
+	type Position,
+	type UnlockRadius,
+} from "@/lib/challenges/location";
 import { DEFAULT_POINTS, MAX_POINTS, MIN_POINTS } from "@/lib/challenges/schemas";
 
 const MapView = dynamic(() => import("@/components/mapview"), {
@@ -32,39 +42,51 @@ const MapView = dynamic(() => import("@/components/mapview"), {
 	loading: () => <div className="size-full animate-pulse bg-muted" />,
 });
 
+// Shared by the create and edit pages. Edits pass the saved challenge as
+// `initial` and its ID so the action knows which one to update
 export function ChallengeForm({
 	classId,
+	challengeId,
+	initial,
 	action: submitAction,
 	submitLabel,
 	pendingLabel,
-	challengeId,
-	initial,
 }: {
 	classId: string;
-	action: (state: CreateChallengeState, formData: FormData) => Promise<CreateChallengeState>;
-	submitLabel: string;
-	pendingLabel: string;
 	challengeId?: number;
 	initial?: {
 		title: string;
 		description: string;
 		solution: string;
 		points: number;
+		location: Position;
+		radius: UnlockRadius;
 		hidden: boolean;
-		longitude: number;
-		latitude: number;
 	};
+	action: (state: ChallengeFormState, formData: FormData) => Promise<ChallengeFormState>;
+	submitLabel: string;
+	pendingLabel: string;
 }) {
-	const [state, action, pending] = useActionState<CreateChallengeState, FormData>(
+	const [state, action, pending] = useActionState<ChallengeFormState, FormData>(
 		submitAction,
-		{},
+		initial
+			? {
+					values: {
+						title: initial.title,
+						description: initial.description,
+						solution: initial.solution,
+						points: String(initial.points),
+					},
+				}
+			: {},
 	);
 
-	// Start from the saved pin when editing so it doesn't have to be placed again
-	const [location, setLocation] = useState<{
-		longitude: number;
-		latitude: number;
-	} | null>(initial ? { longitude: initial.longitude, latitude: initial.latitude } : null);
+	const [location, setLocation] = useState<Position | null>(initial?.location ?? null);
+
+	const [radius, setRadius] = useState<UnlockRadius>(initial?.radius ?? DEFAULT_UNLOCK_RADIUS);
+
+	// Controlled so React's form reset after a failed submit doesn't uncheck it
+	const [hidden, setHidden] = useState(initial?.hidden ?? false);
 
 	const locationError = state.fieldErrors?.longitude ?? state.fieldErrors?.latitude;
 	const classHref = `/dashboard/classes/${classId}`;
@@ -72,12 +94,12 @@ export function ChallengeForm({
 	return (
 		<form action={action} className="flex flex-col gap-6">
 			<input type="hidden" name="classId" value={classId} />
-			<input type="hidden" name="longitude" value={location?.longitude ?? ""} />
-			<input type="hidden" name="latitude" value={location?.latitude ?? ""} />
-
 			{challengeId !== undefined && (
 				<input type="hidden" name="challengeId" value={challengeId} />
 			)}
+			<input type="hidden" name="longitude" value={location?.longitude ?? ""} />
+			<input type="hidden" name="latitude" value={location?.latitude ?? ""} />
+			<input type="hidden" name="radius" value={radius} />
 
 			{state.error && <AuthFormError>{state.error}</AuthFormError>}
 
@@ -95,7 +117,7 @@ export function ChallengeForm({
 								name="title"
 								type="text"
 								placeholder="Loops & Arrays"
-								defaultValue={state.values?.title ?? initial?.title}
+								defaultValue={state.values?.title}
 								required
 								aria-invalid={Boolean(state.fieldErrors?.title) || undefined}
 							/>
@@ -117,9 +139,7 @@ export function ChallengeForm({
 								min={MIN_POINTS}
 								max={MAX_POINTS}
 								step={1}
-								defaultValue={
-									state.values?.points ?? initial?.points ?? DEFAULT_POINTS
-								}
+								defaultValue={state.values?.points ?? DEFAULT_POINTS}
 								required
 								aria-invalid={Boolean(state.fieldErrors?.points) || undefined}
 								aria-describedby="points-hint"
@@ -142,7 +162,7 @@ export function ChallengeForm({
 								id="description"
 								name="description"
 								placeholder="What does this print? for (let i = 0; i < 3; i++) console.log(i * 2)"
-								defaultValue={state.values?.description ?? initial?.description}
+								defaultValue={state.values?.description}
 								required
 								aria-invalid={Boolean(state.fieldErrors?.description) || undefined}
 								aria-describedby="description-hint"
@@ -165,7 +185,7 @@ export function ChallengeForm({
 								id="solution"
 								name="solution"
 								placeholder={"0\n2\n4"}
-								defaultValue={state.values?.solution ?? initial?.solution}
+								defaultValue={state.values?.solution}
 								required
 								autoComplete="off"
 								spellCheck={false}
@@ -178,32 +198,11 @@ export function ChallengeForm({
 								className="flex items-center gap-1.5"
 							>
 								<HugeiconsIcon icon={ViewOffSlashIcon} className="size-3.5" />
-								Hidden from students. Their code output is checked against this.
+								Hidden from students. Their code&apos;s output is checked against
+								this.
 							</FieldDescription>
 
 							<FieldError>{state.fieldErrors?.solution}</FieldError>
-						</Field>
-					</FieldGroup>
-
-					<FieldGroup className="mx-auto w-72">
-						<Field orientation="horizontal">
-							<Checkbox
-								id="hidden"
-								name="hidden"
-								value="true"
-								defaultChecked={state.values?.hidden ?? initial?.hidden ?? false}
-							/>
-
-							<FieldContent>
-								<FieldLabel htmlFor="hidden">Hide Pin From Students?</FieldLabel>
-
-								<FieldDescription>
-									By clicking this checkbox, you are able to hide the pin from
-									students. This means that students will not be able to see the
-									pin on the map, but they will still be able to unlock and solve
-									the challenge if they are within the radius of the pin.
-								</FieldDescription>
-							</FieldContent>
 						</Field>
 					</FieldGroup>
 				</FormSection>
@@ -219,8 +218,8 @@ export function ChallengeForm({
 							<MapView
 								mode="professor"
 								className="size-full"
-								challengeLongitude={initial?.longitude}
-								challengeLatitude={initial?.latitude}
+								radius={radius}
+								initialPin={initial?.location}
 								locationSelect={(longitude, latitude) =>
 									setLocation({ longitude, latitude })
 								}
@@ -249,17 +248,69 @@ export function ChallengeForm({
 						</div>
 					</div>
 
-					{/* TODO: update radius description when radius field is added */}
-					<div className="flex flex-col gap-1 border-t border-border/60 px-5 py-3 sm:px-6">
-						<p className="text-body-sm text-muted-foreground">
-							Students must be within 100 m of the pin to unlock it.
-						</p>
-
+					<div className="flex flex-col gap-3 border-t border-border/60 px-5 py-4 sm:px-6">
 						{locationError && !location && (
 							<p role="alert" className="text-body-sm text-destructive">
 								{locationError}
 							</p>
 						)}
+
+						<FieldSet data-invalid={Boolean(state.fieldErrors?.radius) || undefined}>
+							<FieldLegend variant="label" className="text-label">
+								Unlock radius
+							</FieldLegend>
+
+							<FieldDescription id="radius-hint">
+								Students must be within {radius} m of the pin to unlock it.
+							</FieldDescription>
+
+							<RadioGroup
+								className="sm:grid-cols-3"
+								value={String(radius)}
+								onValueChange={(value) => setRadius(Number(value) as UnlockRadius)}
+								aria-describedby="radius-hint"
+							>
+								{UNLOCK_RADII.map((r) => (
+									<FieldLabel
+										className="w-full gap-2.5 rounded-2xl border border-input bg-input/20 px-3 py-2.5 transition-colors has-data-checked:border-primary has-data-checked:bg-primary/5"
+										key={r}
+									>
+										<Radio value={String(r)} className="mt-0.5" />
+
+										<span className="flex flex-col gap-0.5">
+											<span className="text-label tabular-nums">{r} m</span>
+
+											<span className="text-caption font-normal text-muted-foreground">
+												{UNLOCK_RADIUS_LABELS[r]}
+											</span>
+										</span>
+									</FieldLabel>
+								))}
+							</RadioGroup>
+
+							<FieldError>{state.fieldErrors?.radius}</FieldError>
+						</FieldSet>
+
+						<Field orientation="horizontal">
+							<Checkbox
+								id="hidden"
+								name="hidden"
+								checked={hidden}
+								onCheckedChange={(checked) => setHidden(checked)}
+								aria-describedby="hidden-hint"
+							/>
+
+							<FieldContent>
+								<FieldLabel className="text-label" htmlFor="hidden">
+									Hide pin on the map
+								</FieldLabel>
+
+								<FieldDescription id="hidden-hint">
+									If this is checked, students won{"'"}t see the pin until they
+									{"'"}re within the unlock radius.
+								</FieldDescription>
+							</FieldContent>
+						</Field>
 					</div>
 				</FormSection>
 			</div>

@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -23,7 +23,6 @@ export type Database = {
           CreatedAt: string
           Description: string | null
           Hidden: boolean
-          IsPublished: boolean
           MaxAttempts: number | null
           Points: number
           Title: string
@@ -36,7 +35,6 @@ export type Database = {
           CreatedAt?: string
           Description?: string | null
           Hidden?: boolean
-          IsPublished?: boolean
           MaxAttempts?: number | null
           Points?: number
           Title: string
@@ -49,7 +47,6 @@ export type Database = {
           CreatedAt?: string
           Description?: string | null
           Hidden?: boolean
-          IsPublished?: boolean
           MaxAttempts?: number | null
           Points?: number
           Title?: string

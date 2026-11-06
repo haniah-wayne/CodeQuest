@@ -6,8 +6,12 @@ import { updateChallenge } from "@/app/dashboard/classes/[classId]/challenges/ne
 import { ChallengeForm } from "@/components/challenge/challenge-form";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
 import { requireSessionUser } from "@/lib/auth/session";
+import { DEFAULT_UNLOCK_RADIUS, UNLOCK_RADII, type UnlockRadius } from "@/lib/challenges/location";
 import { createClient } from "@/lib/supabase/server";
-import { useParams, type PageProps } from "@/lib/params";
+
+function isUnlockRadius(radius: number): radius is UnlockRadius {
+	return (UNLOCK_RADII as readonly number[]).includes(radius);
+}
 
 export default async function EditChallengePage(
 	props: PageProps<"/dashboard/classes/[classId]/challenges/[challengeId]/edit">,
@@ -24,7 +28,7 @@ export default async function EditChallengePage(
 	const { data: challenge, error } = await supabase
 		.from("Challenges")
 		.select(
-			"Title, Description, Points, Hidden, Classes(ProfessorID), Solutions(Solution), Locations(Longitude, Latitude)",
+			"Title, Description, Points, Hidden, Classes(ProfessorID), Solutions(Solution), Locations(Longitude, Latitude, Radius)",
 		)
 		.eq("ChallengeID", challengeId)
 		.eq("ClassID", classId)
@@ -32,10 +36,8 @@ export default async function EditChallengePage(
 
 	if (error) console.error(error);
 
-	
-	if (!challenge || user.role !== "professor" || challenge.Classes.ProfessorID !== user.id) {
-		notFound();
-	}
+	// Only the class's professor can edit, so anyone else gets a 404
+	if (!challenge || challenge.Classes.ProfessorID !== user.id) notFound();
 
 	const solution = challenge.Solutions?.Solution;
 	const location = challenge.Locations[0];
@@ -68,15 +70,18 @@ export default async function EditChallengePage(
 				challengeId={challengeId}
 				action={updateChallenge}
 				submitLabel="Save changes"
-				pendingLabel="Saving changes"
+				pendingLabel="Saving changes…"
 				initial={{
 					title: challenge.Title,
 					description: challenge.Description ?? "",
 					solution,
 					points: challenge.Points,
+					location: { longitude: location.Longitude, latitude: location.Latitude },
+					// Older challenges may use a radius that's no longer offered
+					radius: isUnlockRadius(location.Radius)
+						? location.Radius
+						: DEFAULT_UNLOCK_RADIUS,
 					hidden: challenge.Hidden,
-					longitude: location.Longitude,
-					latitude: location.Latitude,
 				}}
 			/>
 		</>

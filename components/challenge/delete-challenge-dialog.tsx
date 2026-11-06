@@ -7,30 +7,30 @@ import {
 	Dialog,
 	DialogClose,
 	DialogDescription,
+	DialogFooter,
 	DialogHeader,
 	DialogPopup,
 	DialogTitle,
-	DialogTrigger,
 } from "@/components/ui/dialog";
 
-export function DeleteChallengeButton({
-	//values from challenge list
+// Opened from the challenge actions menu, so it has no trigger of its own
+export function DeleteChallengeDialog({
 	classId,
 	challengeId,
 	title,
+	open,
+	onOpenChange,
 }: {
-	classId: string; //types for the values
+	classId: string;
 	challengeId: number;
 	title: string;
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
 }) {
-	const [state, action, pending] = useActionState(deleteChallenge, {}); //action state of the function
+	const [state, action, pending] = useActionState(deleteChallenge, {});
 
 	return (
-		<Dialog>
-			<DialogTrigger render={<Button type="button" variant="outline" size="sm" />}>
-				Delete
-			</DialogTrigger>
-
+		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogPopup>
 				<DialogHeader>
 					<DialogTitle>Delete this challenge?</DialogTitle>
@@ -51,15 +51,15 @@ export function DeleteChallengeButton({
 						</p>
 					)}
 
-					<div className="flex justify-end gap-2">
+					<DialogFooter>
 						<DialogClose render={<Button type="button" variant="ghost" />}>
 							Cancel
 						</DialogClose>
 
-						<Button type="submit" disabled={pending}>
-							{pending ? "Deleting..." : "Delete challenge"}
+						<Button type="submit" variant="destructive" disabled={pending}>
+							{pending ? "Deleting…" : "Delete challenge"}
 						</Button>
-					</div>
+					</DialogFooter>
 				</form>
 			</DialogPopup>
 		</Dialog>

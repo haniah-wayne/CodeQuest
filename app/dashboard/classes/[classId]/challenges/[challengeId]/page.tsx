@@ -3,10 +3,14 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CodeWorkspace } from "@/components/challenge/code-workspace";
+import { SubmissionList } from "@/components/challenge/submission-list";
+import { ClassRealtime } from "@/components/class/class-realtime";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
 import { Badge } from "@/components/ui/badge";
 import { requireSessionUser } from "@/lib/auth/session";
 import { DEFAULT_LANGUAGE, isLanguageId } from "@/lib/challenges/languages";
+import { isWithinUnlockRadius } from "@/lib/challenges/location";
+import { getSavedPosition } from "@/lib/challenges/position";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ChallengePage(
@@ -23,10 +27,12 @@ export default async function ChallengePage(
 
 	// RLS decides who can see the challenge, so a missing row means not found
 	// or not allowed
-	const [challengeResult, submissionsResult] = await Promise.all([
+	const [challengeResult, submissionsResult, position] = await Promise.all([
 		supabase
 			.from("Challenges")
-			.select("Title, Description, Points, Classes(ClassName, ProfessorID)")
+			.select(
+				"Title, Description, Points, Classes(ClassName, ProfessorID), Locations(Longitude, Latitude, Radius)",
+			)
 			.eq("ChallengeID", challengeId)
 			.eq("ClassID", classId)
 			.maybeSingle(),
@@ -36,6 +42,7 @@ export default async function ChallengePage(
 			.eq("ChallengeID", challengeId)
 			.eq("StudentID", user.id)
 			.order("SubmittedAt", { ascending: false }),
+		getSavedPosition(),
 	]);
 
 	const challenge = challengeResult.data;
@@ -47,19 +54,23 @@ export default async function ChallengePage(
 	}
 
 	if (challenge.Classes.ProfessorID === user.id) {
-		// TODO: professor view
-		return null;
+		return <ProfessorView classId={classId} challengeId={challengeId} challenge={challenge} />;
 	}
 
 	if (submissionsResult.error) console.error(submissionsResult.error);
 
 	const submissions = submissionsResult.data ?? [];
-	const latest = submissions[0];
-	const solved = submissions.some((s) => s.Status === "correct");
+	const correct = submissions.find((s) => s.Status === "correct");
+	const solved = Boolean(correct);
 
-	// Pick up where the student left off with their last submission
-	const initialLanguage = isLanguageId(latest?.Language) ? latest.Language : DEFAULT_LANGUAGE;
-	const initialCode = latest && isLanguageId(latest.Language) ? latest.Code : null;
+	// Locked challenges stay hidden even if the student has the link
+	if (!solved && !isWithinUnlockRadius(challenge.Locations, position)) notFound();
+
+	// Show the solution that was graded correct, otherwise pick up where the
+	// student left off with their last submission
+	const shown = correct ?? submissions[0];
+	const initialLanguage = isLanguageId(shown?.Language) ? shown.Language : DEFAULT_LANGUAGE;
+	const initialCode = shown && isLanguageId(shown.Language) ? shown.Code : null;
 
 	return (
 		<>
@@ -103,6 +114,76 @@ export default async function ChallengePage(
 				initialCode={initialCode}
 				solved={solved}
 			/>
+		</>
+	);
+}
+
+async function ProfessorView({
+	classId,
+	challengeId,
+	challenge,
+}: {
+	classId: number;
+	challengeId: number;
+	challenge: { Title: string; Points: number; Classes: { ClassName: string } };
+}) {
+	const supabase = await createClient();
+
+	const [submissionsResult, rosterResult] = await Promise.all([
+		supabase
+			.from("Submission")
+			.select("SubmissionID, StudentID, Code, Language, Status, Score, SubmittedAt")
+			.eq("ChallengeID", challengeId)
+			.order("SubmittedAt", { ascending: false }),
+		supabase.rpc("get_class_roster", { p_class_id: classId }),
+	]);
+
+	for (const { error } of [submissionsResult, rosterResult]) {
+		if (error) console.error(error);
+	}
+
+	const names = new Map(
+		(rosterResult.data ?? []).map((r) => [r.student_id, r.student_name] as const),
+	);
+
+	const submissions = (submissionsResult.data ?? []).map((s) => ({
+		id: s.SubmissionID,
+		// Students who have left the class drop off the roster
+		studentName: names.get(s.StudentID) ?? "Former student",
+		language: s.Language,
+		status: s.Status,
+		score: s.Score,
+		submittedAt: s.SubmittedAt,
+		code: s.Code,
+	}));
+
+	return (
+		<>
+			<ClassRealtime classId={classId} />
+
+			<div className="flex flex-col gap-6">
+				<Link
+					className="flex w-fit items-center gap-1.5 rounded-sm text-caption text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+					href={`/dashboard/classes/${classId}`}
+				>
+					<HugeiconsIcon icon={ArrowLeft01Icon} className="size-3.5" />
+					{challenge.Classes.ClassName}
+				</Link>
+
+				<div className="flex flex-col gap-4">
+					<DashboardPageHeader
+						title={challenge.Title}
+						description="Review every submission students have made for this challenge."
+						actions={
+							<Badge className="bg-emerald-50 text-wsu-green tabular-nums">
+								{challenge.Points} pts
+							</Badge>
+						}
+					/>
+				</div>
+			</div>
+
+			<SubmissionList submissions={submissions} error={submissionsResult.error !== null} />
 		</>
 	);
 }
