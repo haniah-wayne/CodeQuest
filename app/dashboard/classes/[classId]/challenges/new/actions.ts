@@ -8,6 +8,11 @@ import { CreateChallengeSchema } from "@/lib/challenges/schemas";
 import { createClient } from "@/lib/supabase/server";
 import { toFieldErrors } from "@/lib/validation";
 
+//ai imports
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import type { LanguageId } from "@/lib/challenges/languages";
+import { execute } from "@/lib/piston";
+
 export interface CreateChallengeState {
 	error?: string;
 	fieldErrors?: Partial<
@@ -98,3 +103,60 @@ export async function createChallenge(
 	revalidatePath(`/dashboard/classes/${classId}`);
 	redirect(`/dashboard/classes/${classId}`);
 }
+
+//moving on to the ai component
+//function to generate test cases
+
+//interface to deal with the diff returns
+interface GenerateTestCasesResult {
+	testCases: { input: string; expectedOutput: string }[];
+	error?: string;
+}
+
+export async function generateTestCases(
+	problem_description: string,
+	reference: string,
+	language: LanguageId,
+): Promise<GenerateTestCasesResult> {
+	try {
+		const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+
+		const model = genAI.getGenerativeModel({
+			model: "gemini-3.8-flash",
+			// Ask for JSON instead of regular chat messages, so code can read the reply
+			generationConfig: { responseMimeType: "application/json" },
+		});
+
+		//sedigin the specific message
+		const test_case_prompt = `Write 5 test inputs for this beginner programming problem.
+		Reply with a JSON array of strings. Each string is the exact text given to the program on standard input.
+		Include normal cases and a couple of edge cases. Only write inputs, not outputs.
+
+		Problem:
+		${problem_description}
+
+		Sample solution (${language}):
+		${reference}`;
+
+		//take the reply
+		const reply = await model.generateContent(test_case_prompt);
+		const inputs: string[] = JSON.parse(reply.response.text());
+
+		const testCases: GenerateTestCasesResult["testCases"] = [];
+
+		//same piston runner that the 
+		for (const input of inputs) {
+			// Same Piston runner students use, the 3rd argument is input
+			const run = await execute(language, reference, input);
+			if (run.problem) continue; // skip inputs that crash the sample solution
+			testCases.push({ input, expectedOutput: run.stdout });
+		}
+
+		//send test cases to be displayed 
+		return { testCases };
+	} catch (error) {
+		console.error(error);
+		return { testCases: [], error: "Couldn't generate test cases. Try again." };
+	}
+}
+
