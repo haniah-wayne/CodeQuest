@@ -1,10 +1,16 @@
 "use client";
 
-import { CheckmarkCircle02Icon, Flag02Icon } from "@hugeicons/core-free-icons";
+import {
+	CheckmarkCircle02Icon,
+	FilterHorizontalIcon,
+	Flag02Icon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { createColumnHelper, useTable } from "@tanstack/react-table";
+import { createColumnHelper, type ReactTable, useTable } from "@tanstack/react-table";
 import { cn } from "cn";
 import Link from "next/link";
+import { useMemo } from "react";
+import { ChallengeActions } from "@/components/challenge/challenge-actions";
 import { ClassSection, SectionEmpty, SectionError } from "@/components/class/class-section";
 import {
 	DataTable,
@@ -12,7 +18,16 @@ import {
 	dataTableFeatures,
 } from "@/components/class/data-table";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuGroup,
+	DropdownMenuLabel,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { Tables } from "@/supabase/database.types";
 
 export type ChallengeStatus = "not_started" | "attempted" | "solved";
@@ -21,6 +36,8 @@ type Challenge = Pick<
 	Tables<"Challenges">,
 	"ChallengeID" | "Title" | "Description" | "Points" | "CreatedAt"
 > & { status: ChallengeStatus };
+
+type CompletionFilterValue = "all" | "completed" | "notCompleted";
 
 const statusOrder: ChallengeStatus[] = ["not_started", "attempted", "solved"];
 
@@ -70,6 +87,21 @@ const statusColumn = helper.accessor("status", {
 	sortFn: (a, b, id) =>
 		statusOrder.indexOf(a.getValue<ChallengeStatus>(id)) -
 		statusOrder.indexOf(b.getValue<ChallengeStatus>(id)),
+
+	filterFn: (row, columnId, filterValue) => {
+		const status = row.getValue<ChallengeStatus>(columnId);
+
+		if (filterValue === "completed") {
+			return status === "solved";
+		}
+
+		if (filterValue === "notCompleted") {
+			return status !== "solved";
+		}
+
+		return true;
+	},
+
 	cell: (info) => <StatusBadge status={info.getValue()} />,
 });
 
@@ -86,6 +118,22 @@ const createdAtColumn = helper.accessor("CreatedAt", {
 		</time>
 	),
 });
+
+const actionsColumn = (classId: string) =>
+	helper.display({
+		id: "actions",
+		header: () => <span className="sr-only">Actions</span>,
+		cell: (info) => (
+			// Sits above the row-wide title link so the menu stays clickable
+			<div className="relative z-10 flex justify-end">
+				<ChallengeActions
+					classId={classId}
+					challengeId={info.row.original.ChallengeID}
+					title={info.row.original.Title}
+				/>
+			</div>
+		),
+	});
 
 export function ChallengeList({
 	challenges,
@@ -116,7 +164,35 @@ export function ChallengeList({
 		</Link>
 	) : null;
 
+	const columns = useMemo(
+		() =>
+			helper.columns([
+				titleColumn(classId, linkRows),
+				pointsColumn,
+				createdAtColumn,
+				...(showStatus ? [statusColumn] : []),
+				...(create ? [actionsColumn(classId)] : []),
+			]),
+		[classId, linkRows, showStatus, create],
+	);
+
+	const table = useTable({
+		features: dataTableFeatures,
+		columns,
+		data: challenges,
+		getRowId: (ch) => String(ch.ChallengeID),
+	});
+
 	const isEmpty = !error && challenges.length === 0;
+	const filtered = table.state.columnFilters.length > 0;
+
+	const action =
+		error || isEmpty ? null : (
+			<div className="flex items-center gap-2">
+				{showStatus && <CompletionFilter table={table} />}
+				{createButton}
+			</div>
+		);
 
 	return (
 		<ClassSection
@@ -124,7 +200,7 @@ export function ChallengeList({
 			title="Challenges"
 			icon={Flag02Icon}
 			count={challenges.length}
-			action={isEmpty ? null : createButton}
+			action={isEmpty ? null : action}
 		>
 			{error ? (
 				<SectionError what="challenges" />
@@ -136,43 +212,63 @@ export function ChallengeList({
 					actions={createButton}
 				/>
 			) : (
-				<ChallengeTable
-					challenges={challenges}
-					classId={classId}
-					showStatus={showStatus}
-					linkRows={linkRows}
+				<DataTable
+					table={table}
+					emptyMessage={
+						filtered ? "No challenges match the selected filter" : "No challenges"
+					}
 				/>
 			)}
 		</ClassSection>
 	);
 }
 
-function ChallengeTable({
-	challenges,
-	classId,
-	showStatus,
-	linkRows,
-}: {
-	challenges: Challenge[];
-	classId: string;
-	showStatus: boolean;
-	linkRows: boolean;
-}) {
-	const columns = helper.columns([
-		titleColumn(classId, linkRows),
-		pointsColumn,
-		createdAtColumn,
-		...(showStatus ? [statusColumn] : []),
-	]);
+const completionOptions = [
+	{ value: "all", label: "All" },
+	{ value: "completed", label: "Completed" },
+	{ value: "notCompleted", label: "Not completed" },
+] as const;
 
-	const table = useTable({
-		features: dataTableFeatures,
-		columns,
-		data: challenges,
-		getRowId: (ch) => String(ch.ChallengeID),
-	});
+function CompletionFilter({ table }: { table: ReactTable<DataTableFeatures, Challenge, unknown> }) {
+	const column = table.getColumn("status");
+	const value = (column?.getFilterValue() as CompletionFilterValue | undefined) ?? "all";
+	const active = value !== "all";
 
-	return <DataTable table={table} emptyMessage="No challenges" />;
+	return (
+		<DropdownMenu>
+			<DropdownMenuTrigger
+				render={
+					<Button
+						variant="outline"
+						size="sm"
+						aria-label={active ? "Filter challenges, 1 active" : "Filter challenges"}
+					>
+						<HugeiconsIcon icon={FilterHorizontalIcon} data-icon="inline-start" />
+						Filter
+						{active && <Badge className="h-4 min-w-4 px-1 tabular-nums">1</Badge>}
+					</Button>
+				}
+			/>
+
+			<DropdownMenuContent align="end" className="w-auto">
+				<DropdownMenuGroup>
+					<DropdownMenuLabel>Completion</DropdownMenuLabel>
+					<DropdownMenuRadioGroup
+						value={value}
+						onValueChange={(next: CompletionFilterValue) =>
+							column?.setFilterValue(next === "all" ? undefined : next)
+						}
+					>
+						{completionOptions.map((option) => (
+							<DropdownMenuRadioItem key={option.value} value={option.value}>
+								{option.label}
+							</DropdownMenuRadioItem>
+						))}
+					</DropdownMenuRadioGroup>
+				</DropdownMenuGroup>
+			</DropdownMenuContent>
+		</DropdownMenu>
+	);
 }
 
 function StatusBadge({ status }: { status: ChallengeStatus }) {
