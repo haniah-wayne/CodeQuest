@@ -11,7 +11,7 @@ import type { SubmissionRow } from "@/components/challenge/submission-list";
 import type { DataTableFeatures } from "@/components/class/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { AiGrade, AiVerdict } from "@/lib/ai-grading";
+import type { AiGrade, AiVerdict } from "@/lib/ai/grading";
 
 interface GradeEntry {
 	pending: boolean;
