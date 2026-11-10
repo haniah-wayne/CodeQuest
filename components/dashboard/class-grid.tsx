@@ -2,6 +2,7 @@ import { Alert02Icon, Book02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import Link from "next/link";
 import type * as React from "react";
+import { ClassActions } from "@/components/dashboard/class-actions";
 import {
 	Empty,
 	EmptyContent,
@@ -25,10 +26,13 @@ export function ClassGrid({
 	classes,
 	error,
 	empty,
+	manage = false,
 }: {
 	classes: ClassSummary[] | null;
 	error: unknown;
 	empty: EmptyState;
+	// Shows the edit and delete menu on each card
+	manage?: boolean;
 }) {
 	if (error) {
 		return (
@@ -50,20 +54,36 @@ export function ClassGrid({
 		<ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 			{classes.map((c) => (
 				<li key={c.ClassID} className="flex">
-					<ClassCard class={c} />
+					<ClassCard class={c} manage={manage} />
 				</li>
 			))}
 		</ul>
 	);
 }
 
-function ClassCard({ class: c }: { class: ClassSummary }) {
+function ClassCard({ class: c, manage }: { class: ClassSummary; manage: boolean }) {
 	return (
-		<Link
-			className="group/class flex flex-1 flex-col gap-2 rounded-3xl border border-accent bg-white p-6 transition-colors outline-none hover:border-emerald-200 hover:bg-emerald-50/40 focus-visible:ring-[3px] focus-visible:ring-ring/50"
-			href={`/dashboard/classes/${c.ClassID}`}
-		>
-			<h2 className="text-heading">{c.ClassName}</h2>
+		<div className="group/class relative flex flex-1 flex-col gap-2 rounded-3xl border border-accent bg-white p-6 transition-colors hover:border-emerald-200 hover:bg-emerald-50/40 has-[a:focus-visible]:ring-[3px] has-[a:focus-visible]:ring-ring/50">
+			<div className="flex items-start justify-between gap-2">
+				<h2 className="text-heading">
+					<Link
+						className="outline-none after:absolute after:inset-0 after:rounded-3xl"
+						href={`/dashboard/classes/${c.ClassID}`}
+					>
+						{c.ClassName}
+					</Link>
+				</h2>
+
+				{manage && (
+					<div className="relative z-10 -mt-1 -mr-2 shrink-0">
+						<ClassActions
+							classId={c.ClassID}
+							name={c.ClassName}
+							description={c.Description ?? ""}
+						/>
+					</div>
+				)}
+			</div>
 
 			{c.Description && (
 				<p className="line-clamp-3 text-body-sm text-pretty text-muted-foreground">
@@ -78,7 +98,7 @@ function ClassCard({ class: c }: { class: ClassSummary }) {
 					<code className="font-mono text-label tracking-wider">{c.ClassCode}</code>
 				</p>
 			)}
-		</Link>
+		</div>
 	);
 }
 

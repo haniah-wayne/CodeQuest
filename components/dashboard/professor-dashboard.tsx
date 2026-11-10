@@ -1,5 +1,5 @@
+import { CreateClassDialog } from "@/components/dashboard/class-dialog";
 import { ClassGrid } from "@/components/dashboard/class-grid";
-import { CreateClassDialog } from "@/components/dashboard/create-class-dialog";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
 import type { SessionUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -25,6 +25,7 @@ export async function ProfessorDashboard({ user }: { user: SessionUser }) {
 			<ClassGrid
 				classes={classes}
 				error={error}
+				manage
 				empty={{
 					title: "No classes yet",
 					description:
