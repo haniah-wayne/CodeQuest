@@ -1,6 +1,6 @@
 import * as v from "valibot";
-import { LANGUAGE_IDS } from "./languages";
-import { UNLOCK_RADII } from "./location";
+import { LANGUAGE_IDS } from "./challenges/languages";
+import { UNLOCK_RADII } from "./challenges/location";
 
 export const MIN_POINTS = 1;
 export const MAX_POINTS = 100;

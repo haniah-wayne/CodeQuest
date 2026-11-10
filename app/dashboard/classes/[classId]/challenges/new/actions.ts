@@ -9,7 +9,7 @@ import {
 	generateChallenge as requestGeneratedChallenge,
 } from "@/lib/ai/challenge";
 import { getSessionUser } from "@/lib/auth/session";
-import { CreateChallengeSchema, GenerateChallengeSchema } from "@/lib/challenges/schemas";
+import { CreateChallengeSchema, GenerateChallengeSchema } from "@/lib/schemas";
 import { createClient } from "@/lib/supabase/server";
 import { toFieldErrors } from "@/lib/validation";
 

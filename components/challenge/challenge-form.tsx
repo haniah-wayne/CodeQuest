@@ -37,7 +37,7 @@ import {
 	type Position,
 	type UnlockRadius,
 } from "@/lib/challenges/location";
-import { DEFAULT_POINTS, MAX_POINTS, MIN_POINTS } from "@/lib/challenges/schemas";
+import { DEFAULT_POINTS, MAX_POINTS, MIN_POINTS } from "@/lib/schemas";
 
 const MapView = dynamic(() => import("@/components/mapview"), {
 	ssr: false,

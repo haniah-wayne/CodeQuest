@@ -2,8 +2,9 @@ import { type ResponseSchema, SchemaType } from "@google/generative-ai";
 import * as v from "valibot";
 import { getGeminiModel } from "@/lib/ai/gemini";
 import { LANGUAGE_IDS, LANGUAGES, type LanguageId } from "@/lib/challenges/languages";
-import { MAX_POINTS, MIN_POINTS } from "@/lib/challenges/schemas";
 import { execute } from "@/lib/piston";
+import { MAX_POINTS, MIN_POINTS } from "@/lib/schemas.js";
+import { CHALLENGE_SYSTEM_PROMPT } from "./prompts.js";
 
 export interface GeneratedChallenge {
 	title: string;
@@ -17,8 +18,6 @@ export interface GenerationInput {
 	request: string;
 	className: string;
 }
-
-const SYSTEM_PROMPT = `TODO`;
 
 //structured output schema
 const RESPONSE_SCHEMA: ResponseSchema = {
@@ -65,7 +64,7 @@ export class GenerationError extends Error {}
 
 export async function generateChallenge(input: GenerationInput): Promise<GeneratedChallenge> {
 	const model = getGeminiModel({
-		systemInstruction: SYSTEM_PROMPT,
+		systemInstruction: CHALLENGE_SYSTEM_PROMPT,
 		generationConfig: {
 			responseMimeType: "application/json",
 			responseSchema: RESPONSE_SCHEMA,

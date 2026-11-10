@@ -6,12 +6,8 @@ import { type AiGrade, requestAiGrade } from "@/lib/ai/grading";
 import { getSessionUser } from "@/lib/auth/session";
 import type { LanguageId } from "@/lib/challenges/languages";
 import { isWithinUnlockRadius, type Position } from "@/lib/challenges/location";
-import {
-	GradeSubmissionSchema,
-	RunCodeSchema,
-	SubmitSolutionSchema,
-} from "@/lib/challenges/schemas";
 import { type ExecutionResult, execute } from "@/lib/piston";
+import { GradeSubmissionSchema, RunCodeSchema, SubmitSolutionSchema } from "@/lib/schemas";
 import { createClient } from "@/lib/supabase/server";
 
 export interface RunCodeState {

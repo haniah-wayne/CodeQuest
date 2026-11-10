@@ -2,6 +2,7 @@ import { type ResponseSchema, SchemaType } from "@google/generative-ai";
 import * as v from "valibot";
 import { getGeminiModel } from "@/lib/ai/gemini";
 import { isLanguageId, LANGUAGES } from "@/lib/challenges/languages";
+import { GRADING_SYSTEM_PROMPT } from "./prompts.js";
 
 export const AI_VERDICTS = ["correct", "partially_correct", "incorrect"] as const;
 
@@ -43,8 +44,6 @@ export interface GradingInput {
 	testCases: TestCase[];
 	submission: Submission;
 }
-
-const SYSTEM_PROMPT = `TODO`;
 
 const RESPONSE_SCHEMA: ResponseSchema = {
 	type: SchemaType.OBJECT,
@@ -95,7 +94,7 @@ const ModelGradeSchema = v.object({
 
 export async function requestAiGrade(input: GradingInput): Promise<AiGrade> {
 	const model = getGeminiModel({
-		systemInstruction: SYSTEM_PROMPT,
+		systemInstruction: GRADING_SYSTEM_PROMPT,
 		generationConfig: {
 			responseMimeType: "application/json",
 			responseSchema: RESPONSE_SCHEMA,

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { GeneratedChallenge } from "@/lib/ai/challenge";
 import { LANGUAGES } from "@/lib/challenges/languages";
-import { MAX_GENERATION_REQUEST_LENGTH } from "@/lib/challenges/schemas";
+import { MAX_GENERATION_REQUEST_LENGTH } from "@/lib/schemas";
 
 export function ChallengeGenerator({
 	classId,
