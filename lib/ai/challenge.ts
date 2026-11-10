@@ -1,10 +1,10 @@
-import { type ResponseSchema, SchemaType } from "@google/generative-ai";
+import { type Schema, Type } from "@google/genai";
 import * as v from "valibot";
-import { getGeminiModel } from "@/lib/ai/gemini";
+import { generateJson } from "@/lib/ai/gemini";
 import { LANGUAGE_IDS, LANGUAGES, type LanguageId } from "@/lib/challenges/languages";
 import { execute } from "@/lib/piston";
-import { MAX_POINTS, MIN_POINTS } from "@/lib/schemas.js";
-import { CHALLENGE_SYSTEM_PROMPT } from "./prompts.js";
+import { MAX_POINTS, MIN_POINTS } from "@/lib/schemas";
+import { CHALLENGE_SYSTEM_PROMPT } from "./prompts";
 
 export interface GeneratedChallenge {
 	title: string;
@@ -20,29 +20,28 @@ export interface GenerationInput {
 }
 
 //structured output schema
-const RESPONSE_SCHEMA: ResponseSchema = {
-	type: SchemaType.OBJECT,
+const RESPONSE_SCHEMA: Schema = {
+	type: Type.OBJECT,
 	properties: {
 		title: {
-			type: SchemaType.STRING,
+			type: Type.STRING,
 			description: "Short challenge name.",
 		},
 		description: {
-			type: SchemaType.STRING,
+			type: Type.STRING,
 			description: "Problem statement shown to students.",
 		},
 		points: {
-			type: SchemaType.INTEGER,
+			type: Type.INTEGER,
 			description: `Suggested points, from ${MIN_POINTS} to ${MAX_POINTS}.`,
 		},
 		referenceLanguage: {
-			type: SchemaType.STRING,
-			format: "enum",
+			type: Type.STRING,
 			enum: [...LANGUAGE_IDS],
 			description: "Language of the reference solution.",
 		},
 		referenceSolution: {
-			type: SchemaType.STRING,
+			type: Type.STRING,
 			description: "Complete program that prints the expected output.",
 		},
 	},
@@ -63,14 +62,6 @@ const MAX_ATTEMPTS = 2;
 export class GenerationError extends Error {}
 
 export async function generateChallenge(input: GenerationInput): Promise<GeneratedChallenge> {
-	const model = getGeminiModel({
-		systemInstruction: CHALLENGE_SYSTEM_PROMPT,
-		generationConfig: {
-			responseMimeType: "application/json",
-			responseSchema: RESPONSE_SCHEMA,
-		},
-	});
-
 	const contents = [
 		{
 			role: "user",
@@ -87,10 +78,13 @@ export async function generateChallenge(input: GenerationInput): Promise<Generat
 
 	//try to get a working reference solution from the model
 	for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-		const result = await model.generateContent({ contents });
+		const text = await generateJson({
+			systemInstruction: CHALLENGE_SYSTEM_PROMPT,
+			schema: RESPONSE_SCHEMA,
+			contents,
+		});
 
 		//parse the model's output and validate it against the schema
-		const text = result.response.text();
 		const draft = v.parse(ModelChallengeSchema, JSON.parse(text));
 
 		//execute the reference solution to see if it works

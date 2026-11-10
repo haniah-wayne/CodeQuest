@@ -1,8 +1,8 @@
-import { type ResponseSchema, SchemaType } from "@google/generative-ai";
+import { type Schema, Type } from "@google/genai";
 import * as v from "valibot";
-import { getGeminiModel } from "@/lib/ai/gemini";
+import { generateJson } from "@/lib/ai/gemini";
 import { isLanguageId, LANGUAGES } from "@/lib/challenges/languages";
-import { GRADING_SYSTEM_PROMPT } from "./prompts.js";
+import { GRADING_SYSTEM_PROMPT } from "./prompts";
 
 export const AI_VERDICTS = ["correct", "partially_correct", "incorrect"] as const;
 
@@ -45,36 +45,35 @@ export interface GradingInput {
 	submission: Submission;
 }
 
-const RESPONSE_SCHEMA: ResponseSchema = {
-	type: SchemaType.OBJECT,
+const RESPONSE_SCHEMA: Schema = {
+	type: Type.OBJECT,
 	properties: {
 		verdict: {
-			type: SchemaType.STRING,
-			format: "enum",
+			type: Type.STRING,
 			enum: [...AI_VERDICTS],
 			description: "Overall judgment of the submission.",
 		},
 		score: {
-			type: SchemaType.INTEGER,
+			type: Type.INTEGER,
 			description: "Recommended points, from 0 to the challenge's maximum points.",
 		},
 		summary: {
-			type: SchemaType.STRING,
+			type: Type.STRING,
 			description: "One or two sentence overview of the assessment.",
 		},
 		strengths: {
-			type: SchemaType.ARRAY,
-			items: { type: SchemaType.STRING },
+			type: Type.ARRAY,
+			items: { type: Type.STRING },
 			description: "What the submission does well.",
 		},
 		issues: {
-			type: SchemaType.ARRAY,
-			items: { type: SchemaType.STRING },
+			type: Type.ARRAY,
+			items: { type: Type.STRING },
 			description: "Bugs or ways the submission fails the problem.",
 		},
 		suggestions: {
-			type: SchemaType.ARRAY,
-			items: { type: SchemaType.STRING },
+			type: Type.ARRAY,
+			items: { type: Type.STRING },
 			description: "Hints for improving the submission without giving away the answer.",
 		},
 	},
@@ -93,14 +92,6 @@ const ModelGradeSchema = v.object({
 });
 
 export async function requestAiGrade(input: GradingInput): Promise<AiGrade> {
-	const model = getGeminiModel({
-		systemInstruction: GRADING_SYSTEM_PROMPT,
-		generationConfig: {
-			responseMimeType: "application/json",
-			responseSchema: RESPONSE_SCHEMA,
-		},
-	});
-
 	const { language } = input.submission;
 
 	const payload = {
@@ -111,8 +102,13 @@ export async function requestAiGrade(input: GradingInput): Promise<AiGrade> {
 		},
 	};
 
-	const result = await model.generateContent(JSON.stringify(payload, null, 2));
-	const parsed = v.parse(ModelGradeSchema, JSON.parse(result.response.text()));
+	const text = await generateJson({
+		systemInstruction: GRADING_SYSTEM_PROMPT,
+		schema: RESPONSE_SCHEMA,
+		contents: JSON.stringify(payload, null, 2),
+	});
+
+	const parsed = v.parse(ModelGradeSchema, JSON.parse(text));
 	const maxScore = input.challenge.points;
 
 	return {

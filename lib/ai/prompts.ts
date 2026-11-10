@@ -1,4 +1,4 @@
-import { MAX_POINTS, MIN_POINTS } from "../schemas.js";
+import { MAX_POINTS, MIN_POINTS } from "../schemas";
 
 export const GRADING_SYSTEM_PROMPT = `You are the grading assistant for CodeQuest, a platform where university students solve short programming challenges. A professor will read your assessment and decide the final grade, so be accurate, specific, and fair.
 
