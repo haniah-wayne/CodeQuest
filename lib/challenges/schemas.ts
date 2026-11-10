@@ -81,3 +81,7 @@ export const SubmitSolutionSchema = v.object({
 	code: CodeSchema,
 	position: PositionSchema,
 });
+
+export const GradeSubmissionSchema = v.object({
+	submissionId: v.pipe(v.number(), v.safeInteger(), v.minValue(1)),
+});
