@@ -1,8 +1,7 @@
-import { GoogleGenerativeAI, type ResponseSchema, SchemaType } from "@google/generative-ai";
+import { type ResponseSchema, SchemaType } from "@google/generative-ai";
 import * as v from "valibot";
+import { getGeminiModel } from "@/lib/ai/gemini";
 import { isLanguageId, LANGUAGES } from "@/lib/challenges/languages";
-
-const MODEL = "gemini-3.8-flash";
 
 export const AI_VERDICTS = ["correct", "partially_correct", "incorrect"] as const;
 
@@ -94,23 +93,8 @@ const ModelGradeSchema = v.object({
 	suggestions: v.array(v.string()),
 });
 
-let client: GoogleGenerativeAI | undefined;
-
-function getClient() {
-	const apiKey = process.env.GEMINI_API_KEY;
-
-	if (!apiKey) {
-		throw new Error("GEMINI_API_KEY is not set");
-	}
-
-	client ??= new GoogleGenerativeAI(apiKey);
-
-	return client;
-}
-
 export async function requestAiGrade(input: GradingInput): Promise<AiGrade> {
-	const model = getClient().getGenerativeModel({
-		model: MODEL,
+	const model = getGeminiModel({
 		systemInstruction: SYSTEM_PROMPT,
 		generationConfig: {
 			responseMimeType: "application/json",

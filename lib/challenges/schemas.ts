@@ -85,3 +85,18 @@ export const SubmitSolutionSchema = v.object({
 export const GradeSubmissionSchema = v.object({
 	submissionId: v.pipe(v.number(), v.safeInteger(), v.minValue(1)),
 });
+
+export const MAX_GENERATION_REQUEST_LENGTH = 2000;
+
+export const GenerateChallengeSchema = v.object({
+	classId: v.pipe(v.number(), v.safeInteger(), v.minValue(1)),
+	request: v.pipe(
+		v.string(),
+		v.trim(),
+		v.nonEmpty("Describe the challenge you want."),
+		v.maxLength(
+			MAX_GENERATION_REQUEST_LENGTH,
+			`Keep the description under ${MAX_GENERATION_REQUEST_LENGTH} characters.`,
+		),
+	),
+});

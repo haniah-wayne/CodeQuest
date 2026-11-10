@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import * as v from "valibot";
-import { type AiGrade, requestAiGrade } from "@/lib/ai-grading";
+import { type AiGrade, requestAiGrade } from "@/lib/ai/grading";
 import { getSessionUser } from "@/lib/auth/session";
 import type { LanguageId } from "@/lib/challenges/languages";
 import { isWithinUnlockRadius, type Position } from "@/lib/challenges/location";
