@@ -35,7 +35,7 @@ export const CreateChallengeSchema = v.object({
 	),
 	solution: v.pipe(
 		v.string("Enter the expected output."),
-		v.check((s) => s.trim() !== "", "Enter the expected output."),
+		//v.check((s) => s.trim() !== "", "Enter the expected output."),   remove for test cases to be implicityl possible
 	),
 	points: v.pipe(
 		v.string("Enter a point value."),
@@ -64,6 +64,11 @@ export const PositionSchema = v.object({
 // Keeps junk off the code runner
 const MAX_CODE_LENGTH = 64 * 1024;
 
+//test cases
+export const MAX_TEST_CASES = 20;
+
+//there needs to be a test case schema? what it takes what it doesnt
+
 const CodeSchema = v.pipe(
 	v.string(),
 	v.check((code) => code.trim() !== "", "Write some code first."),
@@ -73,6 +78,7 @@ const CodeSchema = v.pipe(
 export const RunCodeSchema = v.object({
 	language: v.picklist(LANGUAGE_IDS, "Pick a language."),
 	code: CodeSchema,
+	//needs to run with input as well
 });
 
 export const SubmitSolutionSchema = v.object({
@@ -100,3 +106,5 @@ export const GenerateChallengeSchema = v.object({
 		),
 	),
 });
+
+//test cases: what the sorm sends when suggests to generate with ai

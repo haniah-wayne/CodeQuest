@@ -318,6 +318,7 @@ export type Database = {
           Input: string | null
           Score: number | null
           TestCaseID: number
+          Hidden: boolean
         }
         Insert: {
           ChallengeID: number
@@ -326,6 +327,7 @@ export type Database = {
           Input?: string | null
           Score?: number | null
           TestCaseID?: number
+          Hidden?: boolean
         }
         Update: {
           ChallengeID?: number
@@ -334,6 +336,7 @@ export type Database = {
           Input?: string | null
           Score?: number | null
           TestCaseID?: number
+          Hidden?: boolean
         }
         Relationships: [
           {
