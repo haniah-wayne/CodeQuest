@@ -1,4 +1,5 @@
 import mapboxgl from "mapbox-gl";
+import { METERS_PER_FOOT } from "@/lib/challenges/location";
 
 export function createMap(container: HTMLElement, accessToken: string) {
 	const map = new mapboxgl.Map({
@@ -77,7 +78,7 @@ export function showLockedChallenge(marker: mapboxgl.Marker, title: string, radi
 	content.className = "flex flex-col gap-0.5";
 	heading.textContent = title;
 	heading.className = "text-label";
-	hint.textContent = `Get within ${radius} m to unlock`;
+	hint.textContent = `Get within ${radius} ft to unlock`;
 	hint.className = "text-caption text-muted-foreground";
 
 	content.append(heading, hint);
@@ -91,19 +92,19 @@ export function showLockedChallenge(marker: mapboxgl.Marker, title: string, radi
 
 const RADIUS_SOURCE = "challenge-radius";
 const RADIUS_STEPS = 64;
-const METERS_PER_DEGREE = 111_320;
+const FEET_PER_DEGREE = 111_320 / METERS_PER_FOOT;
 
 // Approximates the unlock area as a polygon, which is accurate enough at
 // campus scale
 function radiusPolygon(longitude: number, latitude: number, radius: number) {
-	const lngScale = METERS_PER_DEGREE * Math.cos((latitude * Math.PI) / 180);
+	const lngScale = FEET_PER_DEGREE * Math.cos((latitude * Math.PI) / 180);
 
 	const ring = Array.from({ length: RADIUS_STEPS + 1 }, (_, i) => {
 		const angle = (i / RADIUS_STEPS) * 2 * Math.PI;
 
 		return [
 			longitude + (radius * Math.cos(angle)) / lngScale,
-			latitude + (radius * Math.sin(angle)) / METERS_PER_DEGREE,
+			latitude + (radius * Math.sin(angle)) / FEET_PER_DEGREE,
 		];
 	});
 

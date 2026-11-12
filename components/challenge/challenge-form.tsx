@@ -297,7 +297,7 @@ export function ChallengeForm({
 								</FieldLegend>
 
 								<FieldDescription id="radius-hint">
-									Students must be within {radius} m of the pin to unlock it.
+									Students must be within {radius} ft of the pin to unlock it.
 								</FieldDescription>
 
 								<RadioGroup
@@ -317,7 +317,7 @@ export function ChallengeForm({
 
 											<span className="flex flex-col gap-0.5">
 												<span className="text-label tabular-nums">
-													{r} m
+													{r} ft
 												</span>
 
 												<span className="text-caption font-normal text-muted-foreground">
