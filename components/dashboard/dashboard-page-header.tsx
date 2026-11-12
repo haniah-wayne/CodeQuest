@@ -15,7 +15,7 @@ export function DashboardPageHeader({
 				<h1 className="text-title text-balance">{title}</h1>
 
 				{description && (
-					<p className="max-w-prose text-body-sm text-pretty text-muted-foreground">
+					<p className="max-w-prose text-body-sm text-pretty whitespace-pre-wrap text-muted-foreground">
 						{description}
 					</p>
 				)}
