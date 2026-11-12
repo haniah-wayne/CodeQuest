@@ -202,7 +202,7 @@ export function ChallengeForm({
 									</FieldLabel>
 
 									<Textarea
-										className="min-h-36"
+										className="max-h-52 min-h-36"
 										id="description"
 										name="description"
 										placeholder="What does this print? for (let i = 0; i < 3; i++) console.log(i * 2)"
