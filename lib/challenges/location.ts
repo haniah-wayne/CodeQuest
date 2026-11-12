@@ -1,15 +1,15 @@
-// Preset unlock radii in meters. Location can drift 10-30 m near buildings and
-// more indoors, so nothing tighter than 25 m
-export const UNLOCK_RADII = [25, 50, 100] as const;
+// Preset unlock radii in feet. Location can drift 30-100 ft near buildings and
+// more indoors, so nothing tighter than 75 ft
+export const UNLOCK_RADII = [75, 150, 300] as const;
 
 export type UnlockRadius = (typeof UNLOCK_RADII)[number];
 
-export const DEFAULT_UNLOCK_RADIUS: UnlockRadius = 50;
+export const DEFAULT_UNLOCK_RADIUS: UnlockRadius = 150;
 
 export const UNLOCK_RADIUS_LABELS: Record<UnlockRadius, string> = {
-	25: "Outdoor spot",
-	50: "One building",
-	100: "Nearby",
+	75: "Outdoor spot",
+	150: "One building",
+	300: "Nearby",
 };
 
 export interface Position {
@@ -23,14 +23,16 @@ interface ChallengeLocation {
 	Radius: number;
 }
 
-const EARTH_RADIUS = 6_371_008.8;
+export const METERS_PER_FOOT = 0.3048;
+
+const EARTH_RADIUS = 6_371_008.8 / METERS_PER_FOOT;
 
 function toRadians(degrees: number) {
 	return (degrees * Math.PI) / 180;
 }
 
-// Haversine distance in meters, reusable across both client and server
-export function distanceInMeters(a: Position, b: Position) {
+// Haversine distance in feet, reusable across both client and server
+export function distanceInFeet(a: Position, b: Position) {
 	const dLat = toRadians(b.latitude - a.latitude);
 	const dLng = toRadians(b.longitude - a.longitude);
 
@@ -48,7 +50,6 @@ export function isWithinUnlockRadius(locations: ChallengeLocation[], position: P
 
 	return locations.some(
 		(l) =>
-			distanceInMeters(position, { longitude: l.Longitude, latitude: l.Latitude }) <=
-			l.Radius,
+			distanceInFeet(position, { longitude: l.Longitude, latitude: l.Latitude }) <= l.Radius,
 	);
 }
