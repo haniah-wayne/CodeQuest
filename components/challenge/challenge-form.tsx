@@ -9,10 +9,11 @@ import {
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import type * as React from "react";
 import type { ChallengeFormState } from "@/app/dashboard/classes/[classId]/challenges/new/actions";
 import { AuthFormError } from "@/components/auth-card";
+import { ChallengeGenerator } from "@/components/challenge/challenge-generator";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -28,6 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Radio, RadioGroup } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import type { GeneratedChallenge } from "@/lib/ai/challenge";
 import {
 	DEFAULT_UNLOCK_RADIUS,
 	UNLOCK_RADII,
@@ -35,7 +37,7 @@ import {
 	type Position,
 	type UnlockRadius,
 } from "@/lib/challenges/location";
-import { DEFAULT_POINTS, MAX_POINTS, MIN_POINTS } from "@/lib/challenges/schemas";
+import { DEFAULT_POINTS, MAX_POINTS, MIN_POINTS } from "@/lib/schemas";
 
 const MapView = dynamic(() => import("@/components/mapview"), {
 	ssr: false,
@@ -88,243 +90,286 @@ export function ChallengeForm({
 	// Controlled so React's form reset after a failed submit doesn't uncheck it
 	const [hidden, setHidden] = useState(initial?.hidden ?? false);
 
+	const formRef = useRef<HTMLFormElement>(null);
+
 	const locationError = state.fieldErrors?.longitude ?? state.fieldErrors?.latitude;
 	const classHref = `/dashboard/classes/${classId}`;
 
+	function applyDraft(draft: GeneratedChallenge) {
+		const fields = formRef.current?.elements;
+
+		if (!fields) return;
+
+		const values = {
+			title: draft.title,
+			points: String(draft.points),
+			description: draft.description,
+			solution: draft.expectedOutput,
+		};
+
+		for (const [name, value] of Object.entries(values)) {
+			const field = fields.namedItem(name);
+
+			if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) {
+				field.value = value;
+			}
+		}
+	}
+
 	return (
-		<form action={action} className="flex flex-col gap-6">
-			<input type="hidden" name="classId" value={classId} />
-			{challengeId !== undefined && (
-				<input type="hidden" name="challengeId" value={challengeId} />
+		<>
+			{challengeId === undefined && (
+				<ChallengeGenerator classId={classId} onApply={applyDraft} />
 			)}
-			<input type="hidden" name="longitude" value={location?.longitude ?? ""} />
-			<input type="hidden" name="latitude" value={location?.latitude ?? ""} />
-			<input type="hidden" name="radius" value={radius} />
 
-			{state.error && <AuthFormError>{state.error}</AuthFormError>}
+			<form ref={formRef} action={action} className="flex flex-col gap-6">
+				<input type="hidden" name="classId" value={classId} />
+				{challengeId !== undefined && (
+					<input type="hidden" name="challengeId" value={challengeId} />
+				)}
+				<input type="hidden" name="longitude" value={location?.longitude ?? ""} />
+				<input type="hidden" name="latitude" value={location?.latitude ?? ""} />
+				<input type="hidden" name="radius" value={radius} />
 
-			<div className="grid items-stretch gap-6 lg:grid-cols-2">
-				<FormSection id="challenge-details" title="Details" icon={Edit02Icon}>
-					<FieldGroup className="p-5 sm:p-6">
-						<Field data-invalid={Boolean(state.fieldErrors?.title) || undefined}>
-							<FieldLabel className="text-label" htmlFor="title">
-								Name
-							</FieldLabel>
+				{state.error && <AuthFormError>{state.error}</AuthFormError>}
 
-							<Input
-								className="h-11"
-								id="title"
-								name="title"
-								type="text"
-								placeholder="Loops & Arrays"
-								defaultValue={state.values?.title}
-								required
-								aria-invalid={Boolean(state.fieldErrors?.title) || undefined}
-							/>
-
-							<FieldError>{state.fieldErrors?.title}</FieldError>
-						</Field>
-
-						<Field data-invalid={Boolean(state.fieldErrors?.points) || undefined}>
-							<FieldLabel className="text-label" htmlFor="points">
-								Points
-							</FieldLabel>
-
-							<Input
-								className="h-11 w-32 tabular-nums"
-								id="points"
-								name="points"
-								type="number"
-								inputMode="numeric"
-								min={MIN_POINTS}
-								max={MAX_POINTS}
-								step={1}
-								defaultValue={state.values?.points ?? DEFAULT_POINTS}
-								required
-								aria-invalid={Boolean(state.fieldErrors?.points) || undefined}
-								aria-describedby="points-hint"
-							/>
-
-							<FieldDescription id="points-hint">
-								Awarded once to each student who solves it.
-							</FieldDescription>
-
-							<FieldError>{state.fieldErrors?.points}</FieldError>
-						</Field>
-
-						<Field data-invalid={Boolean(state.fieldErrors?.description) || undefined}>
-							<FieldLabel className="text-label" htmlFor="description">
-								Problem
-							</FieldLabel>
-
-							<Textarea
-								className="min-h-36"
-								id="description"
-								name="description"
-								placeholder="What does this print? for (let i = 0; i < 3; i++) console.log(i * 2)"
-								defaultValue={state.values?.description}
-								required
-								aria-invalid={Boolean(state.fieldErrors?.description) || undefined}
-								aria-describedby="description-hint"
-							/>
-
-							<FieldDescription id="description-hint">
-								Students see this once they reach the location.
-							</FieldDescription>
-
-							<FieldError>{state.fieldErrors?.description}</FieldError>
-						</Field>
-
-						<Field data-invalid={Boolean(state.fieldErrors?.solution) || undefined}>
-							<FieldLabel className="text-label" htmlFor="solution">
-								Expected output
-							</FieldLabel>
-
-							<Textarea
-								className="min-h-24 font-mono"
-								id="solution"
-								name="solution"
-								placeholder={"0\n2\n4"}
-								defaultValue={state.values?.solution}
-								required
-								autoComplete="off"
-								spellCheck={false}
-								aria-invalid={Boolean(state.fieldErrors?.solution) || undefined}
-								aria-describedby="solution-hint"
-							/>
-
-							<FieldDescription
-								id="solution-hint"
-								className="flex items-center gap-1.5"
-							>
-								<HugeiconsIcon icon={ViewOffSlashIcon} className="size-3.5" />
-								Hidden from students. Their code&apos;s output is checked against
-								this.
-							</FieldDescription>
-
-							<FieldError>{state.fieldErrors?.solution}</FieldError>
-						</Field>
-					</FieldGroup>
-				</FormSection>
-
-				<FormSection
-					id="challenge-location"
-					title="Location"
-					icon={Location01Icon}
-					invalid={Boolean(locationError)}
-				>
-					<div className="relative min-h-80 flex-1 overflow-hidden lg:min-h-0">
-						<div className="absolute inset-0">
-							<MapView
-								mode="professor"
-								className="size-full"
-								radius={radius}
-								initialPin={initial?.location}
-								locationSelect={(longitude, latitude) =>
-									setLocation({ longitude, latitude })
-								}
-							/>
-						</div>
-
-						<div
-							aria-live="polite"
-							className="pointer-events-none absolute inset-x-3 top-3 flex justify-center"
-						>
-							<span className="flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-caption shadow-sm ring-1 ring-foreground/10 backdrop-blur">
-								<HugeiconsIcon
-									icon={location ? Location01Icon : Cursor01Icon}
-									className="size-3.5 text-wsu-green"
-								/>
-
-								{location ? (
-									<span className="tabular-nums">
-										{location.latitude.toFixed(5)},{" "}
-										{location.longitude.toFixed(5)}
-									</span>
-								) : (
-									"Click the map to drop a pin"
-								)}
-							</span>
-						</div>
-					</div>
-
-					<div className="flex flex-col gap-3 border-t border-border/60 px-5 py-4 sm:px-6">
-						{locationError && !location && (
-							<p role="alert" className="text-body-sm text-destructive">
-								{locationError}
-							</p>
-						)}
-
-						<FieldSet data-invalid={Boolean(state.fieldErrors?.radius) || undefined}>
-							<FieldLegend variant="label" className="text-label">
-								Unlock radius
-							</FieldLegend>
-
-							<FieldDescription id="radius-hint">
-								Students must be within {radius} m of the pin to unlock it.
-							</FieldDescription>
-
-							<RadioGroup
-								className="sm:grid-cols-3"
-								value={String(radius)}
-								onValueChange={(value) => setRadius(Number(value) as UnlockRadius)}
-								aria-describedby="radius-hint"
-							>
-								{UNLOCK_RADII.map((r) => (
-									<FieldLabel
-										className="w-full gap-2.5 rounded-2xl border border-input bg-input/20 px-3 py-2.5 transition-colors has-data-checked:border-primary has-data-checked:bg-primary/5"
-										key={r}
-									>
-										<Radio value={String(r)} className="mt-0.5" />
-
-										<span className="flex flex-col gap-0.5">
-											<span className="text-label tabular-nums">{r} m</span>
-
-											<span className="text-caption font-normal text-muted-foreground">
-												{UNLOCK_RADIUS_LABELS[r]}
-											</span>
-										</span>
-									</FieldLabel>
-								))}
-							</RadioGroup>
-
-							<FieldError>{state.fieldErrors?.radius}</FieldError>
-						</FieldSet>
-
-						<Field orientation="horizontal">
-							<Checkbox
-								id="hidden"
-								name="hidden"
-								checked={hidden}
-								onCheckedChange={(checked) => setHidden(checked)}
-								aria-describedby="hidden-hint"
-							/>
-
-							<FieldContent>
-								<FieldLabel className="text-label" htmlFor="hidden">
-									Hide pin on the map
+				<div className="grid items-stretch gap-6 lg:grid-cols-2">
+					<FormSection id="challenge-details" title="Details" icon={Edit02Icon}>
+						<FieldGroup className="p-5 sm:p-6">
+							<Field data-invalid={Boolean(state.fieldErrors?.title) || undefined}>
+								<FieldLabel className="text-label" htmlFor="title">
+									Name
 								</FieldLabel>
 
-								<FieldDescription id="hidden-hint">
-									If this is checked, students won{"'"}t see the pin until they
-									{"'"}re within the unlock radius.
+								<Input
+									className="h-11"
+									id="title"
+									name="title"
+									type="text"
+									placeholder="Loops & Arrays"
+									defaultValue={state.values?.title}
+									required
+									aria-invalid={Boolean(state.fieldErrors?.title) || undefined}
+								/>
+
+								<FieldError>{state.fieldErrors?.title}</FieldError>
+							</Field>
+
+							<Field data-invalid={Boolean(state.fieldErrors?.points) || undefined}>
+								<FieldLabel className="text-label" htmlFor="points">
+									Points
+								</FieldLabel>
+
+								<Input
+									className="h-11 w-32 tabular-nums"
+									id="points"
+									name="points"
+									type="number"
+									inputMode="numeric"
+									min={MIN_POINTS}
+									max={MAX_POINTS}
+									step={1}
+									defaultValue={state.values?.points ?? DEFAULT_POINTS}
+									required
+									aria-invalid={Boolean(state.fieldErrors?.points) || undefined}
+									aria-describedby="points-hint"
+								/>
+
+								<FieldDescription id="points-hint">
+									Awarded once to each student who solves it.
 								</FieldDescription>
-							</FieldContent>
-						</Field>
-					</div>
-				</FormSection>
-			</div>
 
-			<div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-				<Link className={buttonVariants({ variant: "ghost", size: "lg" })} href={classHref}>
-					Cancel
-				</Link>
+								<FieldError>{state.fieldErrors?.points}</FieldError>
+							</Field>
 
-				<Button type="submit" size="lg" className="px-6" disabled={pending}>
-					{pending ? pendingLabel : submitLabel}
-				</Button>
-			</div>
-		</form>
+							<Field
+								data-invalid={Boolean(state.fieldErrors?.description) || undefined}
+							>
+								<FieldLabel className="text-label" htmlFor="description">
+									Problem
+								</FieldLabel>
+
+								<Textarea
+									className="min-h-36"
+									id="description"
+									name="description"
+									placeholder="What does this print? for (let i = 0; i < 3; i++) console.log(i * 2)"
+									defaultValue={state.values?.description}
+									required
+									aria-invalid={
+										Boolean(state.fieldErrors?.description) || undefined
+									}
+									aria-describedby="description-hint"
+								/>
+
+								<FieldDescription id="description-hint">
+									Students see this once they reach the location.
+								</FieldDescription>
+
+								<FieldError>{state.fieldErrors?.description}</FieldError>
+							</Field>
+
+							<Field data-invalid={Boolean(state.fieldErrors?.solution) || undefined}>
+								<FieldLabel className="text-label" htmlFor="solution">
+									Expected output
+								</FieldLabel>
+
+								<Textarea
+									className="min-h-24 font-mono"
+									id="solution"
+									name="solution"
+									placeholder={"0\n2\n4"}
+									defaultValue={state.values?.solution}
+									required
+									autoComplete="off"
+									spellCheck={false}
+									aria-invalid={Boolean(state.fieldErrors?.solution) || undefined}
+									aria-describedby="solution-hint"
+								/>
+
+								<FieldDescription
+									id="solution-hint"
+									className="flex items-center gap-1.5"
+								>
+									<HugeiconsIcon icon={ViewOffSlashIcon} className="size-3.5" />
+									Hidden from students. Their code&apos;s output is checked
+									against this.
+								</FieldDescription>
+
+								<FieldError>{state.fieldErrors?.solution}</FieldError>
+							</Field>
+						</FieldGroup>
+					</FormSection>
+
+					<FormSection
+						id="challenge-location"
+						title="Location"
+						icon={Location01Icon}
+						invalid={Boolean(locationError)}
+					>
+						<div className="relative min-h-80 flex-1 overflow-hidden lg:min-h-0">
+							<div className="absolute inset-0">
+								<MapView
+									mode="professor"
+									className="size-full"
+									radius={radius}
+									initialPin={initial?.location}
+									locationSelect={(longitude, latitude) =>
+										setLocation({ longitude, latitude })
+									}
+								/>
+							</div>
+
+							<div
+								aria-live="polite"
+								className="pointer-events-none absolute inset-x-3 top-3 flex justify-center"
+							>
+								<span className="flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-caption shadow-sm ring-1 ring-foreground/10 backdrop-blur">
+									<HugeiconsIcon
+										icon={location ? Location01Icon : Cursor01Icon}
+										className="size-3.5 text-wsu-green"
+									/>
+
+									{location ? (
+										<span className="tabular-nums">
+											{location.latitude.toFixed(5)},{" "}
+											{location.longitude.toFixed(5)}
+										</span>
+									) : (
+										"Click the map to drop a pin"
+									)}
+								</span>
+							</div>
+						</div>
+
+						<div className="flex flex-col gap-3 border-t border-border/60 px-5 py-4 sm:px-6">
+							{locationError && !location && (
+								<p role="alert" className="text-body-sm text-destructive">
+									{locationError}
+								</p>
+							)}
+
+							<FieldSet
+								data-invalid={Boolean(state.fieldErrors?.radius) || undefined}
+							>
+								<FieldLegend variant="label" className="text-label">
+									Unlock radius
+								</FieldLegend>
+
+								<FieldDescription id="radius-hint">
+									Students must be within {radius} m of the pin to unlock it.
+								</FieldDescription>
+
+								<RadioGroup
+									className="sm:grid-cols-3"
+									value={String(radius)}
+									onValueChange={(value) =>
+										setRadius(Number(value) as UnlockRadius)
+									}
+									aria-describedby="radius-hint"
+								>
+									{UNLOCK_RADII.map((r) => (
+										<FieldLabel
+											className="w-full gap-2.5 rounded-2xl border border-input bg-input/20 px-3 py-2.5 transition-colors has-data-checked:border-primary has-data-checked:bg-primary/5"
+											key={r}
+										>
+											<Radio value={String(r)} className="mt-0.5" />
+
+											<span className="flex flex-col gap-0.5">
+												<span className="text-label tabular-nums">
+													{r} m
+												</span>
+
+												<span className="text-caption font-normal text-muted-foreground">
+													{UNLOCK_RADIUS_LABELS[r]}
+												</span>
+											</span>
+										</FieldLabel>
+									))}
+								</RadioGroup>
+
+								<FieldError>{state.fieldErrors?.radius}</FieldError>
+							</FieldSet>
+
+							<Field orientation="horizontal">
+								<Checkbox
+									id="hidden"
+									name="hidden"
+									checked={hidden}
+									onCheckedChange={(checked) => setHidden(checked)}
+									aria-describedby="hidden-hint"
+								/>
+
+								<FieldContent>
+									<FieldLabel className="text-label" htmlFor="hidden">
+										Hide pin on the map
+									</FieldLabel>
+
+									<FieldDescription id="hidden-hint">
+										If this is checked, students won{"'"}t see the pin until
+										they
+										{"'"}re within the unlock radius.
+									</FieldDescription>
+								</FieldContent>
+							</Field>
+						</div>
+					</FormSection>
+				</div>
+
+				<div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+					<Link
+						className={buttonVariants({ variant: "ghost", size: "lg" })}
+						href={classHref}
+					>
+						Cancel
+					</Link>
+
+					<Button type="submit" size="lg" className="px-6" disabled={pending}>
+						{pending ? pendingLabel : submitLabel}
+					</Button>
+				</div>
+			</form>
+		</>
 	);
 }
 
