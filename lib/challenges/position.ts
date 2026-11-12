@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import * as v from "valibot";
+import { PositionSchema } from "../schemas";
 import type { Position } from "./location";
-import { PositionSchema } from "./schemas";
 
 const POSITION_COOKIE = "cq-position";
 

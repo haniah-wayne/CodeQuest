@@ -10,37 +10,37 @@ interface Audience {
 const audiences: Audience[] = [
 	{
 		title: "Escape the 11:59 PM Screen Prison",
-		body: "Nostrud occaecat officia ipsum cillum quis consectetur sunt. Sit amet consectetur adipisicing elit sed do eiusmod tempor incididunt.",
+		body: "Coding practice doesn't have to mean staring at a laptop in your dorm at midnight. CodeQuest gets you out on campus , where every challenge is waiting on a real spot on the map",
 		points: [
 			{
-				lead: "Lorem ipsum:",
-				rest: " Ut enim ad minim veniam quis nostrud exercitation ullamco.",
+				lead: "Walk to unlock:",
+				rest: " Check in at a campus location to open its challenge.",
 			},
 			{
-				lead: "Lorem ipsum:",
-				rest: " Duis aute irure dolor in reprehenderit in voluptate velit.",
+				lead: "Code anywhere:",
+				rest: " Write and run code on your phone.",
 			},
 			{
-				lead: "Lorem ipsum:",
-				rest: " Excepteur sint occaecat cupidatat non proident sunt in culpa.",
+				lead: "Climb the leaderboard:",
+				rest: " Every solved challenge earns points, and your class ranking updates as you go.",
 			},
 		],
 	},
 	{
 		title: "High-Engagement Campus Anchors",
-		body: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+		body: "Turn the places you already pass every day into checkpoints for your course.",
 		points: [
 			{
-				lead: "Lorem ipsum:",
-				rest: " Quis autem vel eum iure reprehenderit qui in ea voluptate.",
+				lead: "Build challenges fast:",
+				rest: " Write your own, or enter a topic and difficulty and let AI draft you one.",
 			},
 			{
-				lead: "Lorem ipsum:",
-				rest: " Nemo enim ipsam voluptatem quia voluptas sit aspernatur.",
+				lead: "See who showed up:",
+				rest: " Every check-in and submission is logges, so you know who participated and when.",
 			},
 			{
-				lead: "Lorem ipsum:",
-				rest: " At vero eos et accusamus et iusto odio dignissimos ducimus.",
+				lead: "Grading built in:",
+				rest: " Code is run against the expected soution and gives feedback for each student.",
 			},
 		],
 	},

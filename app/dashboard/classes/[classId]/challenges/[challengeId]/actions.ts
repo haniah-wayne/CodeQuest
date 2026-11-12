@@ -2,11 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import * as v from "valibot";
+import { type AiGrade, requestAiGrade } from "@/lib/ai/grading";
 import { getSessionUser } from "@/lib/auth/session";
 import type { LanguageId } from "@/lib/challenges/languages";
 import { isWithinUnlockRadius, type Position } from "@/lib/challenges/location";
-import { RunCodeSchema, SubmitSolutionSchema } from "@/lib/challenges/schemas";
 import { type ExecutionResult, execute } from "@/lib/piston";
+import { GradeSubmissionSchema, RunCodeSchema, SubmitSolutionSchema } from "@/lib/schemas";
 import { createClient } from "@/lib/supabase/server";
 
 export interface RunCodeState {
@@ -163,4 +164,86 @@ export async function submitSolution(input: {
 	revalidatePath(`/dashboard/classes/${challenge.ClassID}/challenges/${challengeId}`);
 
 	return { result, correct, points };
+}
+
+export interface GradeSubmissionState {
+	error?: string;
+	grade?: AiGrade;
+}
+
+export async function gradeSubmission(input: {
+	submissionId: number;
+}): Promise<GradeSubmissionState> {
+	const user = await getSessionUser();
+
+	if (user?.role !== "professor") {
+		return { error: "Only professors can grade submissions." };
+	}
+
+	const parsed = v.safeParse(GradeSubmissionSchema, input);
+
+	if (!parsed.success) {
+		return { error: parsed.issues[0].message };
+	}
+
+	const { submissionId } = parsed.output;
+
+	const supabase = await createClient();
+
+	const { data: submission, error } = await supabase
+		.from("Submission")
+		.select(
+			"ChallengeID, Code, Language, Output, Status, Challenges(Title, Description, Points, Classes(ProfessorID), Solutions(Solution))",
+		)
+		.eq("SubmissionID", submissionId)
+		.maybeSingle();
+
+	if (error) console.error(error);
+
+	// RLS may let other professors read the row, so check ownership here too
+	if (!submission || submission.Challenges.Classes.ProfessorID !== user.id) {
+		return { error: "That submission doesn't exist." };
+	}
+
+	if (!submission.Code?.trim()) {
+		return { error: "This submission has no code to grade." };
+	}
+
+	const { data: testCases, error: testCaseError } = await supabase
+		.from("TestCase")
+		.select("Input, ExpectedOutput, Score")
+		.eq("ChallengeID", submission.ChallengeID);
+
+	// Test cases are optional extra context, so grade without them on failure
+	if (testCaseError) console.error(testCaseError);
+
+	const challenge = submission.Challenges;
+
+	try {
+		const grade = await requestAiGrade({
+			challenge: {
+				title: challenge.Title,
+				description: challenge.Description,
+				points: challenge.Points,
+				expectedOutput: challenge.Solutions?.Solution ?? null,
+			},
+			testCases: (testCases ?? []).map((t) => ({
+				input: t.Input,
+				expectedOutput: t.ExpectedOutput,
+				points: t.Score,
+			})),
+			submission: {
+				language: submission.Language,
+				code: submission.Code,
+				output: submission.Output,
+				autoStatus: submission.Status,
+			},
+		});
+
+		return { grade };
+	} catch (error) {
+		console.error(error);
+
+		return { error: "The AI grader couldn't grade this submission. Try again in a moment." };
+	}
 }

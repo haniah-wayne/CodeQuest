@@ -1,6 +1,6 @@
 import * as v from "valibot";
-import { LANGUAGE_IDS } from "./languages";
-import { UNLOCK_RADII } from "./location";
+import { LANGUAGE_IDS } from "./challenges/languages";
+import { UNLOCK_RADII } from "./challenges/location";
 
 export const MIN_POINTS = 1;
 export const MAX_POINTS = 100;
@@ -80,4 +80,23 @@ export const SubmitSolutionSchema = v.object({
 	language: v.picklist(LANGUAGE_IDS, "Pick a language."),
 	code: CodeSchema,
 	position: PositionSchema,
+});
+
+export const GradeSubmissionSchema = v.object({
+	submissionId: v.pipe(v.number(), v.safeInteger(), v.minValue(1)),
+});
+
+export const MAX_GENERATION_REQUEST_LENGTH = 2000;
+
+export const GenerateChallengeSchema = v.object({
+	classId: v.pipe(v.number(), v.safeInteger(), v.minValue(1)),
+	request: v.pipe(
+		v.string(),
+		v.trim(),
+		v.nonEmpty("Describe the challenge you want."),
+		v.maxLength(
+			MAX_GENERATION_REQUEST_LENGTH,
+			`Keep the description under ${MAX_GENERATION_REQUEST_LENGTH} characters.`,
+		),
+	),
 });

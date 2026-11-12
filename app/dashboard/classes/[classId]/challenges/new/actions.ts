@@ -3,8 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import * as v from "valibot";
+import {
+	type GeneratedChallenge,
+	GenerationError,
+	generateChallenge as requestGeneratedChallenge,
+} from "@/lib/ai/challenge";
 import { getSessionUser } from "@/lib/auth/session";
-import { CreateChallengeSchema } from "@/lib/challenges/schemas";
+import { CreateChallengeSchema, GenerateChallengeSchema } from "@/lib/schemas";
 import { createClient } from "@/lib/supabase/server";
 import { toFieldErrors } from "@/lib/validation";
 
@@ -102,6 +107,57 @@ export async function createChallenge(
 	redirect(`/dashboard/classes/${classId}`);
 }
 
+export interface GenerateChallengeState {
+	error?: string;
+	challenge?: GeneratedChallenge;
+}
+
+export async function generateChallenge(input: {
+	classId: number;
+	request: string;
+}): Promise<GenerateChallengeState> {
+	const user = await getSessionUser();
+
+	if (user?.role !== "professor") {
+		return { error: "Only professors can generate challenges." };
+	}
+
+	const parsed = v.safeParse(GenerateChallengeSchema, input);
+
+	if (!parsed.success) {
+		return { error: parsed.issues[0].message };
+	}
+
+	const { classId, request } = parsed.output;
+
+	const supabase = await createClient();
+
+	const { data: classInfo } = await supabase
+		.from("Classes")
+		.select("ClassName, ProfessorID")
+		.eq("ClassID", classId)
+		.maybeSingle();
+
+	if (classInfo?.ProfessorID !== user.id) {
+		return { error: "You don't have permission to add challenges to this class." };
+	}
+
+	try {
+		return {
+			challenge: await requestGeneratedChallenge({ request, className: classInfo.ClassName }),
+		};
+	} catch (error) {
+		console.error(error);
+
+		return {
+			error:
+				error instanceof GenerationError
+					? "The AI couldn't write a challenge with a working solution. Try rewording your request."
+					: "The AI couldn't generate a challenge right now. Try again in a moment.",
+		};
+	}
+}
+
 export async function updateChallenge(
 	_prevState: ChallengeFormState,
 	formData: FormData,
@@ -129,34 +185,22 @@ export async function updateChallenge(
 
 	const supabase = await createClient();
 
-	// There's no update_challenge RPC, so this is three separate writes and a
-	// failure partway through can leave the challenge half updated
-	const [challengeResult, solutionResult, locationResult] = await Promise.all([
-		supabase
-			.from("Challenges")
-			.update({ Title: title, Description: description, Points: points, Hidden: hidden })
-			.eq("ChallengeID", challengeId)
-			.select("ChallengeID"),
-		supabase
-			.from("Solutions")
-			.update({ Solution: solution })
-			.eq("ChallengeID", challengeId)
-			.select("ChallengeID"),
-		supabase
-			.from("Locations")
-			.update({ Longitude: longitude, Latitude: latitude, Radius: radius })
-			.eq("ChallengeID", challengeId)
-			.select("ChallengeID"),
-	]);
+	// Updates the challenge, solution, and location in one transaction
+	const { error } = await supabase.rpc("update_challenge", {
+		challenge_id: challengeId,
+		class_id: classId,
+		title,
+		description,
+		solution,
+		points,
+		long: longitude,
+		lat: latitude,
+		radius,
+		hidden,
+	});
 
-	// RLS skips rows it won't let us update instead of erroring, so check that
-	// each write actually hit a row
-	const failed = [challengeResult, solutionResult, locationResult].find(
-		(result) => result.error || !result.data?.length,
-	);
-
-	if (failed) {
-		console.error(failed.error ?? `Challenge ${challengeId} update matched no rows`);
+	if (error) {
+		console.error(error);
 
 		return { values, error: "Something went wrong saving your changes." };
 	}

@@ -100,7 +100,7 @@ export async function sendResetPasswordEmail(prevState: unknown, formData: FormD
 	const { error } = await supabase.auth.resetPasswordForEmail(
 		//the form data being sent is email as a string
 		formData.get("email") as string,
-		{ redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback?next=/reset-password` },
+		{ redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/reset-password/confirm` },
 	);
 
 	if (error) {
@@ -109,6 +109,27 @@ export async function sendResetPasswordEmail(prevState: unknown, formData: FormD
 	}
 
 	return { success: "Please check your email", error: "" };
+}
+
+export async function confirmPasswordReset(formData: FormData) {
+	const tokenHash = formData.get("token_hash")?.toString();
+
+	if (!tokenHash) {
+		redirect("/sign-in?error=link_expired");
+	}
+
+	const supabase = await createClient();
+
+	const { error } = await supabase.auth.verifyOtp({
+		token_hash: tokenHash,
+		type: "recovery",
+	});
+
+	if (error) {
+		redirect("/sign-in?error=link_expired");
+	}
+
+	redirect("/reset-password");
 }
 
 export async function updatePassword(prevState: unknown, formData: FormData) {
