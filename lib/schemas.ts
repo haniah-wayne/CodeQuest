@@ -64,10 +64,10 @@ export const PositionSchema = v.object({
 // Keeps junk off the code runner
 const MAX_CODE_LENGTH = 64 * 1024;
 
-//test cases
-export const MAX_TEST_CASES = 20;
+//test cases - lowered it to 10
+export const MAX_TEST_CASES = 10;
 
-//there needs to be a test case schema? what it takes what it doesnt
+//moved the test cases to the bottom
 
 const CodeSchema = v.pipe(
 	v.string(),
@@ -75,10 +75,22 @@ const CodeSchema = v.pipe(
 	v.maxLength(MAX_CODE_LENGTH, "That's too much code to run."),
 );
 
+/*
 export const RunCodeSchema = v.object({
 	language: v.picklist(LANGUAGE_IDS, "Pick a language."),
 	code: CodeSchema,
 	//needs to run with input as well
+});
+*/
+
+//11.12 - Haniah Ahmed - added the new code schema that allows for actual input
+export const RunCodeSchema = v.object({
+	language: v.picklist(LANGUAGE_IDS, "Pick a language."),
+	code: CodeSchema,
+	//the actula optional input to run test input
+	stding: v.optional(
+		v.pipe(v.string(), v.maxLength(MAX_CODE_LENGTH, "Make sure its within the limit")),
+	),
 });
 
 export const SubmitSolutionSchema = v.object({
@@ -107,4 +119,29 @@ export const GenerateChallengeSchema = v.object({
 	),
 });
 
+//11.12  - Haniah Ahmed - finished the test case schema and altered the max length to 10
 //test cases: what the sorm sends when suggests to generate with ai
+const TestCaseSchema = v.object({
+	input: v.pipe(v.string(), v.maxLength(MAX_CODE_LENGTH, "")), //checking to  see if input is too long
+	expectedOutput: v.pipe(
+		v.string(), //making sure its a string
+		v.maxLength(MAX_CODE_LENGTH, "The expected output is too long."), //check to see if its too long
+		v.check((s) => s.trim() !== "", "The expected output can't be empty."), //check to see if its empty
+	),
+
+	hidden: v.boolean(),
+});
+
+export const TestCasesSchema = v.pipe(
+	v.array(TestCaseSchema, "the test couldnt be read, refresh and try again"),
+	v.maxLength(MAX_TEST_CASES, "you can add up to ${MAX_TEST_CASES} test cases"),
+);
+
+export type TestCaseInput = v.InferOutput<typeof TestCaseSchema>; //telling it to use the type of the schema for the test cases, infer the type
+
+export const GeneratedTestCasesSchema = v.object({
+	classId: v.pipe(v.number(), v.safeInteger()),
+	description: v.pipe(v.string(), v.trim(), v.nonEmpty("write the problem, cannot be empty")),
+	sampleSolution: CodeSchema,
+	language: v.picklist(LANGUAGE_IDS, "Pick the sample solution's language"),
+});
