@@ -27,9 +27,9 @@ export default function Home() {
 							</h1>
 
 							<p className="mt-6 max-w-prose text-body-lg text-muted-foreground">
-								Voluptate veniam fugiat veniam pariatur adipisicing. Commodo in et
-								aliquip. Nisi ea sit culpa duis exercitation do sit ullamco
-								excepteur eiusmod magna laborum cupidatat minim do.
+								Join the class. Embark on the Quest! Walk around campus looking for
+								your next challenge! Unlock your challenge, solve it, and move up
+								the leaderboard!{" "}
 							</p>
 						</div>
 					</div>
