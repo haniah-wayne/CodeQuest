@@ -86,6 +86,17 @@ export const GradeSubmissionSchema = v.object({
 	submissionId: v.pipe(v.number(), v.safeInteger(), v.minValue(1)),
 });
 
+export const MAX_FEEDBACK_LENGTH = 5000;
+
+export const SubmissionFeedbackSchema = v.object({
+	submissionId: v.pipe(v.number(), v.safeInteger(), v.minValue(1)),
+	feedback: v.pipe(
+		v.string(),
+		v.trim(),
+		v.maxLength(MAX_FEEDBACK_LENGTH, `Keep feedback under ${MAX_FEEDBACK_LENGTH} characters.`),
+	),
+});
+
 export const MAX_GENERATION_REQUEST_LENGTH = 2000;
 
 export const GenerateChallengeSchema = v.object({

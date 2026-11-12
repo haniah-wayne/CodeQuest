@@ -2,13 +2,10 @@
 
 import { AiMagicIcon, Loading03Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import type { Row } from "@tanstack/react-table";
 import { cn } from "cn";
 import { createContext, use, useState } from "react";
 import type * as React from "react";
 import { gradeSubmission } from "@/app/dashboard/classes/[classId]/challenges/[challengeId]/actions";
-import type { SubmissionRow } from "@/components/challenge/submission-list";
-import type { DataTableFeatures } from "@/components/class/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { AiGrade, AiVerdict } from "@/lib/ai/grading";
@@ -24,7 +21,7 @@ const GradingContext = createContext<{
 	grade: (submissionId: number) => void;
 } | null>(null);
 
-function useGrading() {
+export function useGrading() {
 	const context = use(GradingContext);
 
 	if (!context) {
@@ -67,7 +64,7 @@ export function GradingProvider({ children }: { children: React.ReactNode }) {
 	return <GradingContext value={{ entries, grade }}>{children}</GradingContext>;
 }
 
-const verdictStyles: Record<AiVerdict, { label: string; className: string }> = {
+export const verdictStyles: Record<AiVerdict, { label: string; className: string }> = {
 	correct: {
 		label: "Correct",
 		className: "bg-emerald-50 text-wsu-green",
@@ -81,60 +78,6 @@ const verdictStyles: Record<AiVerdict, { label: string; className: string }> = {
 		className: "bg-destructive/10 text-destructive",
 	},
 };
-
-export function GradeCell({ row }: { row: Row<DataTableFeatures, SubmissionRow> }) {
-	const { entries, grade } = useGrading();
-	const { id, code, studentName } = row.original;
-	const entry = entries[id];
-
-	if (!code) {
-		return <span className="text-muted-foreground">—</span>;
-	}
-
-	if (entry?.pending) {
-		return (
-			<Button variant="outline" size="xs" disabled>
-				<HugeiconsIcon
-					icon={Loading03Icon}
-					className="animate-spin"
-					data-icon="inline-start"
-				/>
-				Grading…
-			</Button>
-		);
-	}
-
-	if (entry?.grade) {
-		const { score, maxScore, verdict } = entry.grade;
-
-		return (
-			<Button
-				variant="ghost"
-				size="xs"
-				className={cn("tabular-nums", verdictStyles[verdict].className)}
-				aria-label={`AI recommends ${score} of ${maxScore} points for ${studentName}. ${row.getIsExpanded() ? "Hide" : "Show"} details`}
-				onClick={row.getToggleExpandedHandler()}
-			>
-				{score} / {maxScore}
-			</Button>
-		);
-	}
-
-	return (
-		<Button
-			variant="outline"
-			size="xs"
-			aria-label={`Grade ${studentName}'s submission with AI`}
-			onClick={() => {
-				row.toggleExpanded(true);
-				grade(id);
-			}}
-		>
-			<HugeiconsIcon icon={AiMagicIcon} data-icon="inline-start" />
-			{entry?.error ? "Retry" : "Grade"}
-		</Button>
-	);
-}
 
 export function GradePanel({ submissionId }: { submissionId: number }) {
 	const { entries, grade } = useGrading();

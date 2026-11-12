@@ -3,6 +3,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CodeWorkspace } from "@/components/challenge/code-workspace";
+import { SubmissionFeedback } from "@/components/challenge/submission-feedback";
 import { SubmissionList } from "@/components/challenge/submission-list";
 import { ClassRealtime } from "@/components/class/class-realtime";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
@@ -38,7 +39,7 @@ export default async function ChallengePage(
 			.maybeSingle(),
 		supabase
 			.from("Submission")
-			.select("Code, Language, Status")
+			.select("SubmissionID, Code, Language, Status, SubmittedAt, Feedback")
 			.eq("ChallengeID", challengeId)
 			.eq("StudentID", user.id)
 			.order("SubmittedAt", { ascending: false }),
@@ -71,6 +72,15 @@ export default async function ChallengePage(
 	const shown = correct ?? submissions[0];
 	const initialLanguage = isLanguageId(shown?.Language) ? shown.Language : DEFAULT_LANGUAGE;
 	const initialCode = shown && isLanguageId(shown.Language) ? shown.Code : null;
+
+	const feedback = submissions
+		.filter((s) => s.Feedback)
+		.map((s) => ({
+			id: s.SubmissionID,
+			status: s.Status,
+			submittedAt: s.SubmittedAt,
+			feedback: s.Feedback!,
+		}));
 
 	return (
 		<>
@@ -108,6 +118,8 @@ export default async function ChallengePage(
 				</div>
 			</div>
 
+			<SubmissionFeedback entries={feedback} />
+
 			<CodeWorkspace
 				challengeId={challengeId}
 				initialLanguage={initialLanguage}
@@ -132,7 +144,7 @@ async function ProfessorView({
 	const [submissionsResult, rosterResult] = await Promise.all([
 		supabase
 			.from("Submission")
-			.select("SubmissionID, StudentID, Code, Language, Status, Score, SubmittedAt")
+			.select("SubmissionID, StudentID, Code, Language, Status, Score, SubmittedAt, Feedback")
 			.eq("ChallengeID", challengeId)
 			.order("SubmittedAt", { ascending: false }),
 		supabase.rpc("get_class_roster", { p_class_id: classId }),
@@ -155,6 +167,7 @@ async function ProfessorView({
 		score: s.Score,
 		submittedAt: s.SubmittedAt,
 		code: s.Code,
+		feedback: s.Feedback,
 	}));
 
 	return (
