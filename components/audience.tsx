@@ -10,19 +10,19 @@ interface Audience {
 const audiences: Audience[] = [
 	{
 		title: "Escape the 11:59 PM Screen Prison",
-		body: "Coding practice doesn't have to mean staring at a laptop in your dorm at midnight. CodeQuest gets you out on campus , where every challenge is waiting on a real spot on the map",
+		body: "Coding practice doesn't have to mean staring at a laptop in your dorm at midnight. CodeQuest gets you out on campus, where every challenge is waiting on a real spot on the map.",
 		points: [
 			{
 				lead: "Walk to unlock:",
-				rest: " Check in at a campus location to open its challenge.",
+				rest: " Get within range of a challenge's spot on the campus map to open it.",
 			},
 			{
-				lead: "Code anywhere:",
-				rest: " Write and run code on your phone.",
+				lead: "Code on your phone:",
+				rest: " Write, run, and submit Python, Java, C++, or JavaScript right in your browser.",
 			},
 			{
 				lead: "Climb the leaderboard:",
-				rest: " Every solved challenge earns points, and your class ranking updates as you go.",
+				rest: " Each correct solution earns the challenge's points, and your class ranking updates live.",
 			},
 		],
 	},
@@ -32,15 +32,15 @@ const audiences: Audience[] = [
 		points: [
 			{
 				lead: "Build challenges fast:",
-				rest: " Write your own, or enter a topic and difficulty and let AI draft you one.",
+				rest: " Write your own, or describe what you want and let AI draft one with a tested reference solution.",
 			},
 			{
-				lead: "See who showed up:",
-				rest: " Every check-in and submission is logges, so you know who participated and when.",
+				lead: "See every attempt:",
+				rest: " Each submission is saved with the student's code, output, and timestamp, so you know who participated and when.",
 			},
 			{
 				lead: "Grading built in:",
-				rest: " Code is run against the expected soution and gives feedback for each student.",
+				rest: " Submissions are auto-checked against the expected output, and AI can review any of them with a suggested score and feedback.",
 			},
 		],
 	},
@@ -52,11 +52,6 @@ export function Audience() {
 			<div className="mx-auto flex w-full max-w-7xl flex-col gap-12 px-5 sm:px-8">
 				<hgroup className="mx-auto flex max-w-2xl flex-col items-center gap-2 text-center">
 					<h2 className="text-title">Built for Warriors, Guided by Professors</h2>
-
-					<p className="text-body-sm text-muted-foreground">
-						Duis non anim ullamco ad velit anim commodo culpa nostrud qui aliquip id
-						incididunt minim.
-					</p>
 				</hgroup>
 
 				<ul className="grid gap-12 sm:grid-cols-2">

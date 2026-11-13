@@ -46,10 +46,6 @@ export function HowItWorks() {
 			<div className="mx-auto flex w-full max-w-7xl flex-col gap-12 px-5 sm:px-8">
 				<hgroup className="mx-auto flex max-w-2xl flex-col items-center gap-2 text-center">
 					<h2 className="text-title">How It Works</h2>
-
-					<p className="text-body-sm text-muted-foreground">
-						Fugiat non deserunt amet sunt consequat voluptate ad eu elit ipsum enim.
-					</p>
 				</hgroup>
 
 				<ol className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
