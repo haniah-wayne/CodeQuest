@@ -1,11 +1,6 @@
 "use client";
 
-import {
-	AiMagicIcon,
-	BubbleChatEditIcon,
-	Loading03Icon,
-	MoreHorizontalIcon,
-} from "@hugeicons/core-free-icons";
+import { AiMagicIcon, BubbleChatEditIcon, MoreHorizontalIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { Row } from "@tanstack/react-table";
 import { cn } from "cn";
@@ -40,23 +35,16 @@ export function SubmissionActions({ row }: { row: Row<DataTableFeatures, Submiss
 
 	return (
 		<div className="flex items-center justify-end gap-1">
-			{entry?.pending ? (
-				<span className="flex items-center gap-1 px-2 text-caption text-muted-foreground">
-					<HugeiconsIcon icon={Loading03Icon} className="size-3.5 animate-spin" />
-					Grading…
-				</span>
-			) : (
-				result && (
-					<Button
-						variant="ghost"
-						size="xs"
-						className={cn("tabular-nums", verdictStyles[result.verdict].className)}
-						aria-label={`AI recommends ${result.score} of ${result.maxScore} points for ${studentName}. ${row.getIsExpanded() ? "Hide" : "Show"} details`}
-						onClick={row.getToggleExpandedHandler()}
-					>
-						{result.score} / {result.maxScore}
-					</Button>
-				)
+			{result && (
+				<Button
+					variant="ghost"
+					size="xs"
+					className={cn("tabular-nums", verdictStyles[result.verdict].className)}
+					aria-label={`AI recommends ${result.score} of ${result.maxScore} points for ${studentName}. ${row.getIsExpanded() ? "Hide" : "Show"} details`}
+					onClick={row.getToggleExpandedHandler()}
+				>
+					{result.score} / {result.maxScore}
+				</Button>
 			)}
 
 			<DropdownMenu>
