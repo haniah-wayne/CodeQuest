@@ -1,0 +1,12 @@
+node_modules
+.next
+*.tsbuildinfo
+
+.env*
+smtp.txt
+certificates
+
+.git
+.DS_Store
+supabase/.temp
+supabase/.branches
