@@ -86,6 +86,7 @@ export function SubmissionFilters({
 			<DropdownMenuTrigger
 				render={
 					<Button
+						className="bg-card"
 						variant="outline"
 						size="sm"
 						aria-label={

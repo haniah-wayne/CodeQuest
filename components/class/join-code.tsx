@@ -26,7 +26,7 @@ export function JoinCode({ code }: { code: string }) {
 	}
 
 	return (
-		<div className="flex items-center gap-3 rounded-full border border-emerald-200 bg-white py-1 pr-1 pl-4">
+		<div className="flex items-center gap-3 rounded-full bg-card py-1 pr-1 pl-4 smooth-shadow-ring-sm">
 			<span className="text-caption text-muted-foreground">Join code</span>
 
 			<code className="font-mono text-label tracking-wider text-wsu-green select-all">

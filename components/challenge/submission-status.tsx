@@ -14,7 +14,7 @@ export function StatusBadge({ status }: { status: string | null }) {
 	switch (status) {
 		case "correct":
 			return (
-				<Badge className="bg-emerald-50 text-wsu-green">
+				<Badge>
 					<HugeiconsIcon icon={CheckmarkCircle02Icon} data-icon="inline-start" />
 					Correct
 				</Badge>

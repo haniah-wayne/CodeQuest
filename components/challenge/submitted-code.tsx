@@ -12,7 +12,7 @@ export function SubmittedCode({ submission }: { submission: SubmissionRow }) {
 	}
 
 	return (
-		<div className="overflow-hidden rounded-2xl border border-border/60 bg-background">
+		<div className="overflow-hidden rounded-(--panel-inner-radius) bg-card smooth-shadow-ring-sm">
 			{isLanguageId(language) ? (
 				<CodeEditor language={language} value={code} onChange={() => {}} readOnly />
 			) : (

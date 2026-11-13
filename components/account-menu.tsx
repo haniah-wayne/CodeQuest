@@ -22,7 +22,12 @@ export function AccountMenu() {
 			<DropdownMenu>
 				<DropdownMenuTrigger
 					render={
-						<Button size="icon-sm" variant="ghost">
+						<Button
+							className="hover:bg-card/70"
+							size="icon-sm"
+							variant="ghost"
+							aria-label="Account menu"
+						>
 							<HugeiconsIcon icon={ChevronDown} />
 						</Button>
 					}

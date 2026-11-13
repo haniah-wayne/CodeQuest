@@ -6,7 +6,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 		<>
 			<SiteHeader />
 
-			<main className="flex flex-1 flex-col justify-center bg-linear-to-br/oklch from-emerald-100/40 to-white px-5 pt-28 pb-16 sm:px-8">
+			<main className="flex flex-1 flex-col justify-center bg-linear-to-br/oklch from-secondary to-background px-5 pt-28 pb-16 sm:px-8">
 				{children}
 			</main>
 		</>

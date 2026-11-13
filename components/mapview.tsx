@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { DEFAULT_UNLOCK_RADIUS, type Position } from "@/lib/challenges/location";
 import {
 	createMap,
+	resizeWithContainer,
 	addChallengeMarker,
 	removeChallengeMarker,
 	showChallengeLink,
@@ -83,6 +84,7 @@ export default function MapView({
 		}
 
 		const map = createMap(mapContainerRef.current, accessToken);
+		const stopResizing = resizeWithContainer(map, mapContainerRef.current);
 
 		if (initialPinRef.current) {
 			map.setCenter([initialPinRef.current.longitude, initialPinRef.current.latitude]);
@@ -123,6 +125,7 @@ export default function MapView({
 
 		return () => {
 			removeClickListener?.();
+			stopResizing();
 			map.remove();
 			setMap(null);
 		};

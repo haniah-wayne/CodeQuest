@@ -70,7 +70,7 @@ export function GradingProvider({ children }: { children: React.ReactNode }) {
 const verdictStyles: Record<AiVerdict, { label: string; className: string }> = {
 	correct: {
 		label: "Correct",
-		className: "bg-emerald-50 text-wsu-green",
+		className: "bg-secondary text-wsu-green",
 	},
 	partially_correct: {
 		label: "Partially correct",
@@ -146,7 +146,7 @@ export function GradePanel({ submissionId }: { submissionId: number }) {
 
 	return (
 		<section
-			className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-background p-4"
+			className="flex flex-col gap-3 rounded-(--panel-inner-radius) bg-card p-4 smooth-shadow-ring-sm"
 			aria-label="AI grade"
 			aria-busy={entry.pending}
 		>
