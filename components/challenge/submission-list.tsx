@@ -174,7 +174,7 @@ export function SubmissionList({
 						emptyMessage={emptyMessage}
 						renderExpanded={(row) => (
 							<div className="flex flex-col gap-2">
-								<GradePanel submissionId={row.original.id} />
+								<GradePanel submission={row.original} />
 								<SubmittedCode submission={row.original} />
 							</div>
 						)}

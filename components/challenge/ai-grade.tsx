@@ -1,11 +1,13 @@
 "use client";
 
-import { AiMagicIcon, Loading03Icon } from "@hugeicons/core-free-icons";
+import { AiMagicIcon, BubbleChatAddIcon, Loading03Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "cn";
 import { createContext, use, useState } from "react";
 import type * as React from "react";
 import { gradeSubmission } from "@/app/dashboard/classes/[classId]/challenges/[challengeId]/actions";
+import { FeedbackDialog } from "@/components/challenge/feedback-dialog";
+import type { SubmissionRow } from "@/components/challenge/submission-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { AiGrade, AiVerdict } from "@/lib/ai/grading";
@@ -79,9 +81,30 @@ export const verdictStyles: Record<AiVerdict, { label: string; className: string
 	},
 };
 
-export function GradePanel({ submissionId }: { submissionId: number }) {
+export function formatAiFeedback(grade: AiGrade) {
+	const sections = [
+		grade.summary.trim(),
+		listSection("What went well", grade.strengths),
+		listSection("Issues", grade.issues),
+		listSection("Suggestions", grade.suggestions),
+	];
+
+	return sections.filter(Boolean).join("\n\n");
+}
+
+function listSection(title: string, items: string[]) {
+	const lines = items.map((item) => item.trim()).filter(Boolean);
+
+	return lines.length === 0 ? "" : `${title}:\n${lines.map((line) => `- ${line}`).join("\n")}`;
+}
+
+export function GradePanel({ submission }: { submission: SubmissionRow }) {
 	const { entries, grade } = useGrading();
+	const [feedbackOpen, setFeedbackOpen] = useState(false);
+
+	const submissionId = submission.id;
 	const entry = entries[submissionId];
+	const hasFeedback = submission.feedback !== null;
 
 	if (!entry) return null;
 
@@ -152,9 +175,31 @@ export function GradePanel({ submissionId }: { submissionId: number }) {
 					<GradeNotes title="Suggestions" items={result.suggestions} />
 					<GradeNotes title="Strengths" items={result.strengths} />
 
-					<p className="text-caption text-muted-foreground">
-						AI feedback can be wrong. Review the code before relying on this grade.
-					</p>
+					<footer className="flex flex-wrap items-center gap-2">
+						<p className="text-caption text-muted-foreground">
+							AI feedback can be wrong. Review the code before relying on this grade.
+						</p>
+
+						<Button
+							variant="outline"
+							size="xs"
+							className="ml-auto"
+							disabled={entry.pending}
+							onClick={() => setFeedbackOpen(true)}
+						>
+							<HugeiconsIcon icon={BubbleChatAddIcon} data-icon="inline-start" />
+							{hasFeedback ? "Replace feedback" : "Send as feedback"}
+						</Button>
+					</footer>
+
+					<FeedbackDialog
+						submissionId={submissionId}
+						title={`Feedback for ${submission.studentName}`}
+						submitLabel={hasFeedback ? "Replace feedback" : "Send feedback"}
+						initialFeedback={formatAiFeedback(result)}
+						open={feedbackOpen}
+						onOpenChange={setFeedbackOpen}
+					/>
 				</>
 			)}
 		</section>

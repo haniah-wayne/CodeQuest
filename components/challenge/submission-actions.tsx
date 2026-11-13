@@ -2,7 +2,6 @@
 
 import {
 	AiMagicIcon,
-	BubbleChatAddIcon,
 	BubbleChatEditIcon,
 	Loading03Icon,
 	MoreHorizontalIcon,
@@ -85,20 +84,25 @@ export function SubmissionActions({ row }: { row: Row<DataTableFeatures, Submiss
 						{gradeLabel}
 					</DropdownMenuItem>
 
-					<DropdownMenuItem onClick={() => setFeedbackOpen(true)}>
-						<HugeiconsIcon icon={feedback ? BubbleChatEditIcon : BubbleChatAddIcon} />
-						{feedback ? "Edit feedback" : "Add feedback"}
-					</DropdownMenuItem>
+					{feedback && (
+						<DropdownMenuItem onClick={() => setFeedbackOpen(true)}>
+							<HugeiconsIcon icon={BubbleChatEditIcon} />
+							Edit feedback
+						</DropdownMenuItem>
+					)}
 				</DropdownMenuContent>
 			</DropdownMenu>
 
-			<FeedbackDialog
-				submissionId={id}
-				studentName={studentName}
-				feedback={feedback}
-				open={feedbackOpen}
-				onOpenChange={setFeedbackOpen}
-			/>
+			{feedback && (
+				<FeedbackDialog
+					submissionId={id}
+					title="Edit feedback"
+					submitLabel="Save feedback"
+					initialFeedback={feedback}
+					open={feedbackOpen}
+					onOpenChange={setFeedbackOpen}
+				/>
+			)}
 		</div>
 	);
 }

@@ -20,13 +20,16 @@ import { MAX_FEEDBACK_LENGTH } from "@/lib/schemas";
 
 export function FeedbackDialog({
 	submissionId,
-	feedback,
+	title,
+	submitLabel,
+	initialFeedback,
 	open,
 	onOpenChange,
 }: {
 	submissionId: number;
-	studentName: string;
-	feedback: string | null;
+	title: string;
+	submitLabel: string;
+	initialFeedback: string;
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 }) {
@@ -34,12 +37,13 @@ export function FeedbackDialog({
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogPopup>
 				<DialogHeader>
-					<DialogTitle>{feedback ? "Edit feedback" : "Add feedback"}</DialogTitle>
+					<DialogTitle>{title}</DialogTitle>
 				</DialogHeader>
 
 				<FeedbackForm
 					submissionId={submissionId}
-					feedback={feedback}
+					submitLabel={submitLabel}
+					initialFeedback={initialFeedback}
 					onSaved={() => onOpenChange(false)}
 				/>
 			</DialogPopup>
@@ -49,11 +53,13 @@ export function FeedbackDialog({
 
 function FeedbackForm({
 	submissionId,
-	feedback,
+	submitLabel,
+	initialFeedback,
 	onSaved,
 }: {
 	submissionId: number;
-	feedback: string | null;
+	submitLabel: string;
+	initialFeedback: string;
 	onSaved: () => void;
 }) {
 	const id = useId();
@@ -89,8 +95,7 @@ function FeedbackForm({
 					id={`${id}-feedback`}
 					name="feedback"
 					className="max-h-80"
-					placeholder="What went well, and what to work on next time"
-					defaultValue={state.value ?? feedback ?? ""}
+					defaultValue={state.value ?? initialFeedback}
 					maxLength={MAX_FEEDBACK_LENGTH}
 					autoFocus
 					aria-invalid={Boolean(state.error) || undefined}
@@ -112,7 +117,7 @@ function FeedbackForm({
 				<DialogClose render={<Button type="button" variant="ghost" />}>Cancel</DialogClose>
 
 				<Button type="submit" disabled={pending}>
-					{pending ? "Saving…" : "Save feedback"}
+					{pending ? "Saving…" : submitLabel}
 				</Button>
 			</DialogFooter>
 		</form>
