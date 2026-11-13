@@ -19,6 +19,7 @@ export interface SuggestedTestCase {
 
 export interface TestCaseSuggestions {
 	testCases: SuggestedTestCase[];
+	skipped: number; // number of inputs that didn't run cleanly on the sample solution
 }
 
 // forces gemini to only return the inputs
@@ -48,7 +49,7 @@ export async function suggestTestCases(input: {
 }): Promise<TestCaseSuggestions> {
 	// only ask gemini for the inputs
 	const text = await generateJson({
-		systemInstruction: TEST_CASE_SYSTEM_PROMPT,
+		systemInstruction: TEST_CASE_PROMPT,
 		schema: RESPONSE_SCHEMA,
 		contents: JSON.stringify({
 			problem: input.description,
@@ -83,5 +84,5 @@ export async function suggestTestCases(input: {
 		throw new TestCaseError("The sample solution didn't run cleanly on any suggested input");
 	}
 
-	return { testCases, skipped: inputs.length - testCases.length };
+	return { testCases, skipped: inputs.length - testCases.length }; //fixed error with skip value
 }
