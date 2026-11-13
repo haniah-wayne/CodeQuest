@@ -4,7 +4,8 @@ import { ArrowRight01Icon, TaskDone01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { createColumnHelper, useTable } from "@tanstack/react-table";
 import { cn } from "cn";
-import { GradeCell, GradePanel, GradingProvider } from "@/components/challenge/ai-grade";
+import { GradePanel, GradingProvider } from "@/components/challenge/ai-grade";
+import { SubmissionActions } from "@/components/challenge/submission-actions";
 import { SubmissionFilters } from "@/components/challenge/submission-filters";
 import { StatusBadge } from "@/components/challenge/submission-status";
 import { SubmittedCode } from "@/components/challenge/submitted-code";
@@ -28,6 +29,7 @@ export interface SubmissionRow {
 	score: number | null;
 	submittedAt: string;
 	code: string | null;
+	feedback: string | null;
 }
 
 const dateFormat = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" });
@@ -103,9 +105,9 @@ const columns = helper.columns([
 		),
 	}),
 	helper.display({
-		id: "aiGrade",
-		header: "AI grade",
-		cell: (info) => <GradeCell row={info.row} />,
+		id: "actions",
+		header: () => <span className="sr-only">Actions</span>,
+		cell: (info) => <SubmissionActions row={info.row} />,
 	}),
 ]);
 
@@ -172,7 +174,7 @@ export function SubmissionList({
 						emptyMessage={emptyMessage}
 						renderExpanded={(row) => (
 							<div className="flex flex-col gap-2">
-								<GradePanel submissionId={row.original.id} />
+								<GradePanel submission={row.original} />
 								<SubmittedCode submission={row.original} />
 							</div>
 						)}

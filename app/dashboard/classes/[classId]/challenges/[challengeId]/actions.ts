@@ -7,7 +7,12 @@ import { getSessionUser } from "@/lib/auth/session";
 import type { LanguageId } from "@/lib/challenges/languages";
 import { isWithinUnlockRadius, type Position } from "@/lib/challenges/location";
 import { type ExecutionResult, execute } from "@/lib/piston";
-import { GradeSubmissionSchema, RunCodeSchema, SubmitSolutionSchema } from "@/lib/schemas";
+import {
+	GradeSubmissionSchema,
+	RunCodeSchema,
+	SubmissionFeedbackSchema,
+	SubmitSolutionSchema,
+} from "@/lib/schemas";
 import { createClient } from "@/lib/supabase/server";
 
 export interface RunCodeState {
@@ -246,4 +251,60 @@ export async function gradeSubmission(input: {
 
 		return { error: "The AI grader couldn't grade this submission. Try again in a moment." };
 	}
+}
+
+export interface SaveFeedbackState {
+	error?: string;
+	success?: boolean;
+}
+
+export async function saveSubmissionFeedback(input: {
+	submissionId: number;
+	feedback: string;
+}): Promise<SaveFeedbackState> {
+	const user = await getSessionUser();
+
+	if (user?.role !== "professor") {
+		return { error: "Only professors can leave feedback." };
+	}
+
+	const parsed = v.safeParse(SubmissionFeedbackSchema, input);
+
+	if (!parsed.success) {
+		return { error: parsed.issues[0].message };
+	}
+
+	const { submissionId, feedback } = parsed.output;
+
+	const supabase = await createClient();
+
+	const { data: submission, error: lookupError } = await supabase
+		.from("Submission")
+		.select("ChallengeID, Challenges(ClassID, Classes(ProfessorID))")
+		.eq("SubmissionID", submissionId)
+		.maybeSingle();
+
+	if (lookupError) console.error(lookupError);
+
+	if (!submission || submission.Challenges.Classes.ProfessorID !== user.id) {
+		return { error: "That submission doesn't exist." };
+	}
+
+	const { error } = await supabase.rpc("set_submission_feedback", {
+		submission_id: submissionId,
+		feedback,
+	});
+
+	if (error) {
+		console.error(error);
+
+		return { error: "We couldn't save your feedback. Try again in a moment." };
+	}
+
+	const classId = submission.Challenges.ClassID;
+
+	revalidatePath(`/dashboard/classes/${classId}`);
+	revalidatePath(`/dashboard/classes/${classId}/challenges/${submission.ChallengeID}`);
+
+	return { success: true };
 }

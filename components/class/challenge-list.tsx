@@ -1,6 +1,7 @@
 "use client";
 
 import {
+	BubbleChatIcon,
 	CheckmarkCircle02Icon,
 	FilterHorizontalIcon,
 	Flag02Icon,
@@ -35,7 +36,10 @@ export type ChallengeStatus = "not_started" | "attempted" | "solved";
 type Challenge = Pick<
 	Tables<"Challenges">,
 	"ChallengeID" | "Title" | "Description" | "Points" | "CreatedAt"
-> & { status: ChallengeStatus };
+> & {
+	status: ChallengeStatus;
+	hasFeedback: boolean;
+};
 
 type CompletionFilterValue = "all" | "completed" | "notCompleted";
 
@@ -54,15 +58,28 @@ const titleColumn = (classId: string, linkRows: boolean) =>
 
 			return (
 				<div className="flex max-w-md min-w-0 flex-col gap-0.5 py-1">
-					<Link
-						className={cn(
-							"w-fit rounded-sm text-label whitespace-normal outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50",
-							linkRows && "after:absolute after:inset-0",
+					<div className="flex min-w-0 items-center gap-1.5">
+						<Link
+							className={cn(
+								"w-fit rounded-sm text-label whitespace-normal outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50",
+								linkRows && "after:absolute after:inset-0",
+							)}
+							href={`/dashboard/classes/${classId}/challenges/${ch.ChallengeID}`}
+						>
+							{ch.Title}
+						</Link>
+
+						{ch.hasFeedback && (
+							<span className="shrink-0 text-wsu-green" title="Instructor feedback">
+								<HugeiconsIcon
+									icon={BubbleChatIcon}
+									className="size-4"
+									aria-hidden
+								/>
+								<span className="sr-only">Has instructor feedback</span>
+							</span>
 						)}
-						href={`/dashboard/classes/${classId}/challenges/${ch.ChallengeID}`}
-					>
-						{ch.Title}
-					</Link>
+					</div>
 
 					{ch.Description && (
 						<p className="line-clamp-1 text-body-sm whitespace-normal text-muted-foreground">
