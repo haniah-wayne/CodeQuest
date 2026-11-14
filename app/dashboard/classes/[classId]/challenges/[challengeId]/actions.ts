@@ -88,7 +88,7 @@ export async function submitSolution(input: {
 		supabase
 			.from("Challenges")
 			.select(
-				"ClassID, Points, Solutions(Solution), Locations(Longitude, Latitude, Radius), TestCase(Input, ExpectedOutput, Hidden)",
+				"ClassID, Points, Locations(Longitude, Latitude, Radius), TestCase(Input, ExpectedOutput)",
 			)
 			.eq("ChallengeID", challengeId)
 			.order("TestCaseID", { referencedTable: "TestCase" })
@@ -127,12 +127,8 @@ export async function submitSolution(input: {
 		};
 	}
 
-	const expected = challenge.Solutions?.Solution ?? "";
-
 	const testCases =
-		challenge.TestCase.length > 0
-			? challenge.TestCase
-			: [{ Input: "", ExpectedOutput: expected, Hidden: false }];
+		challenge.TestCase.length > 0 ? challenge.TestCase : [{ Input: "", ExpectedOutput: "" }];
 
 	//nothign to comparee
 	if (testCases.every((tc) => !tc.ExpectedOutput?.trim())) {
@@ -163,30 +159,8 @@ export async function submitSolution(input: {
 	);
 	const points = correct ? challenge.Points : 0;
 
-	//onyl shows first test, rest stay hidden
-	const shownIndex = testCases.findIndex((tc) => !tc.Hidden);
-	const result = runs[shownIndex === -1 ? 0 : shownIndex];
-
-	/*
-	if (expected === undefined) {
-		console.error(`Challenge ${challengeId} has no solution to grade against`);
-
-		return { error: "This challenge isn't ready for submissions yet." };
-	}
-
-	let result: ExecutionResult;
-
-	try {
-		result = await execute(language, code);
-	} catch (error) {
-		console.error(error);
-
-		return { error: RUNNER_DOWN };
-	}
-
-	const correct = result.problem === null && normalize(result.stdout) === normalize(expected);
-	const points = correct ? challenge.Points : 0;
-	*/
+	// only show first test case output
+	const result = runs[0];
 
 	const { error: insertError } = await supabase.from("Submission").insert({
 		ChallengeID: challengeId,
@@ -269,7 +243,7 @@ export async function gradeSubmission(input: {
 				title: challenge.Title,
 				description: challenge.Description,
 				points: challenge.Points,
-				expectedOutput: challenge.Solutions?.Solution ?? null,
+				expectedOutput: challenge.Solutions?.Solution || null,
 			},
 			testCases: (testCases ?? []).map((t) => ({
 				input: t.Input,

@@ -8,17 +8,10 @@ import {
 	GenerationError,
 	generateChallenge as requestGeneratedChallenge,
 } from "@/lib/ai/challenge";
-import {
-	type SuggestedTestCase,
-	suggestTestCases as requestSuggestedTestCases,
-	TestCaseError,
-} from "@/lib/ai/test-cases";
 import { getSessionUser } from "@/lib/auth/session";
-import type { LanguageId } from "@/lib/challenges/languages";
 import {
 	CreateChallengeSchema,
 	GenerateChallengeSchema,
-	GeneratedTestCasesSchema,
 	type TestCaseInput,
 	TestCasesSchema,
 } from "@/lib/schemas";
@@ -35,26 +28,18 @@ export interface ChallengeFormState {
 	error?: string;
 	fieldErrors?: Partial<
 		Record<
-			| "title"
-			| "description"
-			| "solution"
-			| "points"
-			| "longitude"
-			| "latitude"
-			| "radius"
-			| "testCases", //adding testCases
+			"title" | "description" | "points" | "longitude" | "latitude" | "radius" | "testCases", //adding testCases
 			string
 		>
 	>;
 	// Sent back on failure so the form doesn't clear what was typed
-	values?: { title: string; description: string; solution: string; points: string };
+	values?: { title: string; description: string; points: string };
 }
 
 function readForm(formData: FormData) {
 	const values = {
 		title: formData.get("title")?.toString() ?? "",
 		description: formData.get("description")?.toString() ?? "",
-		solution: formData.get("solution")?.toString() ?? "",
 		points: formData.get("points")?.toString() ?? "",
 	};
 
@@ -73,7 +58,6 @@ export async function createChallenge(
 	_prevState: ChallengeFormState,
 	formData: FormData,
 ): Promise<ChallengeFormState> {
-	//const { values, parsed } = readForm(formData);   --> replaced with
 	const validated = validateChallenge(formData); //using validateChallenge instead
 	const { values } = validated;
 
@@ -88,18 +72,6 @@ export async function createChallenge(
 	if (!Number.isSafeInteger(classId)) {
 		return { values, error: "That class doesn't exist." };
 	}
-
-	/*
-	if (!parsed.success) {
-		return {
-			values,
-			fieldErrors: toFieldErrors(
-				v.flatten<typeof CreateChallengeSchema>(parsed.issues).nested ?? {},
-			),
-		};
-	}
-	*/
-	//replaced with
 
 	//no challenge, validation failed, return field errors
 	if (!validated.challenge) {
@@ -119,23 +91,20 @@ export async function createChallenge(
 		return { values, error: "You don't have permission to add challenges to this class." };
 	}
 
-	const { title, description, solution, points, longitude, latitude, radius, hidden } =
-		validated.challenge;
+	const { title, description, points, longitude, latitude, radius, hidden } = validated.challenge;
 
-	const {
-		data: challengeId,
-		error = await supabase.rpc("create_challenge", {
-			class_id: classId,
-			title,
-			description,
-			solution,
-			points,
-			long: longitude,
-			lat: latitude,
-			radius,
-			hidden,
-		}),
-	} = await supabase.rpc("create_challenge");
+	const { data: challengeId, error } = await supabase.rpc("create_challenge", {
+		class_id: classId,
+		title,
+		description,
+		// Challenges are graded by their test cases, so there's no single output
+		solution: "",
+		points,
+		long: longitude,
+		lat: latitude,
+		radius,
+		hidden,
+	});
 
 	if (error || challengeId === null) {
 		console.error(error);
@@ -144,19 +113,17 @@ export async function createChallenge(
 	}
 
 	// challenge exists, save the test cases
-	if (validated.testCases.length > 0) {
-		const { error: testCaseError } = await supabase
-			.from("TestCase")
-			.insert(toTestCaseRows(challengeId, validated.testCases));
+	const { error: testCaseError } = await supabase
+		.from("TestCase")
+		.insert(toTestCaseRows(challengeId, validated.testCases));
 
-		if (testCaseError) {
-			console.error(testCaseError);
+	if (testCaseError) {
+		console.error(testCaseError);
 
-			return {
-				values,
-				error: "The challenge was saved, but its test cases weren't. Edit the challenge to add them again.",
-			};
-		}
+		return {
+			values,
+			error: "The challenge was saved, but its test cases weren't. Edit the challenge to add them again.",
+		};
 	}
 
 	revalidatePath(`/dashboard/classes/${classId}`); //refresh class page data so new challenge shows up
@@ -209,63 +176,6 @@ export async function generateChallenge(input: {
 	}
 }
 
-//11.13 - Haniah Ahmed - added interface for test case suggestion state
-export interface SuggestTestCasesState {
-	error?: string;
-	testCases?: SuggestedTestCase[];
-	skipped?: number; // inputs dropped because the sample solution failed on them
-}
-
-// ai writes inputs and sample solution provides the outputs
-export async function suggestTestCases(input: {
-	classId: number;
-	description: string;
-	sampleSolution: string;
-	language: LanguageId;
-}): Promise<SuggestTestCasesState> {
-	const user = await getSessionUser();
-
-	if (user?.role !== "professor") {
-		return { error: "Only professors can generate test cases." };
-	}
-
-	// check wht the browset sent
-	const parsed = v.safeParse(GeneratedTestCasesSchema, input);
-
-	if (!parsed.success) {
-		return { error: parsed.issues[0].message }; //error message
-	}
-
-	const { classId, description, sampleSolution, language } = parsed.output;
-
-	const supabase = await createClient();
-
-	// class instructor only
-	const { data: classInfo } = await supabase
-		.from("Classes")
-		.select("ProfessorID")
-		.eq("ClassID", classId)
-		.maybeSingle();
-
-	if (classInfo?.ProfessorID !== user.id) {
-		return { error: "You don't have permission to add challenges to this class." };
-	}
-
-	try {
-		//have gemini and piston functions run
-		return await requestSuggestedTestCases({ description, sampleSolution, language });
-	} catch (error) {
-		console.error(error);
-
-		return {
-			error:
-				error instanceof TestCaseError
-					? "Your sample solution didn't run cleanly on any suggested input. Check that it runs, then try again."
-					: "The AI couldn't suggest test cases right now. Try again in a moment.",
-		};
-	}
-}
-
 export async function updateChallenge(
 	_prevState: ChallengeFormState,
 	formData: FormData,
@@ -290,22 +200,16 @@ export async function updateChallenge(
 		return { values, fieldErrors: validated.fieldErrors };
 	}
 
-	const { title, description, solution, points, longitude, latitude, radius, hidden } =
-		validated.challenge;
+	const { title, description, points, longitude, latitude, radius, hidden } = validated.challenge;
 
 	const supabase = await createClient();
 
-	// There's no update_challenge RPC, so this is three separate writes and a
+	// There's no update_challenge RPC, so these are separate writes and a
 	// failure partway through can leave the challenge half updated
-	const [challengeResult, solutionResult, locationResult] = await Promise.all([
+	const [challengeResult, locationResult] = await Promise.all([
 		supabase
 			.from("Challenges")
 			.update({ Title: title, Description: description, Points: points, Hidden: hidden })
-			.eq("ChallengeID", challengeId)
-			.select("ChallengeID"),
-		supabase
-			.from("Solutions")
-			.update({ Solution: solution })
 			.eq("ChallengeID", challengeId)
 			.select("ChallengeID"),
 		supabase
@@ -317,7 +221,7 @@ export async function updateChallenge(
 
 	// RLS skips rows it won't let us update instead of erroring, so check that
 	// each write actually hit a row
-	const failed = [challengeResult, solutionResult, locationResult].find(
+	const failed = [challengeResult, locationResult].find(
 		(result) => result.error || !result.data?.length,
 	);
 
@@ -333,13 +237,10 @@ export async function updateChallenge(
 		.delete()
 		.eq("ChallengeID", challengeId);
 
-	// delete fails, no cases, then skip
-	const { error: insertError } =
-		deleteError || validated.testCases.length === 0
-			? { error: deleteError }
-			: await supabase
-					.from("TestCase")
-					.insert(toTestCaseRows(challengeId, validated.testCases));
+	// skip the insert if the delete failed
+	const { error: insertError } = deleteError
+		? { error: deleteError }
+		: await supabase.from("TestCase").insert(toTestCaseRows(challengeId, validated.testCases));
 
 	if (insertError) {
 		console.error(insertError);
@@ -410,7 +311,7 @@ function readTestCases(formData: FormData) {
 	let raw: unknown = null; //stays null if it cant be read
 
 	try {
-		raw = JSON.parse(formData.get("testcases")?.toString() ?? "[]");
+		raw = JSON.parse(formData.get("testCases")?.toString() ?? "[]");
 	} catch {
 		//leaving the row as null, set above
 	}
@@ -436,14 +337,6 @@ function validateChallenge(formData: FormData) {
 		};
 	}
 
-	//something to grade agsint as reference
-	if (parsed.output.solution.trim() === "" && testCases.output.length === 0) {
-		return {
-			values,
-			fieldErrors: { solution: "enter expected output or test case" },
-		};
-	}
-
 	return { values, challenge: parsed.output, testCases: testCases.output };
 }
 
@@ -453,6 +346,5 @@ function toTestCaseRows(challengeId: number, testCases: TestCaseInput[]) {
 		ChallengeID: challengeId,
 		Input: tc.input,
 		ExpectedOutput: tc.expectedOutput,
-		Hidden: tc.hidden,
 	}));
 }

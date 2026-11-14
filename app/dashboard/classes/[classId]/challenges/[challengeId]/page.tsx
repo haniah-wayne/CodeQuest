@@ -31,7 +31,7 @@ export default async function ChallengePage(
 		supabase
 			.from("Challenges")
 			.select(
-				"Title, Description, Points, Classes(ClassName, ProfessorID), Locations(Longitude, Latitude, Radius), TestCase(Input, ExpectedOutput, Hidden)",
+				"Title, Description, Points, Classes(ClassName, ProfessorID), Locations(Longitude, Latitude, Radius), TestCase(Input, ExpectedOutput)",
 			)
 			.eq("ChallengeID", challengeId)
 			.eq("ClassID", classId)
@@ -72,7 +72,9 @@ export default async function ChallengePage(
 	const shown = correct ?? submissions[0];
 	const initialLanguage = isLanguageId(shown?.Language) ? shown.Language : DEFAULT_LANGUAGE;
 	const initialCode = shown && isLanguageId(shown.Language) ? shown.Code : null;
-	const examples = challenge.TestCase.filter((tc) => !tc.Hidden);
+	// Only the first test case is shown, the rest are kept for grading
+	const examples = challenge.TestCase.slice(0, 1);
+
 	return (
 		<>
 			<div className="flex flex-col gap-6">
@@ -110,6 +112,7 @@ export default async function ChallengePage(
 			</div>
 
 			{examples.length > 0 && <Examples examples={examples} />}
+
 			<CodeWorkspace
 				challengeId={challengeId}
 				initialLanguage={initialLanguage}

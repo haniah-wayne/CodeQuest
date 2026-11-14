@@ -28,7 +28,7 @@ export default async function EditChallengePage(
 	const { data: challenge, error } = await supabase
 		.from("Challenges")
 		.select(
-			"Title, Description, Points, Hidden, Classes(ProfessorID), Solutions(Solution), Locations(Longitude, Latitude, Radius), TestCase(Input, ExpectedOutput, Hidden)",
+			"Title, Description, Points, Hidden, Classes(ProfessorID), Locations(Longitude, Latitude, Radius), TestCase(Input, ExpectedOutput)",
 		)
 		.eq("ChallengeID", challengeId)
 		.eq("ClassID", classId)
@@ -41,11 +41,10 @@ export default async function EditChallengePage(
 	// Only the class's professor can edit, so anyone else gets a 404
 	if (!challenge || challenge.Classes.ProfessorID !== user.id) notFound();
 
-	const solution = challenge.Solutions?.Solution;
 	const location = challenge.Locations[0];
 
-	if (solution === undefined || !location) {
-		console.error(`Challenge ${challengeId} is missing its solution or location`);
+	if (!location) {
+		console.error(`Challenge ${challengeId} is missing its location`);
 
 		notFound();
 	}
@@ -63,7 +62,7 @@ export default async function EditChallengePage(
 
 				<DashboardPageHeader
 					title="Edit challenge"
-					description="Update the problem, its expected output and test cases, and where its pinned"
+					description="Update the problem, its test cases, and where it's pinned."
 				/>
 			</div>
 
@@ -76,7 +75,6 @@ export default async function EditChallengePage(
 				initial={{
 					title: challenge.Title,
 					description: challenge.Description ?? "",
-					solution,
 					points: challenge.Points,
 					location: { longitude: location.Longitude, latitude: location.Latitude },
 					// Older challenges may use a radius that's no longer offered
@@ -87,7 +85,6 @@ export default async function EditChallengePage(
 					testCases: challenge.TestCase.map((tc) => ({
 						input: tc.Input ?? "",
 						expectedOutput: tc.ExpectedOutput ?? "",
-						hidden: tc.Hidden,
 					})),
 				}}
 			/>

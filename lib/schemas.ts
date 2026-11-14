@@ -33,10 +33,6 @@ export const CreateChallengeSchema = v.object({
 		v.trim(),
 		v.nonEmpty("Enter a description."),
 	),
-	solution: v.pipe(
-		v.string("Enter the expected output."),
-		//v.check((s) => s.trim() !== "", "Enter the expected output."),   remove for test cases to be implicityl possible
-	),
 	points: v.pipe(
 		v.string("Enter a point value."),
 		v.trim(),
@@ -67,6 +63,9 @@ const MAX_CODE_LENGTH = 64 * 1024;
 //test cases - lowered it to 10
 export const MAX_TEST_CASES = 10;
 
+// How many test inputs the AI writes for a generated challenge
+export const SUGGESTED_TEST_CASES = 5;
+
 //moved the test cases to the bottom
 
 const CodeSchema = v.pipe(
@@ -74,14 +73,6 @@ const CodeSchema = v.pipe(
 	v.check((code) => code.trim() !== "", "Write some code first."),
 	v.maxLength(MAX_CODE_LENGTH, "That's too much code to run."),
 );
-
-/*
-export const RunCodeSchema = v.object({
-	language: v.picklist(LANGUAGE_IDS, "Pick a language."),
-	code: CodeSchema,
-	//needs to run with input as well
-});
-*/
 
 //11.12 - Haniah Ahmed - added the new code schema that allows for actual input
 export const RunCodeSchema = v.object({
@@ -126,22 +117,14 @@ const TestCaseSchema = v.object({
 	expectedOutput: v.pipe(
 		v.string(), //making sure its a string
 		v.maxLength(MAX_CODE_LENGTH, "The expected output is too long."), //check to see if its too long
-		v.check((s) => s.trim() !== "", "The expected output can't be empty."), //check to see if its empty
+		v.check((s) => s.trim() !== "", "Every test case needs an expected output."), //check to see if its empty
 	),
-
-	hidden: v.boolean(),
 });
 
 export const TestCasesSchema = v.pipe(
 	v.array(TestCaseSchema, "the test couldnt be read, refresh and try again"),
+	v.minLength(1, "Add at least one test case."),
 	v.maxLength(MAX_TEST_CASES, `You can add up to ${MAX_TEST_CASES} test cases.`),
 );
 
 export type TestCaseInput = v.InferOutput<typeof TestCaseSchema>; //telling it to use the type of the schema for the test cases, infer the type
-
-export const GeneratedTestCasesSchema = v.object({
-	classId: v.pipe(v.number(), v.safeInteger()),
-	description: v.pipe(v.string(), v.trim(), v.nonEmpty("write the problem, cannot be empty")),
-	sampleSolution: CodeSchema,
-	language: v.picklist(LANGUAGE_IDS, "Pick the sample solution's language"),
-});

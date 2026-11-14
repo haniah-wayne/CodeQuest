@@ -4,7 +4,6 @@ import {
 	Cursor01Icon,
 	Edit02Icon,
 	Location01Icon,
-	ViewOffSlashIcon,
 	TestTube01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
@@ -15,7 +14,11 @@ import type * as React from "react";
 import type { ChallengeFormState } from "@/app/dashboard/classes/[classId]/challenges/new/actions";
 import { AuthFormError } from "@/components/auth-card";
 import { ChallengeGenerator } from "@/components/challenge/challenge-generator";
-import { type SampleSolution, TestCaseEditor } from "@/components/challenge/test-case-editor";
+import {
+	TestCaseEditor,
+	toInitialTestCaseDrafts,
+	toTestCaseDrafts,
+} from "@/components/challenge/test-case-editor";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -32,7 +35,6 @@ import { Input } from "@/components/ui/input";
 import { Radio, RadioGroup } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import type { GeneratedChallenge } from "@/lib/ai/challenge";
-import { DEFAULT_LANGUAGE } from "@/lib/challenges/languages";
 import {
 	DEFAULT_UNLOCK_RADIUS,
 	UNLOCK_RADII,
@@ -62,7 +64,6 @@ export function ChallengeForm({
 	initial?: {
 		title: string;
 		description: string;
-		solution: string;
 		points: number;
 		location: Position;
 		radius: UnlockRadius;
@@ -80,7 +81,6 @@ export function ChallengeForm({
 					values: {
 						title: initial.title,
 						description: initial.description,
-						solution: initial.solution,
 						points: String(initial.points),
 					},
 				}
@@ -95,12 +95,8 @@ export function ChallengeForm({
 	const [hidden, setHidden] = useState(initial?.hidden ?? false);
 
 	const formRef = useRef<HTMLFormElement>(null);
-	const [sample, setSample] = useState<SampleSolution>({ language: DEFAULT_LANGUAGE, code: "" });
-	function getDescription() {
-		const field = formRef.current?.elements.namedItem("description");
 
-		return field instanceof HTMLTextAreaElement ? field.value : ""; //erroring out here
-	}
+	const [testCases, setTestCases] = useState(() => toInitialTestCaseDrafts(initial?.testCases));
 
 	const locationError = state.fieldErrors?.longitude ?? state.fieldErrors?.latitude;
 	const classHref = `/dashboard/classes/${classId}`;
@@ -114,7 +110,6 @@ export function ChallengeForm({
 			title: draft.title,
 			points: String(draft.points),
 			description: draft.description,
-			solution: draft.expectedOutput,
 		};
 
 		for (const [name, value] of Object.entries(values)) {
@@ -124,7 +119,8 @@ export function ChallengeForm({
 				field.value = value;
 			}
 		}
-		setSample(draft.reference);
+
+		setTestCases(() => toTestCaseDrafts(draft.testCases));
 	}
 
 	return (
@@ -204,7 +200,7 @@ export function ChallengeForm({
 									className="min-h-36"
 									id="description"
 									name="description"
-									placeholder="What does this print? for (let i = 0; i < 3; i++) console.log(i * 2)"
+									placeholder="Read an integer n from the input and print the first n even numbers, one per line."
 									defaultValue={state.values?.description}
 									required
 									aria-invalid={
@@ -218,35 +214,6 @@ export function ChallengeForm({
 								</FieldDescription>
 
 								<FieldError>{state.fieldErrors?.description}</FieldError>
-							</Field>
-
-							<Field data-invalid={Boolean(state.fieldErrors?.solution) || undefined}>
-								<FieldLabel className="text-label" htmlFor="solution">
-									Expected output
-								</FieldLabel>
-
-								<Textarea
-									className="min-h-24 font-mono"
-									id="solution"
-									name="solution"
-									placeholder={"0\n2\n4"}
-									defaultValue={state.values?.solution}
-									autoComplete="off"
-									spellCheck={false}
-									aria-invalid={Boolean(state.fieldErrors?.solution) || undefined}
-									aria-describedby="solution-hint"
-								/>
-
-								<FieldDescription
-									id="solution-hint"
-									className="flex items-center gap-1.5"
-								>
-									<HugeiconsIcon icon={ViewOffSlashIcon} className="size-3.5" />
-									Hidden from students. Used when the challenge has no test case.
-									Their code&apos;s output is checked against this.
-								</FieldDescription>
-
-								<FieldError>{state.fieldErrors?.solution}</FieldError>
 							</Field>
 						</FieldGroup>
 					</FormSection>
@@ -374,11 +341,8 @@ export function ChallengeForm({
 					invalid={Boolean(state.fieldErrors?.testCases)}
 				>
 					<TestCaseEditor
-						classId={classId}
-						initialTestCases={initial?.testCases}
-						sample={sample}
-						onSampleChange={setSample}
-						getDescription={getDescription}
+						testCases={testCases}
+						onTestCasesChange={setTestCases}
 						error={state.fieldErrors?.testCases}
 					/>
 				</FormSection>
