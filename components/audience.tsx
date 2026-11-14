@@ -40,7 +40,7 @@ const audiences: Audience[] = [
 			},
 			{
 				lead: "Grading built in:",
-				rest: " Submissions are auto-checked against the expected output, and AI can review any of them with a suggested score and feedback.",
+				rest: " Submissions are auto-checked against your test cases, and AI can review any of them with a suggested score and feedback.",
 			},
 		],
 	},

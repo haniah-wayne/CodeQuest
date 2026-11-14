@@ -9,27 +9,37 @@ import {
 	generateChallenge as requestGeneratedChallenge,
 } from "@/lib/ai/challenge";
 import { getSessionUser } from "@/lib/auth/session";
-import { CreateChallengeSchema, GenerateChallengeSchema } from "@/lib/schemas";
+import {
+	CreateChallengeSchema,
+	GenerateChallengeSchema,
+	type TestCaseInput,
+	TestCasesSchema,
+} from "@/lib/schemas";
 import { createClient } from "@/lib/supabase/server";
 import { toFieldErrors } from "@/lib/validation";
+//new imports needed for functions
+
+export interface GenerateChallengeState {
+	error?: string;
+	challenge?: GeneratedChallenge;
+}
 
 export interface ChallengeFormState {
 	error?: string;
 	fieldErrors?: Partial<
 		Record<
-			"title" | "description" | "solution" | "points" | "longitude" | "latitude" | "radius",
+			"title" | "description" | "points" | "longitude" | "latitude" | "radius" | "testCases", //adding testCases
 			string
 		>
 	>;
 	// Sent back on failure so the form doesn't clear what was typed
-	values?: { title: string; description: string; solution: string; points: string };
+	values?: { title: string; description: string; points: string };
 }
 
 function readForm(formData: FormData) {
 	const values = {
 		title: formData.get("title")?.toString() ?? "",
 		description: formData.get("description")?.toString() ?? "",
-		solution: formData.get("solution")?.toString() ?? "",
 		points: formData.get("points")?.toString() ?? "",
 	};
 
@@ -43,11 +53,14 @@ function readForm(formData: FormData) {
 	return { values, parsed: v.safeParse(CreateChallengeSchema, { ...values, ...location }) };
 }
 
+//11.13 - Haniah Ahmed - changes to create challenge so that it includes test cases
 export async function createChallenge(
 	_prevState: ChallengeFormState,
 	formData: FormData,
 ): Promise<ChallengeFormState> {
-	const { values, parsed } = readForm(formData);
+	const validated = validateChallenge(formData); //using validateChallenge instead
+	const { values } = validated;
+
 	const classId = Number(formData.get("classId"));
 
 	const user = await getSessionUser();
@@ -60,13 +73,9 @@ export async function createChallenge(
 		return { values, error: "That class doesn't exist." };
 	}
 
-	if (!parsed.success) {
-		return {
-			values,
-			fieldErrors: toFieldErrors(
-				v.flatten<typeof CreateChallengeSchema>(parsed.issues).nested ?? {},
-			),
-		};
+	//no challenge, validation failed, return field errors
+	if (!validated.challenge) {
+		return { values, fieldErrors: validated.fieldErrors };
 	}
 
 	const supabase = await createClient();
@@ -82,14 +91,14 @@ export async function createChallenge(
 		return { values, error: "You don't have permission to add challenges to this class." };
 	}
 
-	const { title, description, solution, points, longitude, latitude, radius, hidden } =
-		parsed.output;
+	const { title, description, points, longitude, latitude, radius, hidden } = validated.challenge;
 
-	const { error } = await supabase.rpc("create_challenge", {
+	const { data: challengeId, error } = await supabase.rpc("create_challenge", {
 		class_id: classId,
 		title,
 		description,
-		solution,
+		// Challenges are graded by their test cases, so there's no single output
+		solution: "",
 		points,
 		long: longitude,
 		lat: latitude,
@@ -97,19 +106,28 @@ export async function createChallenge(
 		hidden,
 	});
 
-	if (error) {
+	if (error || challengeId === null) {
 		console.error(error);
 
 		return { values, error: "Something went wrong saving that challenge." };
 	}
 
-	revalidatePath(`/dashboard/classes/${classId}`);
-	redirect(`/dashboard/classes/${classId}`);
-}
+	// challenge exists, save the test cases
+	const { error: testCaseError } = await supabase
+		.from("TestCase")
+		.insert(toTestCaseRows(challengeId, validated.testCases));
 
-export interface GenerateChallengeState {
-	error?: string;
-	challenge?: GeneratedChallenge;
+	if (testCaseError) {
+		console.error(testCaseError);
+
+		return {
+			values,
+			error: "The challenge was saved, but its test cases weren't. Edit the challenge to add them again.",
+		};
+	}
+
+	revalidatePath(`/dashboard/classes/${classId}`); //refresh class page data so new challenge shows up
+	redirect(`/dashboard/classes/${classId}`); //send instructor back to class
 }
 
 export async function generateChallenge(input: {
@@ -162,7 +180,13 @@ export async function updateChallenge(
 	_prevState: ChallengeFormState,
 	formData: FormData,
 ): Promise<ChallengeFormState> {
-	const { values, parsed } = readForm(formData);
+	//const { values, parsed } = readForm(formData);
+	//const classId = Number(formData.get("classId"));
+	//const challengeId = Number(formData.get("challengeId"));
+
+	//updating values
+	const validated = validateChallenge(formData); //using validate challenge instead
+	const { values } = validated;
 	const classId = Number(formData.get("classId"));
 	const challengeId = Number(formData.get("challengeId"));
 
@@ -171,27 +195,23 @@ export async function updateChallenge(
 		return { values, error: "You don't have permission to edit this challenge." };
 	}
 
-	if (!parsed.success) {
-		return {
-			values,
-			fieldErrors: toFieldErrors(
-				v.flatten<typeof CreateChallengeSchema>(parsed.issues).nested ?? {},
-			),
-		};
+	// nvalidation faileld , send errors back
+	if (!validated.challenge) {
+		return { values, fieldErrors: validated.fieldErrors };
 	}
 
-	const { title, description, solution, points, longitude, latitude, radius, hidden } =
-		parsed.output;
+	const { title, description, points, longitude, latitude, radius, hidden } = validated.challenge;
 
 	const supabase = await createClient();
 
-	// Updates the challenge, solution, and location in one transaction
+	// Updates the challenge, solution, and location in one transaction.
+	// Challenges are graded by their test cases, so there's no single output
 	const { error } = await supabase.rpc("update_challenge", {
 		challenge_id: challengeId,
 		class_id: classId,
 		title,
 		description,
-		solution,
+		solution: "",
 		points,
 		long: longitude,
 		lat: latitude,
@@ -203,6 +223,23 @@ export async function updateChallenge(
 		console.error(error);
 
 		return { values, error: "Something went wrong saving your changes." };
+	}
+
+	// remove old test cases and insert the ne ones
+	const { error: deleteError } = await supabase
+		.from("TestCase")
+		.delete()
+		.eq("ChallengeID", challengeId);
+
+	// skip the insert if the delete failed
+	const { error: insertError } = deleteError
+		? { error: deleteError }
+		: await supabase.from("TestCase").insert(toTestCaseRows(challengeId, validated.testCases));
+
+	if (insertError) {
+		console.error(insertError);
+
+		return { values, error: "Your changes were saved, but the test cases weren't." };
 	}
 
 	revalidatePath(`/dashboard/classes/${classId}`);
@@ -259,4 +296,49 @@ async function professorOwnsChallenge(classId: number, challengeId: number) {
 	if (error) console.error(error);
 
 	return challenge?.Classes.ProfessorID === user.id;
+}
+
+//11.12 - Haniah Ahmed - more test case related helper functions
+
+//the form sends each test case as one JSON string in hidden input
+function readTestCases(formData: FormData) {
+	let raw: unknown = null; //stays null if it cant be read
+
+	try {
+		raw = JSON.parse(formData.get("testCases")?.toString() ?? "[]");
+	} catch {
+		//leaving the row as null, set above
+	}
+	return v.safeParse(TestCasesSchema, raw); //list of valid test cases checkign
+}
+
+//checks challenge field and test cases together
+function validateChallenge(formData: FormData) {
+	const { values, parsed } = readForm(formData);
+	const testCases = readTestCases(formData);
+
+	if (!parsed.success || !testCases.success) {
+		return {
+			values,
+			fieldErrors: {
+				...(parsed.success //normal field errors from challenge fields
+					? {}
+					: toFieldErrors(
+							v.flatten<typeof CreateChallengeSchema>(parsed.issues).nested ?? {},
+						)),
+				...(testCases.success ? {} : { testCases: testCases.issues[0].message }), //error from test case list
+			},
+		};
+	}
+
+	return { values, challenge: parsed.output, testCases: testCases.output };
+}
+
+//turns test cases into rows for the database
+function toTestCaseRows(challengeId: number, testCases: TestCaseInput[]) {
+	return testCases.map((tc) => ({
+		ChallengeID: challengeId,
+		Input: tc.input,
+		ExpectedOutput: tc.expectedOutput,
+	}));
 }
