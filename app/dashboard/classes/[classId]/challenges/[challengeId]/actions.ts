@@ -6,7 +6,7 @@ import { type AiGrade, requestAiGrade } from "@/lib/ai/grading";
 import { getSessionUser } from "@/lib/auth/session";
 import type { LanguageId } from "@/lib/challenges/languages";
 import { isWithinUnlockRadius, type Position } from "@/lib/challenges/location";
-import { type ExecutionResult, execute } from "@/lib/piston";
+import { type ExecutionResult, execute, executeAll } from "@/lib/piston";
 import { GradeSubmissionSchema, RunCodeSchema, SubmitSolutionSchema } from "@/lib/schemas";
 import { createClient } from "@/lib/supabase/server";
 
@@ -144,8 +144,11 @@ export async function submitSolution(input: {
 	let runs: ExecutionResult[];
 
 	try {
-		// tests all runnign at the same time
-		runs = await Promise.all(testCases.map((tc) => execute(language, code, tc.Input ?? "")));
+		runs = await executeAll(
+			language,
+			code,
+			testCases.map((tc) => tc.Input ?? ""),
+		);
 	} catch (error) {
 		console.error(error);
 

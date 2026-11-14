@@ -96,3 +96,28 @@ function describeProblem(stage: PistonStage, compiling: boolean): string | null 
 
 	return null;
 }
+
+// Piston shares CPU between jobs, so sending a batch all at once makes cold
+// starts exceed the time limit.
+const MAX_CONCURRENT_RUNS = 2;
+
+export async function executeAll(
+	language: LanguageId,
+	code: string,
+	stdins: string[],
+): Promise<ExecutionResult[]> {
+	const results: ExecutionResult[] = [];
+	let next = 0;
+
+	async function worker() {
+		while (next < stdins.length) {
+			const i = next++;
+
+			results[i] = await execute(language, code, stdins[i]);
+		}
+	}
+
+	await Promise.all(Array.from({ length: Math.min(MAX_CONCURRENT_RUNS, stdins.length) }, worker));
+
+	return results;
+}
