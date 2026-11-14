@@ -37,6 +37,7 @@ function normalize(output: string) {
 export async function runCode(input: {
 	language: LanguageId;
 	code: string;
+	stdin?: string; //optional input for the code runner
 }): Promise<RunCodeState> {
 	const user = await getSessionUser();
 
@@ -50,10 +51,10 @@ export async function runCode(input: {
 		return { error: parsed.issues[0].message };
 	}
 
-	const { language, code } = parsed.output;
+	const { language, code, stdin } = parsed.output;
 
 	try {
-		return { result: await execute(language, code) };
+		return { result: await execute(language, code, stdin) };
 	} catch (error) {
 		console.error(error);
 
@@ -86,8 +87,11 @@ export async function submitSolution(input: {
 	const [challengeResult, solvedResult] = await Promise.all([
 		supabase
 			.from("Challenges")
-			.select("ClassID, Points, Solutions(Solution), Locations(Longitude, Latitude, Radius)")
+			.select(
+				"ClassID, Points, Solutions(Solution), Locations(Longitude, Latitude, Radius), TestCase(Input, ExpectedOutput, Hidden)",
+			)
 			.eq("ChallengeID", challengeId)
+			.order("TestCaseID", { referencedTable: "TestCase" })
 			.maybeSingle(),
 		supabase
 			.from("Submission")
@@ -123,8 +127,44 @@ export async function submitSolution(input: {
 		};
 	}
 
-	const expected = challenge.Solutions?.Solution;
+	const expected = challenge.Solutions?.Solution ?? "";
 
+	const testCases =
+		challenge.TestCase.length > 0
+			? challenge.TestCase
+			: [{ Input: "", ExpectedOutput: expected, Hidden: false }];
+
+	//nothign to comparee
+	if (testCases.every((tc) => !tc.ExpectedOutput?.trim())) {
+		console.error(`Challenge ${challengeId} has nothing to grade against`);
+
+		return { error: "This challenge isn't ready for submissions yet." };
+	}
+
+	let runs: ExecutionResult[];
+
+	try {
+		// tests all runnign at the same time
+		runs = await Promise.all(testCases.map((tc) => execute(language, code, tc.Input ?? "")));
+	} catch (error) {
+		console.error(error);
+
+		return { error: RUNNER_DOWN };
+	}
+
+	// all test cases need to pass for it to be correct
+	const correct = runs.every(
+		(run, i) =>
+			run.problem === null &&
+			normalize(run.stdout) === normalize(testCases[i].ExpectedOutput ?? ""),
+	);
+	const points = correct ? challenge.Points : 0;
+
+	//onyl shows first test, rest stay hidden
+	const shownIndex = testCases.findIndex((tc) => !tc.Hidden);
+	const result = runs[shownIndex === -1 ? 0 : shownIndex];
+
+	/*
 	if (expected === undefined) {
 		console.error(`Challenge ${challengeId} has no solution to grade against`);
 
@@ -143,6 +183,7 @@ export async function submitSolution(input: {
 
 	const correct = result.problem === null && normalize(result.stdout) === normalize(expected);
 	const points = correct ? challenge.Points : 0;
+	*/
 
 	const { error: insertError } = await supabase.from("Submission").insert({
 		ChallengeID: challengeId,

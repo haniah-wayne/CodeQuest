@@ -31,10 +31,11 @@ export default async function ChallengePage(
 		supabase
 			.from("Challenges")
 			.select(
-				"Title, Description, Points, Classes(ClassName, ProfessorID), Locations(Longitude, Latitude, Radius)",
+				"Title, Description, Points, Classes(ClassName, ProfessorID), Locations(Longitude, Latitude, Radius), TestCase(Input, ExpectedOutput, Hidden)",
 			)
 			.eq("ChallengeID", challengeId)
 			.eq("ClassID", classId)
+			.order("TestCaseID", { referencedTable: "TestCase" })
 			.maybeSingle(),
 		supabase
 			.from("Submission")
@@ -71,7 +72,7 @@ export default async function ChallengePage(
 	const shown = correct ?? submissions[0];
 	const initialLanguage = isLanguageId(shown?.Language) ? shown.Language : DEFAULT_LANGUAGE;
 	const initialCode = shown && isLanguageId(shown.Language) ? shown.Code : null;
-
+	const examples = challenge.TestCase.filter((tc) => !tc.Hidden);
 	return (
 		<>
 			<div className="flex flex-col gap-6">
@@ -108,13 +109,66 @@ export default async function ChallengePage(
 				</div>
 			</div>
 
+			{examples.length > 0 && <Examples examples={examples} />}
 			<CodeWorkspace
 				challengeId={challengeId}
 				initialLanguage={initialLanguage}
 				initialCode={initialCode}
 				solved={solved}
+				exampleInput={examples[0]?.Input ?? ""}
 			/>
 		</>
+	);
+}
+
+//shows visible test cases only
+function Examples({
+	examples,
+}: {
+	examples: { Input: string | null; ExpectedOutput: string | null }[];
+}) {
+	return (
+		<section
+			className="flex min-w-0 flex-col rounded-3xl border border-accent bg-white"
+			aria-labelledby="examples-heading"
+		>
+			<header className="flex flex-col gap-1 border-b border-border/60 px-5 py-3 sm:px-6">
+				<h2 className="text-label" id="examples-heading">
+					Examples
+				</h2>
+
+				<p className="text-caption text-muted-foreground">
+					Your program reads the input from stdin and must print the output exactly.
+					Don&apos;t print prompts like &quot;Enter a number&quot;. Run uses the first
+					example&apos;s input.
+				</p>
+			</header>
+
+			<ol className="flex flex-col divide-y divide-border/60">
+				{examples.map((example, index) => (
+					<li key={index} className="grid gap-3 px-5 py-4 sm:grid-cols-2 sm:px-6">
+						{[
+							["Input", example.Input],
+							["Output", example.ExpectedOutput],
+						].map(([label, value]) => (
+							<div key={label} className="flex min-w-0 flex-col gap-1">
+								<span className="text-caption text-muted-foreground">
+									{label} {index + 1}
+								</span>
+
+								<pre className="overflow-auto rounded-xl bg-muted px-3 py-2 font-mono text-sm whitespace-pre-wrap">
+									{value || (
+										<span className="text-muted-foreground italic">
+											(empty)
+										</span>
+									)}
+								</pre>
+							</div>
+						))}
+					</li>
+				))}
+			</ol>
+		</section>
 	);
 }
 

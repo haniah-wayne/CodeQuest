@@ -5,6 +5,7 @@ import {
 	Edit02Icon,
 	Location01Icon,
 	ViewOffSlashIcon,
+	TestTube01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import dynamic from "next/dynamic";
@@ -14,6 +15,7 @@ import type * as React from "react";
 import type { ChallengeFormState } from "@/app/dashboard/classes/[classId]/challenges/new/actions";
 import { AuthFormError } from "@/components/auth-card";
 import { ChallengeGenerator } from "@/components/challenge/challenge-generator";
+import { type SampleSolution, TestCaseEditor } from "@/components/challenge/test-case-editor";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -30,6 +32,7 @@ import { Input } from "@/components/ui/input";
 import { Radio, RadioGroup } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import type { GeneratedChallenge } from "@/lib/ai/challenge";
+import { DEFAULT_LANGUAGE } from "@/lib/challenges/languages";
 import {
 	DEFAULT_UNLOCK_RADIUS,
 	UNLOCK_RADII,
@@ -37,7 +40,7 @@ import {
 	type Position,
 	type UnlockRadius,
 } from "@/lib/challenges/location";
-import { DEFAULT_POINTS, MAX_POINTS, MIN_POINTS } from "@/lib/schemas";
+import { DEFAULT_POINTS, MAX_POINTS, MIN_POINTS, type TestCaseInput } from "@/lib/schemas";
 
 const MapView = dynamic(() => import("@/components/mapview"), {
 	ssr: false,
@@ -64,6 +67,7 @@ export function ChallengeForm({
 		location: Position;
 		radius: UnlockRadius;
 		hidden: boolean;
+		testCases: TestCaseInput[];
 	};
 	action: (state: ChallengeFormState, formData: FormData) => Promise<ChallengeFormState>;
 	submitLabel: string;
@@ -91,6 +95,12 @@ export function ChallengeForm({
 	const [hidden, setHidden] = useState(initial?.hidden ?? false);
 
 	const formRef = useRef<HTMLFormElement>(null);
+	const [sample, setSample] = useState<SampleSolution>({ language: DEFAULT_LANGUAGE, code: "" });
+	function getDescription() {
+		const field = formRef.current?.elements.namedItem("description");
+
+		return field instanceof HTMLTextAreaElement ? field.value : ""; //erroring out here
+	}
 
 	const locationError = state.fieldErrors?.longitude ?? state.fieldErrors?.latitude;
 	const classHref = `/dashboard/classes/${classId}`;
@@ -114,6 +124,7 @@ export function ChallengeForm({
 				field.value = value;
 			}
 		}
+		setSample(draft.reference);
 	}
 
 	return (
@@ -220,7 +231,6 @@ export function ChallengeForm({
 									name="solution"
 									placeholder={"0\n2\n4"}
 									defaultValue={state.values?.solution}
-									required
 									autoComplete="off"
 									spellCheck={false}
 									aria-invalid={Boolean(state.fieldErrors?.solution) || undefined}
@@ -232,8 +242,8 @@ export function ChallengeForm({
 									className="flex items-center gap-1.5"
 								>
 									<HugeiconsIcon icon={ViewOffSlashIcon} className="size-3.5" />
-									Hidden from students. Their code&apos;s output is checked
-									against this.
+									Hidden from students. Used when the challenge has no test case.
+									Their code&apos;s output is checked against this.
 								</FieldDescription>
 
 								<FieldError>{state.fieldErrors?.solution}</FieldError>
@@ -355,6 +365,23 @@ export function ChallengeForm({
 						</div>
 					</FormSection>
 				</div>
+
+				{/* test cases */}
+				<FormSection
+					id="challenge-tests"
+					title="Test cases"
+					icon={TestTube01Icon}
+					invalid={Boolean(state.fieldErrors?.testCases)}
+				>
+					<TestCaseEditor
+						classId={classId}
+						initialTestCases={initial?.testCases}
+						sample={sample}
+						onSampleChange={setSample}
+						getDescription={getDescription}
+						error={state.fieldErrors?.testCases}
+					/>
+				</FormSection>
 
 				<div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
 					<Link

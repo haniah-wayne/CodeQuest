@@ -28,10 +28,12 @@ export default async function EditChallengePage(
 	const { data: challenge, error } = await supabase
 		.from("Challenges")
 		.select(
-			"Title, Description, Points, Hidden, Classes(ProfessorID), Solutions(Solution), Locations(Longitude, Latitude, Radius)",
+			"Title, Description, Points, Hidden, Classes(ProfessorID), Solutions(Solution), Locations(Longitude, Latitude, Radius), TestCase(Input, ExpectedOutput, Hidden)",
 		)
 		.eq("ChallengeID", challengeId)
 		.eq("ClassID", classId)
+
+		.order("TestCaseID", { referencedTable: "TestCase" })
 		.maybeSingle();
 
 	if (error) console.error(error);
@@ -61,7 +63,7 @@ export default async function EditChallengePage(
 
 				<DashboardPageHeader
 					title="Edit challenge"
-					description="Update the problem, its expected output, or where it's pinned."
+					description="Update the problem, its expected output and test cases, and where its pinned"
 				/>
 			</div>
 
@@ -82,6 +84,11 @@ export default async function EditChallengePage(
 						? location.Radius
 						: DEFAULT_UNLOCK_RADIUS,
 					hidden: challenge.Hidden,
+					testCases: challenge.TestCase.map((tc) => ({
+						input: tc.Input ?? "",
+						expectedOutput: tc.ExpectedOutput ?? "",
+						hidden: tc.Hidden,
+					})),
 				}}
 			/>
 		</>

@@ -88,7 +88,7 @@ export const RunCodeSchema = v.object({
 	language: v.picklist(LANGUAGE_IDS, "Pick a language."),
 	code: CodeSchema,
 	//the actula optional input to run test input
-	stding: v.optional(
+	stdin: v.optional(
 		v.pipe(v.string(), v.maxLength(MAX_CODE_LENGTH, "Make sure its within the limit")),
 	),
 });
@@ -134,7 +134,7 @@ const TestCaseSchema = v.object({
 
 export const TestCasesSchema = v.pipe(
 	v.array(TestCaseSchema, "the test couldnt be read, refresh and try again"),
-	v.maxLength(MAX_TEST_CASES, "you can add up to ${MAX_TEST_CASES} test cases"),
+	v.maxLength(MAX_TEST_CASES, `You can add up to ${MAX_TEST_CASES} test cases.`),
 );
 
 export type TestCaseInput = v.InferOutput<typeof TestCaseSchema>; //telling it to use the type of the schema for the test cases, infer the type

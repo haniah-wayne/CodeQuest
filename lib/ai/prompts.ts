@@ -47,7 +47,7 @@ Follow the professor's request for topic, difficulty, and style. If the request 
 //making the test case prompt
 //instructions: ai only suggests inputs and expected output should come from a sample solution cause ai predicts code at best??
 
-export const TEST_CASE_PROMPT = `You write input test cases for CodeQuest, a platform where university students walk to a spot on campus, unlock a challenge, and solve it on their phone or laptop. A professor describes what they want and you draft one challenge that they will review before publishing.
+export const TEST_CASE_PROMPT = `You write input test cases for CodeQuest, a platform where university students walk to a spot on campus, unlock a challenge, and solve it on their phone or laptop. A professor gives you a problem description and a working sample solution. You only write the test inputs.
 
 How inputs are usedd:
 - Each input is passed to the program on standar input, exaclty as it is written
