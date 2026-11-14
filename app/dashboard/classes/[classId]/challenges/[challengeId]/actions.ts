@@ -8,6 +8,7 @@ import type { LanguageId } from "@/lib/challenges/languages";
 import { isWithinUnlockRadius, type Position } from "@/lib/challenges/location";
 import { type ExecutionResult, execute, executeAll } from "@/lib/piston";
 import { GradeSubmissionSchema, RunCodeSchema, SubmitSolutionSchema } from "@/lib/schemas";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export interface RunCodeState {
@@ -87,11 +88,8 @@ export async function submitSolution(input: {
 	const [challengeResult, solvedResult] = await Promise.all([
 		supabase
 			.from("Challenges")
-			.select(
-				"ClassID, Points, Locations(Longitude, Latitude, Radius), TestCase(Input, ExpectedOutput)",
-			)
+			.select("ClassID, Points, Locations(Longitude, Latitude, Radius)")
 			.eq("ChallengeID", challengeId)
-			.order("TestCaseID", { referencedTable: "TestCase" })
 			.maybeSingle(),
 		supabase
 			.from("Submission")
@@ -127,11 +125,29 @@ export async function submitSolution(input: {
 		};
 	}
 
-	const testCases =
-		challenge.TestCase.length > 0 ? challenge.TestCase : [{ Input: "", ExpectedOutput: "" }];
+	let testCases: {
+		Input: string | null;
+		ExpectedOutput: string | null;
+	}[];
+
+	try {
+		const { data, error } = await createAdminClient()
+			.from("TestCase")
+			.select("Input, ExpectedOutput")
+			.eq("ChallengeID", challengeId)
+			.order("TestCaseID");
+
+		if (error) throw error;
+
+		testCases = data;
+	} catch (error) {
+		console.error(error);
+
+		return { error: "Something went wrong checking your solution. Try again in a moment." };
+	}
 
 	//nothign to comparee
-	if (testCases.every((tc) => !tc.ExpectedOutput?.trim())) {
+	if (testCases.length === 0 || testCases.every((tc) => !tc.ExpectedOutput?.trim())) {
 		console.error(`Challenge ${challengeId} has nothing to grade against`);
 
 		return { error: "This challenge isn't ready for submissions yet." };
