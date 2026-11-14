@@ -1,12 +1,12 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { type CreateClassState, createClass } from "@/app/dashboard/actions";
+import type * as React from "react";
+import { useActionState, useId, useState } from "react";
+import { type ClassFormState, createClass, updateClass } from "@/app/dashboard/actions";
 import { AuthFormError } from "@/components/auth-card";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
-	DialogDescription,
 	DialogHeader,
 	DialogPopup,
 	DialogTitle,
@@ -16,51 +16,96 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
+type ClassDialogMode =
+	| { mode: "create" }
+	| { mode: "edit"; classId: number; defaults: { name: string; description: string } };
+
+const copy = {
+	create: {
+		title: "New class",
+		submit: "Create class",
+		pending: "Creating class…",
+	},
+	edit: {
+		title: "Edit class",
+		submit: "Save changes",
+		pending: "Saving…",
+	},
+};
+
 export function CreateClassDialog() {
 	const [open, setOpen] = useState(false);
 
-	const [state, action, pending] = useActionState(
-		async (prevState: CreateClassState, formData: FormData) => {
-			const result = await createClass(prevState, formData);
+	return (
+		<ClassDialog
+			mode="create"
+			open={open}
+			onOpenChange={setOpen}
+			trigger={
+				<DialogTrigger render={<Button className="px-4" />}>Create a class</DialogTrigger>
+			}
+		/>
+	);
+}
 
-			if (result.success) setOpen(false);
+export function ClassDialog({
+	open,
+	onOpenChange,
+	trigger,
+	...props
+}: ClassDialogMode & {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	trigger?: React.ReactNode;
+}) {
+	const id = useId();
+	const text = copy[props.mode];
+
+	const [state, action, pending] = useActionState(
+		async (prevState: ClassFormState, formData: FormData) => {
+			const save = props.mode === "edit" ? updateClass : createClass;
+			const result = await save(prevState, formData);
+
+			if (result.success) onOpenChange(false);
 
 			return result;
 		},
 		{},
 	);
 
+	const defaults = state.values ?? (props.mode === "edit" ? props.defaults : undefined);
+
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger render={<Button className="px-4" />}>Create a class</DialogTrigger>
+		<Dialog open={open} onOpenChange={onOpenChange}>
+			{trigger}
 
 			<DialogPopup>
 				<DialogHeader>
-					<DialogTitle>New class</DialogTitle>
-
-					<DialogDescription>
-						Students join with the code we generate for you.
-					</DialogDescription>
+					<DialogTitle>{text.title}</DialogTitle>
 				</DialogHeader>
 
 				{/* React resets the form after each submit, so the defaults put back
 				    whatever was typed when the action fails */}
 				<form action={action}>
+					{props.mode === "edit" && (
+						<input type="hidden" name="classId" value={props.classId} />
+					)}
+
 					<FieldGroup>
 						{state.error && <AuthFormError>{state.error}</AuthFormError>}
 
 						<Field data-invalid={Boolean(state.fieldErrors?.name) || undefined}>
-							<FieldLabel className="text-label" htmlFor="name">
+							<FieldLabel className="text-label" htmlFor={`${id}-name`}>
 								Class name
 							</FieldLabel>
 
 							<Input
 								className="h-11"
-								id="name"
+								id={`${id}-name`}
 								name="name"
 								type="text"
 								placeholder="Intro to Programming"
-								defaultValue={state.values?.name}
+								defaultValue={defaults?.name}
 								required
 								aria-invalid={Boolean(state.fieldErrors?.name) || undefined}
 							/>
@@ -69,15 +114,15 @@ export function CreateClassDialog() {
 						</Field>
 
 						<Field data-invalid={Boolean(state.fieldErrors?.description) || undefined}>
-							<FieldLabel className="text-label" htmlFor="description">
+							<FieldLabel className="text-label" htmlFor={`${id}-description`}>
 								Description
 							</FieldLabel>
 
 							<Textarea
-								id="description"
+								id={`${id}-description`}
 								name="description"
 								placeholder="What students will work on this semester"
-								defaultValue={state.values?.description}
+								defaultValue={defaults?.description}
 								required
 								aria-invalid={Boolean(state.fieldErrors?.description) || undefined}
 							/>
@@ -86,7 +131,7 @@ export function CreateClassDialog() {
 						</Field>
 
 						<Button type="submit" size="lg" className="w-full" disabled={pending}>
-							{pending ? "Creating class…" : "Create class"}
+							{pending ? text.pending : text.submit}
 						</Button>
 					</FieldGroup>
 				</form>

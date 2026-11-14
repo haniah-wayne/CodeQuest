@@ -12,7 +12,7 @@ import { useRef, useState, useTransition } from "react";
 import { updatePosition } from "@/app/dashboard/classes/[classId]/actions";
 import { ClassSection } from "@/components/class/class-section";
 import type { MapChallenge } from "@/components/mapview";
-import { distanceInMeters, type Position } from "@/lib/challenges/location";
+import { distanceInFeet, type Position } from "@/lib/challenges/location";
 
 const MapView = dynamic(() => import("@/components/mapview"), {
 	ssr: false,
@@ -21,7 +21,7 @@ const MapView = dynamic(() => import("@/components/mapview"), {
 
 // Watching location fires constantly, so only tell the server when the student
 // has actually moved, or now and then to keep the saved position fresh
-const RESEND_DISTANCE = 10;
+const RESEND_DISTANCE = 30;
 const RESEND_INTERVAL = 60 * 1000;
 
 type Status = "locating" | "tracking" | "denied" | "unavailable";
@@ -47,7 +47,7 @@ export function ChallengeMap({ challenges }: { challenges: MapChallenge[] }) {
 		if (
 			last &&
 			Date.now() - last.at < RESEND_INTERVAL &&
-			distanceInMeters(last.position, position) < RESEND_DISTANCE
+			distanceInFeet(last.position, position) < RESEND_DISTANCE
 		) {
 			return;
 		}

@@ -204,29 +204,23 @@ export async function updateChallenge(
 
 	const supabase = await createClient();
 
-	// There's no update_challenge RPC, so these are separate writes and a
-	// failure partway through can leave the challenge half updated
-	const [challengeResult, locationResult] = await Promise.all([
-		supabase
-			.from("Challenges")
-			.update({ Title: title, Description: description, Points: points, Hidden: hidden })
-			.eq("ChallengeID", challengeId)
-			.select("ChallengeID"),
-		supabase
-			.from("Locations")
-			.update({ Longitude: longitude, Latitude: latitude, Radius: radius })
-			.eq("ChallengeID", challengeId)
-			.select("ChallengeID"),
-	]);
+	// Updates the challenge, solution, and location in one transaction.
+	// Challenges are graded by their test cases, so there's no single output
+	const { error } = await supabase.rpc("update_challenge", {
+		challenge_id: challengeId,
+		class_id: classId,
+		title,
+		description,
+		solution: "",
+		points,
+		long: longitude,
+		lat: latitude,
+		radius,
+		hidden,
+	});
 
-	// RLS skips rows it won't let us update instead of erroring, so check that
-	// each write actually hit a row
-	const failed = [challengeResult, locationResult].find(
-		(result) => result.error || !result.data?.length,
-	);
-
-	if (failed) {
-		console.error(failed.error ?? `Challenge ${challengeId} update matched no rows`);
+	if (error) {
+		console.error(error);
 
 		return { values, error: "Something went wrong saving your changes." };
 	}

@@ -24,6 +24,7 @@ export type Database = {
           CreatedAt: string
           Description: string | null
           Hidden: boolean
+          IsPublished: boolean
           MaxAttempts: number | null
           Points: number
           Title: string
@@ -36,6 +37,7 @@ export type Database = {
           CreatedAt?: string
           Description?: string | null
           Hidden?: boolean
+          IsPublished?: boolean
           MaxAttempts?: number | null
           Points?: number
           Title: string
@@ -48,6 +50,7 @@ export type Database = {
           CreatedAt?: string
           Description?: string | null
           Hidden?: boolean
+          IsPublished?: boolean
           MaxAttempts?: number | null
           Points?: number
           Title?: string
@@ -316,28 +319,31 @@ export type Database = {
           ChallengeID: number
           CreatedAt: string | null
           ExpectedOutput: string | null
+          Hidden: boolean
+          hiddenFrom: boolean | null
           Input: string | null
           Score: number | null
           TestCaseID: number
-          Hidden: boolean
         }
         Insert: {
           ChallengeID: number
           CreatedAt?: string | null
           ExpectedOutput?: string | null
+          Hidden?: boolean
+          hiddenFrom?: boolean | null
           Input?: string | null
           Score?: number | null
           TestCaseID?: number
-          Hidden?: boolean
         }
         Update: {
           ChallengeID?: number
           CreatedAt?: string | null
           ExpectedOutput?: string | null
+          Hidden?: boolean
+          hiddenFrom?: boolean | null
           Input?: string | null
           Score?: number | null
           TestCaseID?: number
-          Hidden?: boolean
         }
         Relationships: [
           {
@@ -381,14 +387,30 @@ export type Database = {
       get_class_roster: {
         Args: { p_class_id: number }
         Returns: {
-          student_email: string | null
+          student_email: string
           student_id: string
           student_name: string
         }[]
       }
       get_global_leaderboard: { Args: never; Returns: undefined }
+      is_class_member: { Args: { p_class_id: number }; Returns: boolean }
       is_class_professor: { Args: { class_id: number }; Returns: boolean }
       join_class_by_code: { Args: { class_code: string }; Returns: string }
+      update_challenge: {
+        Args: {
+          challenge_id: number
+          class_id: number
+          description: string
+          hidden: boolean
+          lat: number
+          long: number
+          points: number
+          radius: number
+          solution: string
+          title: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
