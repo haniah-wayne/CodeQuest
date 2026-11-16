@@ -82,8 +82,8 @@ export function ChallengeGenerator({
 					/>
 
 					<p id="generator-hint" className="text-caption text-muted-foreground">
-						Mention the topic, difficulty, or style. You can review the draft before it
-						fills in the form.
+						Mention the topic, difficulty, or style. You can review the draft and its
+						test cases before they fill in the form.
 					</p>
 				</div>
 
@@ -140,11 +140,34 @@ function DraftPreview({ draft }: { draft: GeneratedChallenge }) {
 			<p className="text-body-sm whitespace-pre-wrap">{draft.description}</p>
 
 			<div className="flex flex-col gap-1.5">
-				<h4 className="text-caption text-muted-foreground">Expected output</h4>
+				<h4 className="text-caption text-muted-foreground">
+					Test cases ({draft.testCases.length})
+				</h4>
 
-				<pre className="m-0 max-h-60 overflow-auto rounded-xl border border-border/60 bg-background p-3 font-mono text-sm leading-6">
-					{draft.expectedOutput}
-				</pre>
+				<ol className="flex max-h-80 flex-col gap-2 overflow-auto">
+					{draft.testCases.map((tc, index) => (
+						<li key={index} className="grid gap-2 sm:grid-cols-2">
+							{[
+								["Input", tc.input],
+								["Output", tc.expectedOutput],
+							].map(([label, value]) => (
+								<div key={label} className="flex min-w-0 flex-col gap-1">
+									<span className="text-caption text-muted-foreground">
+										{label} {index + 1}
+									</span>
+
+									<pre className="m-0 max-h-40 overflow-auto rounded-xl border border-border/60 bg-background p-3 font-mono text-sm leading-6">
+										{value || (
+											<span className="text-muted-foreground italic">
+												(empty)
+											</span>
+										)}
+									</pre>
+								</div>
+							))}
+						</li>
+					))}
+				</ol>
 			</div>
 
 			<details className="group flex flex-col gap-1.5">

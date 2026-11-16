@@ -8,7 +8,8 @@ export type Json =
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+    // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+///updates test case database types 
   __InternalSupabase: {
     PostgrestVersion: "14.17"
   }

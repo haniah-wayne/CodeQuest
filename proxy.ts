@@ -81,6 +81,6 @@ function redirectWithCookies(request: NextRequest, response: NextResponse, to: s
 export const config = {
 	// Filter out internals and assets
 	matcher: [
-		"/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+		"/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|webmanifest)$).*)",
 	],
 };

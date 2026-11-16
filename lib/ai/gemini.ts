@@ -1,4 +1,4 @@
-import { type ContentListUnion, GoogleGenAI, type Schema } from "@google/genai";
+import { type ContentListUnion, GoogleGenAI, type Schema, ThinkingLevel } from "@google/genai";
 
 let client: GoogleGenAI | undefined;
 
@@ -18,6 +18,7 @@ export async function generateJson(options: {
 	systemInstruction: string;
 	schema: Schema;
 	contents: ContentListUnion;
+	thinkingLevel?: ThinkingLevel;
 }): Promise<string> {
 	const client = getClient();
 
@@ -28,6 +29,9 @@ export async function generateJson(options: {
 			systemInstruction: options.systemInstruction,
 			responseMimeType: "application/json",
 			responseSchema: options.schema,
+			...(options.thinkingLevel && {
+				thinkingConfig: { thinkingLevel: options.thinkingLevel },
+			}),
 		},
 	});
 
