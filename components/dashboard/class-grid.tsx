@@ -13,8 +13,10 @@ import {
 } from "@/components/ui/empty";
 import type { Tables } from "@/supabase/database.types";
 
-export type ClassSummary = Pick<Tables<"Classes">, "ClassID" | "ClassName" | "Description"> &
-	Partial<Pick<Tables<"Classes">, "ClassCode">>;
+export type ClassSummary = Pick<
+	Tables<"Classes">,
+	"ClassID" | "ClassName" | "Description" | "ClassCode"
+>;
 
 interface EmptyState {
 	title: string;
