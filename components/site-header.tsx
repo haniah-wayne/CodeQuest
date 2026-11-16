@@ -24,11 +24,7 @@ export async function SiteHeader() {
 
 				<div className="ml-auto flex items-center gap-1 sm:gap-2">
 					{user ? (
-						<>
-							<span>{user.name}</span>
-
-							<AccountMenu />
-						</>
+						<AccountMenu name={user.name} />
 					) : (
 						<>
 							<Link

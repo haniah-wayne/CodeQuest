@@ -13,7 +13,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export function AccountMenu() {
+export function AccountMenu({ name }: { name: string | null }) {
 	// the dialog lives outside the menu so it isn't unmounted when the menu closes
 	const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -24,11 +24,12 @@ export function AccountMenu() {
 					render={
 						<Button
 							className="hover:bg-card/70"
-							size="icon-sm"
+							size={name ? "sm" : "icon-sm"}
 							variant="ghost"
-							aria-label="Account menu"
+							aria-label={name ? undefined : "Account menu"}
 						>
-							<HugeiconsIcon icon={ChevronDown} />
+							{name && <span className="max-w-40 truncate">{name}</span>}
+							<HugeiconsIcon icon={ChevronDown} data-icon="inline-end" />
 						</Button>
 					}
 				/>
