@@ -265,6 +265,7 @@ export type Database = {
           AttemptNum: number | null
           ChallengeID: number
           Code: string | null
+          Feedback: string | null
           Language: string | null
           Output: string | null
           Score: number | null
@@ -277,6 +278,7 @@ export type Database = {
           AttemptNum?: number | null
           ChallengeID: number
           Code?: string | null
+          Feedback?: string | null
           Language?: string | null
           Output?: string | null
           Score?: number | null
@@ -289,6 +291,7 @@ export type Database = {
           AttemptNum?: number | null
           ChallengeID?: number
           Code?: string | null
+          Feedback?: string | null
           Language?: string | null
           Output?: string | null
           Score?: number | null
@@ -396,6 +399,10 @@ export type Database = {
       is_class_member: { Args: { p_class_id: number }; Returns: boolean }
       is_class_professor: { Args: { class_id: number }; Returns: boolean }
       join_class_by_code: { Args: { class_code: string }; Returns: string }
+      set_submission_feedback: {
+        Args: { feedback: string; submission_id: number }
+        Returns: undefined
+      }
       update_challenge: {
         Args: {
           challenge_id: number
