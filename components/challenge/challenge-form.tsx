@@ -4,7 +4,7 @@ import {
 	Cursor01Icon,
 	Edit02Icon,
 	Location01Icon,
-	ViewOffSlashIcon,
+	TestTube01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import dynamic from "next/dynamic";
@@ -14,6 +14,11 @@ import type * as React from "react";
 import type { ChallengeFormState } from "@/app/dashboard/classes/[classId]/challenges/new/actions";
 import { AuthFormError } from "@/components/auth-card";
 import { ChallengeGenerator } from "@/components/challenge/challenge-generator";
+import {
+	TestCaseEditor,
+	toInitialTestCaseDrafts,
+	toTestCaseDrafts,
+} from "@/components/challenge/test-case-editor";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -38,7 +43,7 @@ import {
 	type Position,
 	type UnlockRadius,
 } from "@/lib/challenges/location";
-import { DEFAULT_POINTS, MAX_POINTS, MIN_POINTS } from "@/lib/schemas";
+import { DEFAULT_POINTS, MAX_POINTS, MIN_POINTS, type TestCaseInput } from "@/lib/schemas";
 
 const MapView = dynamic(() => import("@/components/mapview"), {
 	ssr: false,
@@ -60,11 +65,11 @@ export function ChallengeForm({
 	initial?: {
 		title: string;
 		description: string;
-		solution: string;
 		points: number;
 		location: Position;
 		radius: UnlockRadius;
 		hidden: boolean;
+		testCases: TestCaseInput[];
 	};
 	action: (state: ChallengeFormState, formData: FormData) => Promise<ChallengeFormState>;
 	submitLabel: string;
@@ -77,7 +82,6 @@ export function ChallengeForm({
 					values: {
 						title: initial.title,
 						description: initial.description,
-						solution: initial.solution,
 						points: String(initial.points),
 					},
 				}
@@ -93,6 +97,8 @@ export function ChallengeForm({
 
 	const formRef = useRef<HTMLFormElement>(null);
 
+	const [testCases, setTestCases] = useState(() => toInitialTestCaseDrafts(initial?.testCases));
+
 	const locationError = state.fieldErrors?.longitude ?? state.fieldErrors?.latitude;
 	const classHref = `/dashboard/classes/${classId}`;
 
@@ -105,7 +111,6 @@ export function ChallengeForm({
 			title: draft.title,
 			points: String(draft.points),
 			description: draft.description,
-			solution: draft.expectedOutput,
 		};
 
 		for (const [name, value] of Object.entries(values)) {
@@ -115,6 +120,8 @@ export function ChallengeForm({
 				field.value = value;
 			}
 		}
+
+		setTestCases(() => toTestCaseDrafts(draft.testCases));
 	}
 
 	return (
@@ -205,7 +212,7 @@ export function ChallengeForm({
 										className="max-h-52 min-h-36"
 										id="description"
 										name="description"
-										placeholder="What does this print? for (let i = 0; i < 3; i++) console.log(i * 2)"
+										placeholder="Read an integer n from the input and print the first n even numbers, one per line."
 										defaultValue={state.values?.description}
 										required
 										aria-invalid={
@@ -219,43 +226,6 @@ export function ChallengeForm({
 									</FieldDescription>
 
 									<FieldError>{state.fieldErrors?.description}</FieldError>
-								</Field>
-
-								<Field
-									data-invalid={Boolean(state.fieldErrors?.solution) || undefined}
-								>
-									<FieldLabel className="text-label" htmlFor="solution">
-										Expected output
-									</FieldLabel>
-
-									<Textarea
-										className="min-h-24 font-mono"
-										id="solution"
-										name="solution"
-										placeholder={"0\n2\n4"}
-										defaultValue={state.values?.solution}
-										required
-										autoComplete="off"
-										spellCheck={false}
-										aria-invalid={
-											Boolean(state.fieldErrors?.solution) || undefined
-										}
-										aria-describedby="solution-hint"
-									/>
-
-									<FieldDescription
-										id="solution-hint"
-										className="flex items-center gap-1.5"
-									>
-										<HugeiconsIcon
-											icon={ViewOffSlashIcon}
-											className="size-3.5"
-										/>
-										Hidden from students. Their code&apos;s output is checked
-										against this.
-									</FieldDescription>
-
-									<FieldError>{state.fieldErrors?.solution}</FieldError>
 								</Field>
 							</FieldGroup>
 						</PanelSurface>
@@ -375,6 +345,22 @@ export function ChallengeForm({
 						</PanelSurface>
 					</FormSection>
 				</div>
+
+				{/* test cases */}
+				<FormSection
+					id="challenge-tests"
+					title="Test cases"
+					icon={TestTube01Icon}
+					invalid={Boolean(state.fieldErrors?.testCases)}
+				>
+					<PanelSurface>
+						<TestCaseEditor
+							testCases={testCases}
+							onTestCasesChange={setTestCases}
+							error={state.fieldErrors?.testCases}
+						/>
+					</PanelSurface>
+				</FormSection>
 
 				<div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
 					<Link

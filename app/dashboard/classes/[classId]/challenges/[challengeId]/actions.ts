@@ -6,8 +6,14 @@ import { type AiGrade, requestAiGrade } from "@/lib/ai/grading";
 import { getSessionUser } from "@/lib/auth/session";
 import type { LanguageId } from "@/lib/challenges/languages";
 import { isWithinUnlockRadius, type Position } from "@/lib/challenges/location";
-import { type ExecutionResult, execute } from "@/lib/piston";
-import { GradeSubmissionSchema, RunCodeSchema, SubmitSolutionSchema } from "@/lib/schemas";
+import { type ExecutionResult, execute, executeAll } from "@/lib/piston";
+import {
+	GradeSubmissionSchema,
+	RunCodeSchema,
+	SubmissionFeedbackSchema,
+	SubmitSolutionSchema,
+} from "@/lib/schemas";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export interface RunCodeState {
@@ -37,6 +43,7 @@ function normalize(output: string) {
 export async function runCode(input: {
 	language: LanguageId;
 	code: string;
+	stdin?: string; //optional input for the code runner
 }): Promise<RunCodeState> {
 	const user = await getSessionUser();
 
@@ -50,10 +57,10 @@ export async function runCode(input: {
 		return { error: parsed.issues[0].message };
 	}
 
-	const { language, code } = parsed.output;
+	const { language, code, stdin } = parsed.output;
 
 	try {
-		return { result: await execute(language, code) };
+		return { result: await execute(language, code, stdin) };
 	} catch (error) {
 		console.error(error);
 
@@ -86,7 +93,7 @@ export async function submitSolution(input: {
 	const [challengeResult, solvedResult] = await Promise.all([
 		supabase
 			.from("Challenges")
-			.select("ClassID, Points, Solutions(Solution), Locations(Longitude, Latitude, Radius)")
+			.select("ClassID, Points, Locations(Longitude, Latitude, Radius)")
 			.eq("ChallengeID", challengeId)
 			.maybeSingle(),
 		supabase
@@ -123,26 +130,58 @@ export async function submitSolution(input: {
 		};
 	}
 
-	const expected = challenge.Solutions?.Solution;
+	let testCases: {
+		Input: string | null;
+		ExpectedOutput: string | null;
+	}[];
 
-	if (expected === undefined) {
-		console.error(`Challenge ${challengeId} has no solution to grade against`);
+	try {
+		const { data, error } = await createAdminClient()
+			.from("TestCase")
+			.select("Input, ExpectedOutput")
+			.eq("ChallengeID", challengeId)
+			.order("TestCaseID");
+
+		if (error) throw error;
+
+		testCases = data;
+	} catch (error) {
+		console.error(error);
+
+		return { error: "Something went wrong checking your solution. Try again in a moment." };
+	}
+
+	//nothign to comparee
+	if (testCases.length === 0 || testCases.every((tc) => !tc.ExpectedOutput?.trim())) {
+		console.error(`Challenge ${challengeId} has nothing to grade against`);
 
 		return { error: "This challenge isn't ready for submissions yet." };
 	}
 
-	let result: ExecutionResult;
+	let runs: ExecutionResult[];
 
 	try {
-		result = await execute(language, code);
+		runs = await executeAll(
+			language,
+			code,
+			testCases.map((tc) => tc.Input ?? ""),
+		);
 	} catch (error) {
 		console.error(error);
 
 		return { error: RUNNER_DOWN };
 	}
 
-	const correct = result.problem === null && normalize(result.stdout) === normalize(expected);
+	// all test cases need to pass for it to be correct
+	const correct = runs.every(
+		(run, i) =>
+			run.problem === null &&
+			normalize(run.stdout) === normalize(testCases[i].ExpectedOutput ?? ""),
+	);
 	const points = correct ? challenge.Points : 0;
+
+	// only show first test case output
+	const result = runs[0];
 
 	const { error: insertError } = await supabase.from("Submission").insert({
 		ChallengeID: challengeId,
@@ -225,7 +264,7 @@ export async function gradeSubmission(input: {
 				title: challenge.Title,
 				description: challenge.Description,
 				points: challenge.Points,
-				expectedOutput: challenge.Solutions?.Solution ?? null,
+				expectedOutput: challenge.Solutions?.Solution || null,
 			},
 			testCases: (testCases ?? []).map((t) => ({
 				input: t.Input,
@@ -246,4 +285,60 @@ export async function gradeSubmission(input: {
 
 		return { error: "The AI grader couldn't grade this submission. Try again in a moment." };
 	}
+}
+
+export interface SaveFeedbackState {
+	error?: string;
+	success?: boolean;
+}
+
+export async function saveSubmissionFeedback(input: {
+	submissionId: number;
+	feedback: string;
+}): Promise<SaveFeedbackState> {
+	const user = await getSessionUser();
+
+	if (user?.role !== "professor") {
+		return { error: "Only professors can leave feedback." };
+	}
+
+	const parsed = v.safeParse(SubmissionFeedbackSchema, input);
+
+	if (!parsed.success) {
+		return { error: parsed.issues[0].message };
+	}
+
+	const { submissionId, feedback } = parsed.output;
+
+	const supabase = await createClient();
+
+	const { data: submission, error: lookupError } = await supabase
+		.from("Submission")
+		.select("ChallengeID, Challenges(ClassID, Classes(ProfessorID))")
+		.eq("SubmissionID", submissionId)
+		.maybeSingle();
+
+	if (lookupError) console.error(lookupError);
+
+	if (!submission || submission.Challenges.Classes.ProfessorID !== user.id) {
+		return { error: "That submission doesn't exist." };
+	}
+
+	const { error } = await supabase.rpc("set_submission_feedback", {
+		submission_id: submissionId,
+		feedback,
+	});
+
+	if (error) {
+		console.error(error);
+
+		return { error: "We couldn't save your feedback. Try again in a moment." };
+	}
+
+	const classId = submission.Challenges.ClassID;
+
+	revalidatePath(`/dashboard/classes/${classId}`);
+	revalidatePath(`/dashboard/classes/${classId}/challenges/${submission.ChallengeID}`);
+
+	return { success: true };
 }

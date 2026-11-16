@@ -1,12 +1,14 @@
-import { ArrowLeft01Icon, CheckmarkCircle02Icon } from "@hugeicons/core-free-icons";
+import { ArrowLeft01Icon, CheckmarkCircle02Icon, TestTube01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CodeWorkspace } from "@/components/challenge/code-workspace";
+import { SubmissionFeedback } from "@/components/challenge/submission-feedback";
 import { SubmissionList } from "@/components/challenge/submission-list";
 import { ClassRealtime } from "@/components/class/class-realtime";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
 import { Badge } from "@/components/ui/badge";
+import { Panel, PanelHeader, PanelIcon, PanelSurface } from "@/components/ui/panel";
 import { requireSessionUser } from "@/lib/auth/session";
 import { DEFAULT_LANGUAGE, isLanguageId } from "@/lib/challenges/languages";
 import { isWithinUnlockRadius } from "@/lib/challenges/location";
@@ -31,14 +33,15 @@ export default async function ChallengePage(
 		supabase
 			.from("Challenges")
 			.select(
-				"Title, Description, Points, Classes(ClassName, ProfessorID), Locations(Longitude, Latitude, Radius)",
+				"Title, Description, Points, Classes(ClassName, ProfessorID), Locations(Longitude, Latitude, Radius), TestCase(Input, ExpectedOutput)",
 			)
 			.eq("ChallengeID", challengeId)
 			.eq("ClassID", classId)
+			.order("TestCaseID", { referencedTable: "TestCase" })
 			.maybeSingle(),
 		supabase
 			.from("Submission")
-			.select("Code, Language, Status")
+			.select("SubmissionID, Code, Language, Status, SubmittedAt, Feedback")
 			.eq("ChallengeID", challengeId)
 			.eq("StudentID", user.id)
 			.order("SubmittedAt", { ascending: false }),
@@ -71,6 +74,17 @@ export default async function ChallengePage(
 	const shown = correct ?? submissions[0];
 	const initialLanguage = isLanguageId(shown?.Language) ? shown.Language : DEFAULT_LANGUAGE;
 	const initialCode = shown && isLanguageId(shown.Language) ? shown.Code : null;
+	// Only the first test case is shown, the rest are kept for grading
+	const examples = challenge.TestCase.slice(0, 1);
+
+	const feedback = submissions
+		.filter((s) => s.Feedback)
+		.map((s) => ({
+			id: s.SubmissionID,
+			status: s.Status,
+			submittedAt: s.SubmittedAt,
+			feedback: s.Feedback!,
+		}));
 
 	return (
 		<>
@@ -108,13 +122,70 @@ export default async function ChallengePage(
 				</div>
 			</div>
 
+			<SubmissionFeedback entries={feedback} />
+
+			{examples.length > 0 && <Examples examples={examples} />}
+
 			<CodeWorkspace
 				challengeId={challengeId}
 				initialLanguage={initialLanguage}
 				initialCode={initialCode}
 				solved={solved}
+				exampleInput={examples[0]?.Input ?? ""}
 			/>
 		</>
+	);
+}
+
+//shows visible test cases only
+function Examples({
+	examples,
+}: {
+	examples: { Input: string | null; ExpectedOutput: string | null }[];
+}) {
+	return (
+		<Panel aria-labelledby="examples-heading">
+			<PanelHeader>
+				<PanelIcon icon={TestTube01Icon} />
+
+				<h2 className="text-label" id="examples-heading">
+					Examples
+				</h2>
+			</PanelHeader>
+
+			<PanelSurface className="flex flex-col gap-4 p-5 sm:p-6">
+				<p className="text-caption text-muted-foreground">
+					Your program reads the input from stdin and must print the output exactly.
+					Don&apos;t print prompts like &quot;Enter a number&quot;. Run uses the first
+					example&apos;s input.
+				</p>
+
+				<ol className="flex flex-col gap-4">
+					{examples.map((example, index) => (
+						<li key={index} className="grid gap-3 sm:grid-cols-2">
+							{[
+								["Input", example.Input],
+								["Output", example.ExpectedOutput],
+							].map(([label, value]) => (
+								<div key={label} className="flex min-w-0 flex-col gap-1">
+									<span className="text-caption text-muted-foreground">
+										{label} {index + 1}
+									</span>
+
+									<pre className="m-0 overflow-auto rounded-xl bg-muted px-3 py-2 font-mono text-sm whitespace-pre-wrap">
+										{value || (
+											<span className="text-muted-foreground italic">
+												(empty)
+											</span>
+										)}
+									</pre>
+								</div>
+							))}
+						</li>
+					))}
+				</ol>
+			</PanelSurface>
+		</Panel>
 	);
 }
 
@@ -132,7 +203,7 @@ async function ProfessorView({
 	const [submissionsResult, rosterResult] = await Promise.all([
 		supabase
 			.from("Submission")
-			.select("SubmissionID, StudentID, Code, Language, Status, Score, SubmittedAt")
+			.select("SubmissionID, StudentID, Code, Language, Status, Score, SubmittedAt, Feedback")
 			.eq("ChallengeID", challengeId)
 			.order("SubmittedAt", { ascending: false }),
 		supabase.rpc("get_class_roster", { p_class_id: classId }),
@@ -155,6 +226,7 @@ async function ProfessorView({
 		score: s.Score,
 		submittedAt: s.SubmittedAt,
 		code: s.Code,
+		feedback: s.Feedback,
 	}));
 
 	return (

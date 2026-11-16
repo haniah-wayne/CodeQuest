@@ -47,11 +47,13 @@ export function CodeWorkspace({
 	initialLanguage,
 	initialCode,
 	solved,
+	exampleInput = "",
 }: {
 	challengeId: number;
 	initialLanguage: LanguageId;
 	initialCode: string | null;
 	solved: boolean;
+	exampleInput?: string;
 }) {
 	const [language, setLanguage] = useState(initialLanguage);
 
@@ -86,7 +88,10 @@ export function CodeWorkspace({
 		startTransition(async () => {
 			try {
 				if (kind === "run") {
-					setOutcome({ ...(await runCode({ language, code })), kind });
+					setOutcome({
+						...(await runCode({ language, code, stdin: exampleInput })),
+						kind,
+					});
 
 					return;
 				}

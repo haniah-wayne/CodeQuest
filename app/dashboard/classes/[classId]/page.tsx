@@ -37,7 +37,7 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 			supabase
 				.from("Challenges")
 				.select(
-					"ChallengeID, Title, Description, Points, CreatedAt, Hidden, Locations(Longitude, Latitude, Radius), Submission(Status)",
+					"ChallengeID, Title, Description, Points, CreatedAt, Hidden, Locations(Longitude, Latitude, Radius), Submission(Status, Feedback)",
 				)
 				.eq("ClassID", id)
 				.eq("Submission.StudentID", user.id)
@@ -65,7 +65,11 @@ export default async function ClassPage(props: PageProps<"/dashboard/classes/[cl
 					? "attempted"
 					: "not_started";
 
-			return { ...ch, status };
+			return {
+				...ch,
+				status,
+				hasFeedback: submissions.some((s) => s.Feedback !== null),
+			};
 		},
 	);
 
