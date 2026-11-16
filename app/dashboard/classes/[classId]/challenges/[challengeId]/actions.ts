@@ -11,6 +11,7 @@ import {
 	GradeSubmissionSchema,
 	RunCodeSchema,
 	SubmissionFeedbackSchema,
+	SubmissionScoreSchema,
 	SubmitSolutionSchema,
 } from "@/lib/schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -333,6 +334,68 @@ export async function saveSubmissionFeedback(input: {
 		console.error(error);
 
 		return { error: "We couldn't save your feedback. Try again in a moment." };
+	}
+
+	const classId = submission.Challenges.ClassID;
+
+	revalidatePath(`/dashboard/classes/${classId}`);
+	revalidatePath(`/dashboard/classes/${classId}/challenges/${submission.ChallengeID}`);
+
+	return { success: true };
+}
+
+export interface OverrideScoreState {
+	error?: string;
+	success?: boolean;
+}
+
+export async function overrideSubmissionScore(input: {
+	submissionId: number;
+	score: number;
+}): Promise<OverrideScoreState> {
+	const user = await getSessionUser();
+
+	if (user?.role !== "professor") {
+		return { error: "Only professors can change points." };
+	}
+
+	const parsed = v.safeParse(SubmissionScoreSchema, input);
+
+	if (!parsed.success) {
+		return { error: parsed.issues[0].message };
+	}
+
+	const { submissionId, score } = parsed.output;
+
+	const supabase = await createClient();
+
+	const { data: submission, error: lookupError } = await supabase
+		.from("Submission")
+		.select("ChallengeID, Challenges(ClassID, Points, Classes(ProfessorID))")
+		.eq("SubmissionID", submissionId)
+		.maybeSingle();
+
+	if (lookupError) console.error(lookupError);
+
+	if (!submission || submission.Challenges.Classes.ProfessorID !== user.id) {
+		return { error: "That submission doesn't exist." };
+	}
+
+	const maxPoints = submission.Challenges.Points;
+
+	if (score > maxPoints) {
+		return { error: `Points can't be more than ${maxPoints}.` };
+	}
+
+	const { error } = await supabase
+		.from("Submission")
+		.update({ Score: score })
+		.eq("SubmissionID", submissionId);
+
+	if (error) {
+		console.error(error);
+
+		return { error: "We couldn't save the points. Try again in a moment." };
 	}
 
 	const classId = submission.Challenges.ClassID;

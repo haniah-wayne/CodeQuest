@@ -224,6 +224,7 @@ async function ProfessorView({
 		language: s.Language,
 		status: s.Status,
 		score: s.Score,
+		maxScore: challenge.Points,
 		submittedAt: s.SubmittedAt,
 		code: s.Code,
 		feedback: s.Feedback,

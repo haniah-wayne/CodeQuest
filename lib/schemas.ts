@@ -106,6 +106,15 @@ export const SubmissionFeedbackSchema = v.object({
 	),
 });
 
+export const SubmissionScoreSchema = v.object({
+	submissionId: v.pipe(v.number(), v.safeInteger(), v.minValue(1)),
+	score: v.pipe(
+		v.number("Enter a point value."),
+		v.integer("Points must be a whole number."),
+		v.minValue(0, "Points can't be negative."),
+	),
+});
+
 export const MAX_GENERATION_REQUEST_LENGTH = 2000;
 
 export const GenerateChallengeSchema = v.object({
