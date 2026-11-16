@@ -31,7 +31,6 @@ CREATE TABLE public."Challenges"
     "ClassID"       bigint      NOT NULL REFERENCES public."Classes" ("ClassID") ON DELETE CASCADE,
     "Title"         text        NOT NULL,
     "Description"   text,
-    "ChallengeType" text,
     "Points"        integer     NOT NULL DEFAULT 0,
     "CodeLanguage"  text,
     "CreatedAt"     timestamptz NOT NULL DEFAULT now(),
@@ -80,8 +79,6 @@ CREATE TABLE public."TestCase"
     "Score"          smallint,
     "ExpectedOutput" text,
     "CreatedAt"      timestamptz,
-    "hiddenFrom"     boolean,
-    "Hidden"         boolean NOT NULL DEFAULT false
 );
 
 ALTER TABLE public."Profile"
