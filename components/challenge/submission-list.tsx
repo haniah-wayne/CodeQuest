@@ -5,6 +5,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { createColumnHelper, useTable } from "@tanstack/react-table";
 import { cn } from "cn";
 import { GradePanel, GradingProvider } from "@/components/challenge/ai-grade";
+import { ScoreCell } from "@/components/challenge/score-cell";
 import { SubmissionActions } from "@/components/challenge/submission-actions";
 import { SubmissionFilters } from "@/components/challenge/submission-filters";
 import { StatusBadge } from "@/components/challenge/submission-status";
@@ -27,6 +28,7 @@ export interface SubmissionRow {
 	language: string | null;
 	status: string | null;
 	score: number | null;
+	maxScore: number;
 	submittedAt: string;
 	code: string | null;
 	feedback: string | null;
@@ -89,7 +91,7 @@ const columns = helper.columns([
 	helper.accessor("score", {
 		header: "Score",
 		sortFn: "basic",
-		cell: (info) => <span className="tabular-nums">{info.getValue() ?? "—"}</span>,
+		cell: (info) => <ScoreCell submission={info.row.original} />,
 	}),
 	helper.accessor("submittedAt", {
 		header: "Submitted",
