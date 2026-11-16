@@ -1,4 +1,4 @@
-import { ArrowLeft01Icon, CheckmarkCircle02Icon } from "@hugeicons/core-free-icons";
+import { ArrowLeft01Icon, CheckmarkCircle02Icon, TestTube01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -8,6 +8,7 @@ import { SubmissionList } from "@/components/challenge/submission-list";
 import { ClassRealtime } from "@/components/class/class-realtime";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
 import { Badge } from "@/components/ui/badge";
+import { Panel, PanelHeader, PanelIcon, PanelSurface } from "@/components/ui/panel";
 import { requireSessionUser } from "@/lib/auth/session";
 import { DEFAULT_LANGUAGE, isLanguageId } from "@/lib/challenges/languages";
 import { isWithinUnlockRadius } from "@/lib/challenges/location";
@@ -103,7 +104,7 @@ export default async function ChallengePage(
 						actions={
 							<>
 								{solved && (
-									<Badge className="bg-emerald-50 text-wsu-green">
+									<Badge>
 										<HugeiconsIcon
 											icon={CheckmarkCircle02Icon}
 											data-icon="inline-start"
@@ -112,7 +113,7 @@ export default async function ChallengePage(
 									</Badge>
 								)}
 
-								<Badge className="bg-emerald-50 text-wsu-green tabular-nums">
+								<Badge className="bg-wsu-gold text-wsu-green tabular-nums">
 									{challenge.Points} pts
 								</Badge>
 							</>
@@ -143,47 +144,48 @@ function Examples({
 	examples: { Input: string | null; ExpectedOutput: string | null }[];
 }) {
 	return (
-		<section
-			className="flex min-w-0 flex-col rounded-3xl border border-accent bg-white"
-			aria-labelledby="examples-heading"
-		>
-			<header className="flex flex-col gap-1 border-b border-border/60 px-5 py-3 sm:px-6">
+		<Panel aria-labelledby="examples-heading">
+			<PanelHeader>
+				<PanelIcon icon={TestTube01Icon} />
+
 				<h2 className="text-label" id="examples-heading">
 					Examples
 				</h2>
+			</PanelHeader>
 
+			<PanelSurface className="flex flex-col gap-4 p-5 sm:p-6">
 				<p className="text-caption text-muted-foreground">
 					Your program reads the input from stdin and must print the output exactly.
 					Don&apos;t print prompts like &quot;Enter a number&quot;. Run uses the first
 					example&apos;s input.
 				</p>
-			</header>
 
-			<ol className="flex flex-col divide-y divide-border/60">
-				{examples.map((example, index) => (
-					<li key={index} className="grid gap-3 px-5 py-4 sm:grid-cols-2 sm:px-6">
-						{[
-							["Input", example.Input],
-							["Output", example.ExpectedOutput],
-						].map(([label, value]) => (
-							<div key={label} className="flex min-w-0 flex-col gap-1">
-								<span className="text-caption text-muted-foreground">
-									{label} {index + 1}
-								</span>
+				<ol className="flex flex-col gap-4">
+					{examples.map((example, index) => (
+						<li key={index} className="grid gap-3 sm:grid-cols-2">
+							{[
+								["Input", example.Input],
+								["Output", example.ExpectedOutput],
+							].map(([label, value]) => (
+								<div key={label} className="flex min-w-0 flex-col gap-1">
+									<span className="text-caption text-muted-foreground">
+										{label} {index + 1}
+									</span>
 
-								<pre className="overflow-auto rounded-xl bg-muted px-3 py-2 font-mono text-sm whitespace-pre-wrap">
-									{value || (
-										<span className="text-muted-foreground italic">
-											(empty)
-										</span>
-									)}
-								</pre>
-							</div>
-						))}
-					</li>
-				))}
-			</ol>
-		</section>
+									<pre className="m-0 overflow-auto rounded-xl bg-muted px-3 py-2 font-mono text-sm whitespace-pre-wrap">
+										{value || (
+											<span className="text-muted-foreground italic">
+												(empty)
+											</span>
+										)}
+									</pre>
+								</div>
+							))}
+						</li>
+					))}
+				</ol>
+			</PanelSurface>
+		</Panel>
 	);
 }
 
@@ -245,7 +247,7 @@ async function ProfessorView({
 						title={challenge.Title}
 						description="Review every submission students have made for this challenge."
 						actions={
-							<Badge className="bg-emerald-50 text-wsu-green tabular-nums">
+							<Badge className="bg-wsu-gold text-wsu-green tabular-nums">
 								{challenge.Points} pts
 							</Badge>
 						}

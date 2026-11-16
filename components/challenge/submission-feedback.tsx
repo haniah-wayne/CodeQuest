@@ -24,7 +24,7 @@ export function SubmissionFeedback({ entries }: { entries: FeedbackEntry[] }) {
 			<ul className="flex flex-col gap-2">
 				{entries.map((entry) => (
 					<li
-						className="flex flex-col gap-2 rounded-2xl border border-border/60 bg-background p-4"
+						className="flex flex-col gap-2 rounded-(--panel-inner-radius) bg-card p-4 smooth-shadow-ring-sm"
 						key={entry.id}
 					>
 						<div className="flex flex-wrap items-center gap-2">

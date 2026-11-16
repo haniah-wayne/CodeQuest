@@ -74,7 +74,7 @@ export function TestCaseEditor({
 					return (
 						<li
 							key={tc.id}
-							className="flex flex-col gap-3 rounded-2xl border border-border/60 p-4"
+							className="flex flex-col gap-3 rounded-2xl bg-card p-4 smooth-shadow-ring-sm"
 						>
 							<div className="flex items-center justify-between gap-3">
 								<h3 className="text-label">

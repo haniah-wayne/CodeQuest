@@ -13,6 +13,13 @@ export function createMap(container: HTMLElement, accessToken: string) {
 	return map;
 }
 
+export function resizeWithContainer(map: mapboxgl.Map, container: HTMLElement) {
+	const observer = new ResizeObserver(() => map.resize());
+	observer.observe(container);
+
+	return () => observer.disconnect();
+}
+
 export function addChallengeMarker(map: mapboxgl.Map, longitude: number, latitude: number) {
 	const marker = new mapboxgl.Marker();
 

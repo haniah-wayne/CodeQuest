@@ -71,7 +71,7 @@ export function RosterList({
 				error || isEmpty ? null : (
 					<Input
 						type="search"
-						className="h-8 w-36 sm:w-56"
+						className="h-8 w-36 bg-card sm:w-56"
 						placeholder={label}
 						aria-label={label}
 						value={search}

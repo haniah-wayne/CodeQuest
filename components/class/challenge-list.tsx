@@ -95,7 +95,7 @@ const pointsColumn = helper.accessor("Points", {
 	header: "Points",
 	sortFn: "basic",
 	cell: (info) => (
-		<Badge className="bg-emerald-50 text-wsu-green tabular-nums">{info.getValue()} pts</Badge>
+		<Badge className="bg-wsu-gold text-wsu-green tabular-nums">{info.getValue()} pts</Badge>
 	),
 });
 
@@ -256,6 +256,7 @@ function CompletionFilter({ table }: { table: ReactTable<DataTableFeatures, Chal
 			<DropdownMenuTrigger
 				render={
 					<Button
+						className="bg-card"
 						variant="outline"
 						size="sm"
 						aria-label={active ? "Filter challenges, 1 active" : "Filter challenges"}
@@ -292,7 +293,7 @@ function StatusBadge({ status }: { status: ChallengeStatus }) {
 	switch (status) {
 		case "solved":
 			return (
-				<Badge className="bg-emerald-50 text-wsu-green">
+				<Badge>
 					<HugeiconsIcon icon={CheckmarkCircle02Icon} data-icon="inline-start" />
 					Solved
 				</Badge>
