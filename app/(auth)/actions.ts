@@ -71,6 +71,7 @@ export async function signUp(_prevState: SignUpState, formData: FormData): Promi
 		email,
 		password,
 		options: {
+			emailRedirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback?next=${encodeURIComponent(roleHome(role))}`,
 			data: {
 				name,
 				role,
