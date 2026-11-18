@@ -116,7 +116,8 @@ export function SignUpForm() {
 						</div>
 
 						<FieldDescription className="text-caption">
-							At least {MIN_PASSWORD_LENGTH} characters.
+							At least {MIN_PASSWORD_LENGTH} characters, and contain at least one
+							number, one capital, and one special character.
 						</FieldDescription>
 
 						<FieldError>{state.fieldErrors?.password}</FieldError>

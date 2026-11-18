@@ -1,4 +1,5 @@
 import mapboxgl from "mapbox-gl";
+import { METERS_PER_FOOT } from "@/lib/challenges/location";
 
 export function createMap(container: HTMLElement, accessToken: string) {
 	const map = new mapboxgl.Map({
@@ -10,6 +11,13 @@ export function createMap(container: HTMLElement, accessToken: string) {
 	});
 
 	return map;
+}
+
+export function resizeWithContainer(map: mapboxgl.Map, container: HTMLElement) {
+	const observer = new ResizeObserver(() => map.resize());
+	observer.observe(container);
+
+	return () => observer.disconnect();
 }
 
 export function addChallengeMarker(map: mapboxgl.Map, longitude: number, latitude: number) {
@@ -42,6 +50,7 @@ export function removeChallengeMarker(marker: mapboxgl.Marker) {
 
 export function showStudentLocation(map: mapboxgl.Map) {
 	const geolocate = new mapboxgl.GeolocateControl({
+		positionOptions: { enableHighAccuracy: true, timeout: 10_000 },
 		trackUserLocation: true,
 		showUserLocation: true,
 		followUserLocation: false,
@@ -52,27 +61,95 @@ export function showStudentLocation(map: mapboxgl.Map) {
 	return geolocate;
 }
 
-export function calculateDistance(
-	studentLongitude: number,
-	studentLatitude: number,
-	challengeLongitude: number,
-	challengeLatitude: number,
-) {
-	const studentLocation = new mapboxgl.LngLat(studentLongitude, studentLatitude);
+export function showChallengeLink(marker: mapboxgl.Marker, title: string, href: string) {
+	const link = document.createElement("a");
 
-	const challengeLocation = new mapboxgl.LngLat(challengeLongitude, challengeLatitude);
+	link.href = href;
+	link.textContent = title;
+	link.className = "text-label text-wsu-green underline-offset-4 hover:underline";
 
-	return studentLocation.distanceTo(challengeLocation);
-}
-
-export function isWithinRadius(distance: number, radius: number) {
-	return distance <= radius;
-}
-
-export function showChallengePopup(marker: mapboxgl.Marker, title: string, description: string) {
-	const popup = new mapboxgl.Popup({ offset: 25 }).setText(`${title}: ${description}`);
+	const popup = new mapboxgl.Popup({ offset: 25 }).setDOMContent(link);
 
 	marker.setPopup(popup);
 
 	return popup;
+}
+
+// The challenge page 404s until the student is in range, so locked pins only
+// say how close to get
+export function showLockedChallenge(marker: mapboxgl.Marker, title: string, radius: number) {
+	const content = document.createElement("div");
+	const heading = document.createElement("p");
+	const hint = document.createElement("p");
+
+	content.className = "flex flex-col gap-0.5";
+	heading.textContent = title;
+	heading.className = "text-label";
+	hint.textContent = `Get within ${radius} ft to unlock`;
+	hint.className = "text-caption text-muted-foreground";
+
+	content.append(heading, hint);
+
+	const popup = new mapboxgl.Popup({ offset: 25 }).setDOMContent(content);
+
+	marker.setPopup(popup);
+
+	return popup;
+}
+
+const RADIUS_SOURCE = "challenge-radius";
+const RADIUS_STEPS = 64;
+const FEET_PER_DEGREE = 111_320 / METERS_PER_FOOT;
+
+// Approximates the unlock area as a polygon, which is accurate enough at
+// campus scale
+function radiusPolygon(longitude: number, latitude: number, radius: number) {
+	const lngScale = FEET_PER_DEGREE * Math.cos((latitude * Math.PI) / 180);
+
+	const ring = Array.from({ length: RADIUS_STEPS + 1 }, (_, i) => {
+		const angle = (i / RADIUS_STEPS) * 2 * Math.PI;
+
+		return [
+			longitude + (radius * Math.cos(angle)) / lngScale,
+			latitude + (radius * Math.sin(angle)) / FEET_PER_DEGREE,
+		];
+	});
+
+	return {
+		type: "Feature" as const,
+		properties: {},
+		geometry: { type: "Polygon" as const, coordinates: [ring] },
+	};
+}
+
+// The map's style must be loaded before calling this
+export function showChallengeRadius(
+	map: mapboxgl.Map,
+	longitude: number,
+	latitude: number,
+	radius: number,
+) {
+	const data = radiusPolygon(longitude, latitude, radius);
+	const source = map.getSource<mapboxgl.GeoJSONSource>(RADIUS_SOURCE);
+
+	if (source) {
+		source.setData(data);
+		return;
+	}
+
+	map.addSource(RADIUS_SOURCE, { type: "geojson", data });
+
+	map.addLayer({
+		id: `${RADIUS_SOURCE}-fill`,
+		type: "fill",
+		source: RADIUS_SOURCE,
+		paint: { "fill-color": "#0c5449", "fill-opacity": 0.12 },
+	});
+
+	map.addLayer({
+		id: `${RADIUS_SOURCE}-outline`,
+		type: "line",
+		source: RADIUS_SOURCE,
+		paint: { "line-color": "#0c5449", "line-width": 2 },
+	});
 }

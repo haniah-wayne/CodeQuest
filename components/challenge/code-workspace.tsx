@@ -7,6 +7,7 @@ import {
 	PlayIcon,
 	SentIcon,
 	SourceCodeIcon,
+	SquareLock02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "cn";
@@ -18,20 +19,41 @@ import {
 } from "@/app/dashboard/classes/[classId]/challenges/[challengeId]/actions";
 import { CodeEditor } from "@/components/challenge/code-editor";
 import { Button } from "@/components/ui/button";
+import { Panel, PanelHeader, PanelIcon, PanelSurface } from "@/components/ui/panel";
 import { LANGUAGE_IDS, LANGUAGES, type LanguageId } from "@/lib/challenges/languages";
+import type { Position } from "@/lib/challenges/location";
 
 type Outcome = SubmitSolutionState & { kind: "run" | "submit" };
+
+// Submissions are checked against where the student is right now
+function getCurrentPosition() {
+	return new Promise<Position>((resolve, reject) => {
+		navigator.geolocation.getCurrentPosition(
+			({ coords }) => resolve({ longitude: coords.longitude, latitude: coords.latitude }),
+			reject,
+			{ enableHighAccuracy: true, timeout: 10_000, maximumAge: 30_000 },
+		);
+	});
+}
+
+function locationErrorMessage(error: GeolocationPositionError) {
+	return error.code === error.PERMISSION_DENIED
+		? "Allow location access to submit. Challenges can only be solved on location."
+		: "We couldn't find your location. Try again in a moment.";
+}
 
 export function CodeWorkspace({
 	challengeId,
 	initialLanguage,
 	initialCode,
 	solved,
+	exampleInput = "",
 }: {
 	challengeId: number;
 	initialLanguage: LanguageId;
 	initialCode: string | null;
 	solved: boolean;
+	exampleInput?: string;
 }) {
 	const [language, setLanguage] = useState(initialLanguage);
 
@@ -47,23 +69,41 @@ export function CodeWorkspace({
 
 	const [outcome, setOutcome] = useState<Outcome | null>(null);
 	const [pendingKind, setPendingKind] = useState<Outcome["kind"] | null>(null);
+	const [solvedHere, setSolvedHere] = useState(false);
 
 	const [pending, startTransition] = useTransition();
 
 	const outputRef = useRef<HTMLDivElement>(null);
 
 	const code = drafts[language];
-	const isSolved = solved || (outcome?.kind === "submit" && outcome.correct === true);
+	const isSolved = solved || solvedHere;
+
+	// Locked once solved, and while a submission is being graded so the code
+	// left in the editor is exactly what was submitted
+	const locked = isSolved || (pending && pendingKind === "submit");
 
 	function run(kind: Outcome["kind"]) {
 		setPendingKind(kind);
 
 		startTransition(async () => {
 			try {
-				const state =
-					kind === "run"
-						? await runCode({ language, code })
-						: await submitSolution({ challengeId, language, code });
+				if (kind === "run") {
+					setOutcome({
+						...(await runCode({ language, code, stdin: exampleInput })),
+						kind,
+					});
+
+					return;
+				}
+
+				const state = await submitSolution({
+					challengeId,
+					language,
+					code,
+					position: await getCurrentPosition(),
+				});
+
+				if (state.correct || state.alreadySolved) setSolvedHere(true);
 
 				setOutcome({ ...state, kind });
 			} catch (error) {
@@ -71,7 +111,10 @@ export function CodeWorkspace({
 
 				setOutcome({
 					kind,
-					error: "Something went wrong. Check your connection and try again.",
+					error:
+						error instanceof GeolocationPositionError
+							? locationErrorMessage(error)
+							: "Something went wrong. Check your connection and try again.",
 				});
 			}
 		});
@@ -88,27 +131,29 @@ export function CodeWorkspace({
 
 	return (
 		<div className="flex min-w-0 flex-col gap-4">
-			<section
-				className="flex min-w-0 flex-col rounded-3xl border border-accent bg-white"
-				aria-labelledby="solution-heading"
-			>
-				<header className="flex items-center gap-3 border-b border-border/60 px-5 py-3 sm:px-6">
-					<span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-wsu-green">
-						<HugeiconsIcon icon={SourceCodeIcon} className="size-4.5" />
-					</span>
+			<Panel aria-labelledby="solution-heading">
+				<PanelHeader>
+					<PanelIcon icon={SourceCodeIcon} />
 
 					<h2 className="text-label" id="solution-heading">
 						Your solution
 					</h2>
 
+					{isSolved && (
+						<span className="flex items-center gap-1 text-caption text-muted-foreground">
+							<HugeiconsIcon icon={SquareLock02Icon} className="size-3.5" />
+							Read-only
+						</span>
+					)}
+
 					<label className="ml-auto">
 						<span className="sr-only">Language</span>
 
 						<select
-							className="h-9 rounded-4xl border border-input bg-input/30 pr-8 pl-3 text-base outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50 md:text-sm"
+							className="h-9 rounded-4xl border border-input bg-card pr-8 pl-3 text-base outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-50 md:text-sm"
 							value={language}
 							onChange={(e) => setLanguage(e.target.value as LanguageId)}
-							disabled={pending}
+							disabled={pending || isSolved}
 						>
 							{LANGUAGE_IDS.map((id) => (
 								<option key={id} value={id}>
@@ -117,19 +162,23 @@ export function CodeWorkspace({
 							))}
 						</select>
 					</label>
-				</header>
+				</PanelHeader>
 
-				<CodeEditor
-					language={language}
-					value={code}
-					onChange={(value) => setDrafts((d) => ({ ...d, [language]: value }))}
-				/>
+				{/* clip, not hidden, so the editor's sticky symbol bar still sticks */}
+				<PanelSurface className="overflow-clip">
+					<CodeEditor
+						language={language}
+						value={code}
+						onChange={(value) => setDrafts((d) => ({ ...d, [language]: value }))}
+						readOnly={locked}
+					/>
+				</PanelSurface>
 
-				<footer className="flex items-center justify-end gap-2 border-t border-border/60 px-4 py-3 sm:px-5">
+				<footer className="flex items-center justify-end gap-2 p-1">
 					<Button
 						variant="outline"
 						size="lg"
-						className="flex-1 sm:flex-none"
+						className="flex-1 bg-card sm:flex-none"
 						onClick={() => run("run")}
 						disabled={pending}
 					>
@@ -154,17 +203,17 @@ export function CodeWorkspace({
 								: "Submit"}
 					</Button>
 				</footer>
-			</section>
+			</Panel>
 
 			<div ref={outputRef} className="scroll-mt-24" role="status" aria-live="polite">
 				{pending ? (
 					<OutputShell
 						title={pendingKind === "submit" ? "Checking your solution" : "Running"}
 					>
-						<div className="flex flex-col gap-2 p-5 sm:px-6" aria-hidden>
+						<PanelSurface className="flex flex-col gap-2 p-5" aria-hidden>
 							<span className="h-3 w-2/3 animate-pulse rounded-full bg-muted" />
 							<span className="h-3 w-1/3 animate-pulse rounded-full bg-muted" />
-						</div>
+						</PanelSurface>
 					</OutputShell>
 				) : outcome ? (
 					<OutputPanel outcome={outcome} />
@@ -194,11 +243,13 @@ function OutputPanel({ outcome }: { outcome: Outcome }) {
 			{error && <Verdict tone="error">{error}</Verdict>}
 
 			{result && (
-				<pre className="max-h-96 overflow-auto px-5 py-4 font-mono text-sm leading-6 wrap-break-word whitespace-pre-wrap sm:px-6">
-					{result.output || (
-						<span className="text-muted-foreground italic">No output</span>
-					)}
-				</pre>
+				<PanelSurface className="overflow-clip">
+					<pre className="max-h-96 overflow-auto px-5 py-4 font-mono text-sm leading-6 wrap-break-word whitespace-pre-wrap">
+						{result.output || (
+							<span className="text-muted-foreground italic">No output</span>
+						)}
+					</pre>
+				</PanelSurface>
 			)}
 		</OutputShell>
 	);
@@ -214,11 +265,9 @@ function OutputShell({
 	children: React.ReactNode;
 }) {
 	return (
-		<section className="flex min-w-0 flex-col overflow-hidden rounded-3xl border border-accent bg-white">
-			<header className="flex items-center gap-3 border-b border-border/60 px-5 py-3 sm:px-6">
-				<span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-wsu-green">
-					<HugeiconsIcon icon={CommandLineIcon} className="size-4.5" />
-				</span>
+		<Panel>
+			<PanelHeader>
+				<PanelIcon icon={CommandLineIcon} />
 
 				<h2 className="text-label">{title}</h2>
 
@@ -227,10 +276,10 @@ function OutputShell({
 						{meta}
 					</span>
 				)}
-			</header>
+			</PanelHeader>
 
 			{children}
-		</section>
+		</Panel>
 	);
 }
 
@@ -238,10 +287,10 @@ function Verdict({ tone, children }: { tone: "success" | "error"; children: Reac
 	return (
 		<p
 			className={cn(
-				"flex items-start gap-2 border-b border-border/60 px-5 py-3 text-body-sm sm:px-6",
+				"flex items-start gap-2 rounded-(--panel-radius) bg-card px-5 py-3 text-body-sm smooth-shadow-ring-sm",
 				tone === "success"
-					? "bg-emerald-50 text-wsu-green"
-					: "bg-destructive/10 text-destructive",
+					? "text-wsu-green smooth-ring-wsu-green/35"
+					: "text-destructive smooth-ring-destructive/35",
 			)}
 		>
 			<HugeiconsIcon

@@ -19,7 +19,7 @@ export function AuthCard({
 	children: React.ReactNode;
 }) {
 	return (
-		<Card className="mx-auto w-full max-w-md rounded-3xl border border-accent bg-white ring-0 [--card-spacing:--spacing(8)]">
+		<Card className="mx-auto w-full max-w-md rounded-3xl [--card-spacing:--spacing(8)]">
 			<CardHeader>
 				<hgroup className="flex flex-col gap-2">
 					<h1 className="text-title">{title}</h1>
@@ -31,7 +31,7 @@ export function AuthCard({
 			<CardContent>{children}</CardContent>
 
 			<CardFooter className="flex-col gap-4">
-				<Separator className="bg-accent" />
+				<Separator />
 
 				<p className="text-caption text-muted-foreground">
 					{altPrompt}{" "}

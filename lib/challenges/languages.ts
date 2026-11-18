@@ -41,3 +41,7 @@ export const DEFAULT_LANGUAGE: LanguageId = "python";
 export function isLanguageId(value: unknown): value is LanguageId {
 	return typeof value === "string" && Object.hasOwn(LANGUAGES, value);
 }
+
+export function languageLabel(language: string | null) {
+	return isLanguageId(language) ? LANGUAGES[language].label : (language ?? "Unknown");
+}

@@ -9,7 +9,7 @@ export async function StudentDashboard({ user }: { user: SessionUser }) {
 
 	const { data: enrollments, error } = await supabase
 		.from("Enrollment")
-		.select("Classes!inner(ClassID, ClassName, Description)")
+		.select("Classes!inner(ClassID, ClassName, Description, ClassCode)")
 		.eq("StudentID", user.id)
 		.order("EnrolledAt");
 

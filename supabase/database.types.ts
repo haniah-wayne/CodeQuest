@@ -8,7 +8,8 @@ export type Json =
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+    // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+///updates test case database types 
   __InternalSupabase: {
     PostgrestVersion: "14.17"
   }
@@ -22,7 +23,8 @@ export type Database = {
           CodeLanguage: string | null
           CreatedAt: string
           Description: string | null
-          IsPublished: boolean | null
+          Hidden: boolean
+          IsPublished: boolean
           MaxAttempts: number | null
           Points: number
           Title: string
@@ -34,7 +36,8 @@ export type Database = {
           CodeLanguage?: string | null
           CreatedAt?: string
           Description?: string | null
-          IsPublished?: boolean | null
+          Hidden?: boolean
+          IsPublished?: boolean
           MaxAttempts?: number | null
           Points?: number
           Title: string
@@ -46,7 +49,8 @@ export type Database = {
           CodeLanguage?: string | null
           CreatedAt?: string
           Description?: string | null
-          IsPublished?: boolean | null
+          Hidden?: boolean
+          IsPublished?: boolean
           MaxAttempts?: number | null
           Points?: number
           Title?: string
@@ -217,21 +221,18 @@ export type Database = {
           Email: string | null
           ID: string
           Name: string
-          Password: string | null
           Role: string
         }
         Insert: {
           Email?: string | null
           ID: string
           Name: string
-          Password?: string | null
           Role: string
         }
         Update: {
           Email?: string | null
           ID?: string
           Name?: string
-          Password?: string | null
           Role?: string
         }
         Relationships: []
@@ -264,6 +265,7 @@ export type Database = {
           AttemptNum: number | null
           ChallengeID: number
           Code: string | null
+          Feedback: string | null
           Language: string | null
           Output: string | null
           Score: number | null
@@ -276,6 +278,7 @@ export type Database = {
           AttemptNum?: number | null
           ChallengeID: number
           Code?: string | null
+          Feedback?: string | null
           Language?: string | null
           Output?: string | null
           Score?: number | null
@@ -288,6 +291,7 @@ export type Database = {
           AttemptNum?: number | null
           ChallengeID?: number
           Code?: string | null
+          Feedback?: string | null
           Language?: string | null
           Output?: string | null
           Score?: number | null
@@ -318,6 +322,8 @@ export type Database = {
           ChallengeID: number
           CreatedAt: string | null
           ExpectedOutput: string | null
+          Hidden: boolean
+          hiddenFrom: boolean | null
           Input: string | null
           Score: number | null
           TestCaseID: number
@@ -326,6 +332,8 @@ export type Database = {
           ChallengeID: number
           CreatedAt?: string | null
           ExpectedOutput?: string | null
+          Hidden?: boolean
+          hiddenFrom?: boolean | null
           Input?: string | null
           Score?: number | null
           TestCaseID?: number
@@ -334,6 +342,8 @@ export type Database = {
           ChallengeID?: number
           CreatedAt?: string | null
           ExpectedOutput?: string | null
+          Hidden?: boolean
+          hiddenFrom?: boolean | null
           Input?: string | null
           Score?: number | null
           TestCaseID?: number
@@ -357,14 +367,17 @@ export type Database = {
         Args: {
           class_id: number
           description: string
+          hidden?: boolean
           lat: number
           long: number
+          points: number
           radius: number
           solution: string
           title: string
         }
         Returns: number
       }
+      delete_own_account: { Args: never; Returns: undefined }
       get_class_leaderboard: {
         Args: { p_class_id: number }
         Returns: {
@@ -374,9 +387,37 @@ export type Database = {
           total_score: number
         }[]
       }
+      get_class_roster: {
+        Args: { p_class_id: number }
+        Returns: {
+          student_email: string
+          student_id: string
+          student_name: string
+        }[]
+      }
       get_global_leaderboard: { Args: never; Returns: undefined }
+      is_class_member: { Args: { p_class_id: number }; Returns: boolean }
       is_class_professor: { Args: { class_id: number }; Returns: boolean }
       join_class_by_code: { Args: { class_code: string }; Returns: string }
+      set_submission_feedback: {
+        Args: { feedback: string; submission_id: number }
+        Returns: undefined
+      }
+      update_challenge: {
+        Args: {
+          challenge_id: number
+          class_id: number
+          description: string
+          hidden: boolean
+          lat: number
+          long: number
+          points: number
+          radius: number
+          solution: string
+          title: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

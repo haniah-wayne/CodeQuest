@@ -1,12 +1,18 @@
-import { ArrowLeft01Icon, CheckmarkCircle02Icon } from "@hugeicons/core-free-icons";
+import { ArrowLeft01Icon, CheckmarkCircle02Icon, TestTube01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CodeWorkspace } from "@/components/challenge/code-workspace";
+import { SubmissionFeedback } from "@/components/challenge/submission-feedback";
+import { SubmissionList } from "@/components/challenge/submission-list";
+import { ClassRealtime } from "@/components/class/class-realtime";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
 import { Badge } from "@/components/ui/badge";
+import { Panel, PanelHeader, PanelIcon, PanelSurface } from "@/components/ui/panel";
 import { requireSessionUser } from "@/lib/auth/session";
 import { DEFAULT_LANGUAGE, isLanguageId } from "@/lib/challenges/languages";
+import { isWithinUnlockRadius } from "@/lib/challenges/location";
+import { getSavedPosition } from "@/lib/challenges/position";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ChallengePage(
@@ -23,19 +29,23 @@ export default async function ChallengePage(
 
 	// RLS decides who can see the challenge, so a missing row means not found
 	// or not allowed
-	const [challengeResult, submissionsResult] = await Promise.all([
+	const [challengeResult, submissionsResult, position] = await Promise.all([
 		supabase
 			.from("Challenges")
-			.select("Title, Description, Points, Classes(ClassName, ProfessorID)")
+			.select(
+				"Title, Description, Points, Classes(ClassName, ProfessorID), Locations(Longitude, Latitude, Radius), TestCase(Input, ExpectedOutput)",
+			)
 			.eq("ChallengeID", challengeId)
 			.eq("ClassID", classId)
+			.order("TestCaseID", { referencedTable: "TestCase" })
 			.maybeSingle(),
 		supabase
 			.from("Submission")
-			.select("Code, Language, Status")
+			.select("SubmissionID, Code, Language, Status, SubmittedAt, Feedback")
 			.eq("ChallengeID", challengeId)
 			.eq("StudentID", user.id)
 			.order("SubmittedAt", { ascending: false }),
+		getSavedPosition(),
 	]);
 
 	const challenge = challengeResult.data;
@@ -47,19 +57,34 @@ export default async function ChallengePage(
 	}
 
 	if (challenge.Classes.ProfessorID === user.id) {
-		// TODO: professor view
-		return null;
+		return <ProfessorView classId={classId} challengeId={challengeId} challenge={challenge} />;
 	}
 
 	if (submissionsResult.error) console.error(submissionsResult.error);
 
 	const submissions = submissionsResult.data ?? [];
-	const latest = submissions[0];
-	const solved = submissions.some((s) => s.Status === "correct");
+	const correct = submissions.find((s) => s.Status === "correct");
+	const solved = Boolean(correct);
 
-	// Pick up where the student left off with their last submission
-	const initialLanguage = isLanguageId(latest?.Language) ? latest.Language : DEFAULT_LANGUAGE;
-	const initialCode = latest && isLanguageId(latest.Language) ? latest.Code : null;
+	// Locked challenges stay hidden even if the student has the link
+	if (!solved && !isWithinUnlockRadius(challenge.Locations, position)) notFound();
+
+	// Show the solution that was graded correct, otherwise pick up where the
+	// student left off with their last submission
+	const shown = correct ?? submissions[0];
+	const initialLanguage = isLanguageId(shown?.Language) ? shown.Language : DEFAULT_LANGUAGE;
+	const initialCode = shown && isLanguageId(shown.Language) ? shown.Code : null;
+	// Only the first test case is shown, the rest are kept for grading
+	const examples = challenge.TestCase.slice(0, 1);
+
+	const feedback = submissions
+		.filter((s) => s.Feedback)
+		.map((s) => ({
+			id: s.SubmissionID,
+			status: s.Status,
+			submittedAt: s.SubmittedAt,
+			feedback: s.Feedback!,
+		}));
 
 	return (
 		<>
@@ -79,7 +104,7 @@ export default async function ChallengePage(
 						actions={
 							<>
 								{solved && (
-									<Badge className="bg-emerald-50 text-wsu-green">
+									<Badge>
 										<HugeiconsIcon
 											icon={CheckmarkCircle02Icon}
 											data-icon="inline-start"
@@ -88,7 +113,7 @@ export default async function ChallengePage(
 									</Badge>
 								)}
 
-								<Badge className="bg-emerald-50 text-wsu-green tabular-nums">
+								<Badge className="bg-wsu-gold text-wsu-green tabular-nums">
 									{challenge.Points} pts
 								</Badge>
 							</>
@@ -97,12 +122,141 @@ export default async function ChallengePage(
 				</div>
 			</div>
 
+			<SubmissionFeedback entries={feedback} />
+
+			{examples.length > 0 && <Examples examples={examples} />}
+
 			<CodeWorkspace
 				challengeId={challengeId}
 				initialLanguage={initialLanguage}
 				initialCode={initialCode}
 				solved={solved}
+				exampleInput={examples[0]?.Input ?? ""}
 			/>
+		</>
+	);
+}
+
+//shows visible test cases only
+function Examples({
+	examples,
+}: {
+	examples: { Input: string | null; ExpectedOutput: string | null }[];
+}) {
+	return (
+		<Panel aria-labelledby="examples-heading">
+			<PanelHeader>
+				<PanelIcon icon={TestTube01Icon} />
+
+				<h2 className="text-label" id="examples-heading">
+					Examples
+				</h2>
+			</PanelHeader>
+
+			<PanelSurface className="flex flex-col gap-4 p-5 sm:p-6">
+				<p className="text-caption text-muted-foreground">
+					Your program reads the input from stdin and must print the output exactly.
+					Don&apos;t print prompts like &quot;Enter a number&quot;. Run uses the first
+					example&apos;s input.
+				</p>
+
+				<ol className="flex flex-col gap-4">
+					{examples.map((example, index) => (
+						<li key={index} className="grid gap-3 sm:grid-cols-2">
+							{[
+								["Input", example.Input],
+								["Output", example.ExpectedOutput],
+							].map(([label, value]) => (
+								<div key={label} className="flex min-w-0 flex-col gap-1">
+									<span className="text-caption text-muted-foreground">
+										{label} {index + 1}
+									</span>
+
+									<pre className="m-0 overflow-auto rounded-xl bg-muted px-3 py-2 font-mono text-sm whitespace-pre-wrap">
+										{value || (
+											<span className="text-muted-foreground italic">
+												(empty)
+											</span>
+										)}
+									</pre>
+								</div>
+							))}
+						</li>
+					))}
+				</ol>
+			</PanelSurface>
+		</Panel>
+	);
+}
+
+async function ProfessorView({
+	classId,
+	challengeId,
+	challenge,
+}: {
+	classId: number;
+	challengeId: number;
+	challenge: { Title: string; Points: number; Classes: { ClassName: string } };
+}) {
+	const supabase = await createClient();
+
+	const [submissionsResult, rosterResult] = await Promise.all([
+		supabase
+			.from("Submission")
+			.select("SubmissionID, StudentID, Code, Language, Status, Score, SubmittedAt, Feedback")
+			.eq("ChallengeID", challengeId)
+			.order("SubmittedAt", { ascending: false }),
+		supabase.rpc("get_class_roster", { p_class_id: classId }),
+	]);
+
+	for (const { error } of [submissionsResult, rosterResult]) {
+		if (error) console.error(error);
+	}
+
+	const names = new Map(
+		(rosterResult.data ?? []).map((r) => [r.student_id, r.student_name] as const),
+	);
+
+	const submissions = (submissionsResult.data ?? []).map((s) => ({
+		id: s.SubmissionID,
+		// Students who have left the class drop off the roster
+		studentName: names.get(s.StudentID) ?? "Former student",
+		language: s.Language,
+		status: s.Status,
+		score: s.Score,
+		maxScore: challenge.Points,
+		submittedAt: s.SubmittedAt,
+		code: s.Code,
+		feedback: s.Feedback,
+	}));
+
+	return (
+		<>
+			<ClassRealtime classId={classId} />
+
+			<div className="flex flex-col gap-6">
+				<Link
+					className="flex w-fit items-center gap-1.5 rounded-sm text-caption text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+					href={`/dashboard/classes/${classId}`}
+				>
+					<HugeiconsIcon icon={ArrowLeft01Icon} className="size-3.5" />
+					{challenge.Classes.ClassName}
+				</Link>
+
+				<div className="flex flex-col gap-4">
+					<DashboardPageHeader
+						title={challenge.Title}
+						description="Review every submission students have made for this challenge."
+						actions={
+							<Badge className="bg-wsu-gold text-wsu-green tabular-nums">
+								{challenge.Points} pts
+							</Badge>
+						}
+					/>
+				</div>
+			</div>
+
+			<SubmissionList submissions={submissions} error={submissionsResult.error !== null} />
 		</>
 	);
 }

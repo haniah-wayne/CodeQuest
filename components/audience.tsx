@@ -10,37 +10,37 @@ interface Audience {
 const audiences: Audience[] = [
 	{
 		title: "Escape the 11:59 PM Screen Prison",
-		body: "Nostrud occaecat officia ipsum cillum quis consectetur sunt. Sit amet consectetur adipisicing elit sed do eiusmod tempor incididunt.",
+		body: "Coding practice doesn't have to mean staring at a laptop in your dorm at midnight. CodeQuest gets you out on campus, where every challenge is waiting on a real spot on the map.",
 		points: [
 			{
-				lead: "Lorem ipsum:",
-				rest: " Ut enim ad minim veniam quis nostrud exercitation ullamco.",
+				lead: "Walk to unlock:",
+				rest: " Get within range of a challenge's spot on the campus map to open it.",
 			},
 			{
-				lead: "Lorem ipsum:",
-				rest: " Duis aute irure dolor in reprehenderit in voluptate velit.",
+				lead: "Code on your phone:",
+				rest: " Write, run, and submit Python, Java, C++, or JavaScript right in your browser.",
 			},
 			{
-				lead: "Lorem ipsum:",
-				rest: " Excepteur sint occaecat cupidatat non proident sunt in culpa.",
+				lead: "Climb the leaderboard:",
+				rest: " Each correct solution earns the challenge's points, and your class ranking updates live.",
 			},
 		],
 	},
 	{
 		title: "High-Engagement Campus Anchors",
-		body: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+		body: "Turn the places you already pass every day into checkpoints for your course.",
 		points: [
 			{
-				lead: "Lorem ipsum:",
-				rest: " Quis autem vel eum iure reprehenderit qui in ea voluptate.",
+				lead: "Build challenges fast:",
+				rest: " Write your own, or describe what you want and let AI draft one with a tested reference solution.",
 			},
 			{
-				lead: "Lorem ipsum:",
-				rest: " Nemo enim ipsam voluptatem quia voluptas sit aspernatur.",
+				lead: "See every attempt:",
+				rest: " Each submission is saved with the student's code, output, and timestamp, so you know who participated and when.",
 			},
 			{
-				lead: "Lorem ipsum:",
-				rest: " At vero eos et accusamus et iusto odio dignissimos ducimus.",
+				lead: "Grading built in:",
+				rest: " Submissions are auto-checked against your test cases, and AI can review any of them with a suggested score and feedback.",
 			},
 		],
 	},
@@ -48,21 +48,19 @@ const audiences: Audience[] = [
 
 export function Audience() {
 	return (
-		<section id="audience" className="bg-linear-to-b/oklch from-white to-emerald-50/50 py-24">
+		<section
+			id="audience"
+			className="bg-linear-to-b from-wsu-green to-background py-24 text-white"
+		>
 			<div className="mx-auto flex w-full max-w-7xl flex-col gap-12 px-5 sm:px-8">
 				<hgroup className="mx-auto flex max-w-2xl flex-col items-center gap-2 text-center">
 					<h2 className="text-title">Built for Warriors, Guided by Professors</h2>
-
-					<p className="text-body-sm text-muted-foreground">
-						Duis non anim ullamco ad velit anim commodo culpa nostrud qui aliquip id
-						incididunt minim.
-					</p>
 				</hgroup>
 
 				<ul className="grid gap-12 sm:grid-cols-2">
 					{audiences.map((audience) => (
 						<li
-							className="flex flex-col gap-4 rounded-3xl border-border bg-white p-8 shadow-xs smooth-shadow-sm"
+							className="flex flex-col gap-4 rounded-3xl bg-card p-8 text-card-foreground smooth-shadow-xl"
 							key={audience.title}
 						>
 							<h3 className="text-heading">{audience.title}</h3>
@@ -74,7 +72,7 @@ export function Audience() {
 							<ul className="mt-3 flex flex-col gap-4">
 								{audience.points.map((point) => (
 									<li className="flex items-start gap-3" key={point.rest}>
-										<span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+										<span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-wsu-gold text-wsu-green">
 											<HugeiconsIcon
 												className="size-3.5"
 												icon={Tick}
