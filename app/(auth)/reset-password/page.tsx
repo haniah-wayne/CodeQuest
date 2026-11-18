@@ -10,7 +10,7 @@ import { AuthCard, AuthFormError } from "@/components/auth-card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { MIN_PASSWORD_LENGTH } from "@/lib/auth/schemas.js";
+import { MIN_PASSWORD_LENGTH } from "@/lib/auth/schemas";
 
 export default function ResetPassword() {
 	const [state, action, pending] = useActionState(updatePassword, {
