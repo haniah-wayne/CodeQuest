@@ -78,7 +78,7 @@ CREATE TABLE public."TestCase"
     "Input"          text,
     "Score"          smallint,
     "ExpectedOutput" text,
-    "CreatedAt"      timestamptz,
+    "CreatedAt"      timestamptz
 );
 
 ALTER TABLE public."Profile"
