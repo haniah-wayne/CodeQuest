@@ -4,7 +4,9 @@
 //11.13 - Haniah Ahmed - added the test case editor to the challenge form
 
 import { Add01Icon, Delete02Icon } from "@hugeicons/core-free-icons";
+import { AiMagicIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,7 +50,23 @@ export function TestCaseEditor({
 	}
 
 	function addTestCase() {
-		setTestCases((current) => [...current, ...toTestCaseDrafts([{}])]);
+		setTestCases((current) => [
+			...current,
+			{
+				id: `manual-${nextId++}`,
+				input: "",
+				expectedOutput: "",
+			},
+		]);
+	}
+
+	const [results, setResults] = useState<Record<string, { valid: boolean; message: string }>>({});
+
+	async function checkTestCase(id: string) {
+		const tc = testCases.find((tc) => tc.id === id && tc.id.startsWith("manual-"));
+		if (!tc) return;
+		const input = tc.input;
+		const output = tc.expectedOutput;
 	}
 
 	return (
@@ -129,6 +147,39 @@ export function TestCaseEditor({
 									/>
 								</Field>
 							</div>
+
+							{tc.id.startsWith("manual-") && (
+								<>
+									<Button
+										type="button"
+										variant="outline"
+										className="w-fit"
+										aria-label={`Check with AI ${index + 1}`}
+										onClick={() => checkTestCase(tc.id)}
+									>
+										<HugeiconsIcon
+											icon={AiMagicIcon}
+											data-icon="inline-start"
+										/>
+										Check with AI
+									</Button>
+
+									{results[tc.id] && (
+										<p
+											role="status"
+											className={
+												results[tc.id].valid
+													? "text-sm text-green-600"
+													: "text-sm text-red-600"
+											}
+										>
+											{results[tc.id].valid
+												? "No issues found"
+												: results[tc.id].message}
+										</p>
+									)}
+								</>
+							)}
 						</li>
 					);
 				})}
