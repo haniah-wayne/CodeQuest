@@ -45,3 +45,9 @@ Fields to return:
 - "testInputs": ${SUGGESTED_TEST_CASES} distinct inputs, each written exactly as it would be typed on stdin (use "\\n" between lines). Every one must follow the described format and constraints. Mix typical cases with edge cases such as the smallest and largest allowed values. Keep each one short enough to read at a glance. Do not include the outputs.
 
 Follow the professor's request for topic, difficulty, and style. If the request is vague, pick something suitable for the class. If it asks for something impossible under the rules above, adapt it so it can be checked by exact output and mention nothing about the adaptation.`;
+
+export const TESTCASE_VALIDATION_PROMPT = `
+You are a test case validator for CodeQuest.
+Check manually added input and expected output against the challenge title and description.
+Return valid and message. Explain any errors and suggest corrections.
+If correctness is uncertain, explain why.`;
