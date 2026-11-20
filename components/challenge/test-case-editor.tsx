@@ -10,6 +10,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
+import { checkTestCaseWithAI } from "@/lib/ai/testcase-validation-action";
 import { MAX_TEST_CASES, type TestCaseInput } from "@/lib/schemas";
 
 // test case interface with an id for the editor to track them
@@ -36,10 +37,15 @@ export function TestCaseEditor({
 	testCases,
 	onTestCasesChange: setTestCases,
 	error,
+	getChallengeDetails,
 }: {
 	testCases: TestCaseDraft[];
 	onTestCasesChange: (update: (current: TestCaseDraft[]) => TestCaseDraft[]) => void;
 	error?: string;
+	getChallengeDetails: () => {
+		title: string;
+		description: string;
+	} | null;
 }) {
 	function updateTestCase(id: string, changes: Partial<TestCaseInput>) {
 		setTestCases((current) => current.map((tc) => (tc.id === id ? { ...tc, ...changes } : tc)));
@@ -64,9 +70,33 @@ export function TestCaseEditor({
 
 	async function checkTestCase(id: string) {
 		const tc = testCases.find((tc) => tc.id === id && tc.id.startsWith("manual-"));
+
 		if (!tc) return;
-		const input = tc.input;
-		const output = tc.expectedOutput;
+
+		const details = getChallengeDetails();
+		if (!details) return;
+
+		try {
+			const result = await checkTestCaseWithAI(
+				details.title,
+				details.description,
+				tc.input,
+				tc.expectedOutput,
+			);
+
+			setResults((prev) => ({
+				...prev,
+				[id]: result,
+			}));
+		} catch {
+			setResults((prev) => ({
+				...prev,
+				[id]: {
+					valid: false,
+					message: "AI validation failed. Please try again.",
+				},
+			}));
+		}
 	}
 
 	return (
