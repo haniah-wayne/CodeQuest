@@ -8,8 +8,7 @@ export type Json =
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
-    // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-///updates test case database types 
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.17"
   }
@@ -18,7 +17,6 @@ export type Database = {
       Challenges: {
         Row: {
           ChallengeID: number
-          ChallengeType: string | null
           ClassID: number
           CodeLanguage: string | null
           CreatedAt: string
@@ -31,7 +29,6 @@ export type Database = {
         }
         Insert: {
           ChallengeID?: number
-          ChallengeType?: string | null
           ClassID: number
           CodeLanguage?: string | null
           CreatedAt?: string
@@ -44,7 +41,6 @@ export type Database = {
         }
         Update: {
           ChallengeID?: number
-          ChallengeType?: string | null
           ClassID?: number
           CodeLanguage?: string | null
           CreatedAt?: string
@@ -62,54 +58,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "Classes"
             referencedColumns: ["ClassID"]
-          },
-        ]
-      }
-      CheckIns: {
-        Row: {
-          ChallengeID: number
-          CheckedInAt: string
-          CheckInID: number
-          Distance: number | null
-          Latitude: number
-          Longitude: number
-          StudentID: string
-          Successful: boolean
-        }
-        Insert: {
-          ChallengeID: number
-          CheckedInAt?: string
-          CheckInID?: never
-          Distance?: number | null
-          Latitude: number
-          Longitude: number
-          StudentID: string
-          Successful?: boolean
-        }
-        Update: {
-          ChallengeID?: number
-          CheckedInAt?: string
-          CheckInID?: never
-          Distance?: number | null
-          Latitude?: number
-          Longitude?: number
-          StudentID?: string
-          Successful?: boolean
-        }
-        Relationships: [
-          {
-            foreignKeyName: "CheckIns_ChallengeID_fkey"
-            columns: ["ChallengeID"]
-            isOneToOne: false
-            referencedRelation: "Challenges"
-            referencedColumns: ["ChallengeID"]
-          },
-          {
-            foreignKeyName: "CheckIns_StudentID_fkey"
-            columns: ["StudentID"]
-            isOneToOne: false
-            referencedRelation: "Profile"
-            referencedColumns: ["ID"]
           },
         ]
       }
@@ -322,8 +270,6 @@ export type Database = {
           ChallengeID: number
           CreatedAt: string | null
           ExpectedOutput: string | null
-          Hidden: boolean
-          hiddenFrom: boolean | null
           Input: string | null
           Score: number | null
           TestCaseID: number
@@ -332,8 +278,6 @@ export type Database = {
           ChallengeID: number
           CreatedAt?: string | null
           ExpectedOutput?: string | null
-          Hidden?: boolean
-          hiddenFrom?: boolean | null
           Input?: string | null
           Score?: number | null
           TestCaseID?: number
@@ -342,8 +286,6 @@ export type Database = {
           ChallengeID?: number
           CreatedAt?: string | null
           ExpectedOutput?: string | null
-          Hidden?: boolean
-          hiddenFrom?: boolean | null
           Input?: string | null
           Score?: number | null
           TestCaseID?: number
@@ -395,10 +337,21 @@ export type Database = {
           student_name: string
         }[]
       }
-      get_global_leaderboard: { Args: never; Returns: undefined }
       is_class_member: { Args: { p_class_id: number }; Returns: boolean }
       is_class_professor: { Args: { class_id: number }; Returns: boolean }
       join_class_by_code: { Args: { class_code: string }; Returns: string }
+      record_submission: {
+        Args: {
+          p_challenge_id: number
+          p_code: string
+          p_language: string
+          p_output: string
+          p_score: number
+          p_status: string
+          p_student_id: string
+        }
+        Returns: boolean
+      }
       set_submission_feedback: {
         Args: { feedback: string; submission_id: number }
         Returns: undefined
