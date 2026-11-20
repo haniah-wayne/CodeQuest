@@ -102,16 +102,9 @@ export function ChallengeForm({
 	const locationError = state.fieldErrors?.longitude ?? state.fieldErrors?.latitude;
 	const classHref = `/dashboard/classes/${classId}`;
 
-	function applyDraft(draft: GeneratedChallenge) {
+	function setDetails(values: { title: string; points: string; description: string }) {
 		const fields = formRef.current?.elements;
-
 		if (!fields) return;
-
-		const values = {
-			title: draft.title,
-			points: String(draft.points),
-			description: draft.description,
-		};
 
 		for (const [name, value] of Object.entries(values)) {
 			const field = fields.namedItem(name);
@@ -120,14 +113,37 @@ export function ChallengeForm({
 				field.value = value;
 			}
 		}
+	}
 
-		setTestCases(() => toTestCaseDrafts(draft.testCases));
+	function fillGenerated(challenge: GeneratedChallenge) {
+		setDetails({
+			title: challenge.title,
+			points: String(challenge.points),
+			description: challenge.description,
+		});
+
+		setTestCases(toTestCaseDrafts(challenge.testCases));
+	}
+
+	// Retain non-generated values
+	function clearGenerated() {
+		setDetails({
+			title: "",
+			points: String(DEFAULT_POINTS),
+			description: "",
+		});
+
+		setTestCases([]);
 	}
 
 	return (
 		<>
 			{challengeId === undefined && (
-				<ChallengeGenerator classId={classId} onApply={applyDraft} />
+				<ChallengeGenerator
+					classId={classId}
+					onGenerate={fillGenerated}
+					onClear={clearGenerated}
+				/>
 			)}
 
 			<form ref={formRef} action={action} className="flex flex-col gap-6">
