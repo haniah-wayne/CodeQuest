@@ -246,7 +246,7 @@ async function ProfessorView({
 				<div className="flex flex-col gap-4">
 					<DashboardPageHeader
 						title={challenge.Title}
-						description="Review every submission students have made for this challenge."
+						description="Review each student's latest submission for this challenge."
 						actions={
 							<Badge className="bg-wsu-gold text-wsu-green tabular-nums">
 								{challenge.Points} pts

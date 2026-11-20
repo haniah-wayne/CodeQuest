@@ -184,24 +184,38 @@ export async function submitSolution(input: {
 	// only show first test case output
 	const result = runs[0];
 
-	const { error: insertError } = await supabase.from("Submission").insert({
-		ChallengeID: challengeId,
-		StudentID: user.id,
-		Code: code,
-		Language: language,
-		Output: result.output,
-		Score: points,
-		Status: correct ? "correct" : "incorrect",
-	});
+	let recorded: boolean;
 
-	if (insertError) {
-		console.error(insertError);
+	try {
+		const { data, error } = await createAdminClient().rpc("record_submission", {
+			p_student_id: user.id,
+			p_challenge_id: challengeId,
+			p_code: code,
+			p_language: language,
+			p_output: result.output,
+			p_score: points,
+			p_status: correct ? "correct" : "incorrect",
+		});
+
+		if (error) throw error;
+
+		recorded = data;
+	} catch (error) {
+		console.error(error);
 
 		return { result, error: "Your code ran, but we couldn't save your submission." };
 	}
 
 	revalidatePath(`/dashboard/classes/${challenge.ClassID}`);
 	revalidatePath(`/dashboard/classes/${challenge.ClassID}/challenges/${challengeId}`);
+
+	if (!recorded) {
+		return {
+			result,
+			error: "You've already solved this challenge.",
+			alreadySolved: true,
+		};
+	}
 
 	return { result, correct, points };
 }
