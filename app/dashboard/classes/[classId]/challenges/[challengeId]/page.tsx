@@ -29,7 +29,7 @@ export default async function ChallengePage(
 
 	// RLS decides who can see the challenge, so a missing row means not found
 	// or not allowed
-	const [challengeResult, submissionsResult, position] = await Promise.all([
+	const [challengeResult, submissionResult, position] = await Promise.all([
 		supabase
 			.from("Challenges")
 			.select(
@@ -41,10 +41,10 @@ export default async function ChallengePage(
 			.maybeSingle(),
 		supabase
 			.from("Submission")
-			.select("SubmissionID, Code, Language, Status, SubmittedAt, Feedback")
+			.select("Code, Language, Status, SubmittedAt, Feedback")
 			.eq("ChallengeID", challengeId)
 			.eq("StudentID", user.id)
-			.order("SubmittedAt", { ascending: false }),
+			.maybeSingle(),
 		getSavedPosition(),
 	]);
 
@@ -60,31 +60,25 @@ export default async function ChallengePage(
 		return <ProfessorView classId={classId} challengeId={challengeId} challenge={challenge} />;
 	}
 
-	if (submissionsResult.error) console.error(submissionsResult.error);
+	if (submissionResult.error) {
+		console.error(submissionResult.error);
+	}
 
-	const submissions = submissionsResult.data ?? [];
-	const correct = submissions.find((s) => s.Status === "correct");
-	const solved = Boolean(correct);
+	const submission = submissionResult.data;
+	const solved = submission?.Status === "correct";
 
 	// Locked challenges stay hidden even if the student has the link
-	if (!solved && !isWithinUnlockRadius(challenge.Locations, position)) notFound();
+	if (!solved && !isWithinUnlockRadius(challenge.Locations, position)) {
+		notFound();
+	}
 
-	// Show the solution that was graded correct, otherwise pick up where the
-	// student left off with their last submission
-	const shown = correct ?? submissions[0];
-	const initialLanguage = isLanguageId(shown?.Language) ? shown.Language : DEFAULT_LANGUAGE;
-	const initialCode = shown && isLanguageId(shown.Language) ? shown.Code : null;
+	const initialLanguage = isLanguageId(submission?.Language)
+		? submission.Language
+		: DEFAULT_LANGUAGE;
+
+	const initialCode = submission && isLanguageId(submission.Language) ? submission.Code : null;
 	// Only the first test case is shown, the rest are kept for grading
 	const examples = challenge.TestCase.slice(0, 1);
-
-	const feedback = submissions
-		.filter((s) => s.Feedback)
-		.map((s) => ({
-			id: s.SubmissionID,
-			status: s.Status,
-			submittedAt: s.SubmittedAt,
-			feedback: s.Feedback!,
-		}));
 
 	return (
 		<>
@@ -122,7 +116,13 @@ export default async function ChallengePage(
 				</div>
 			</div>
 
-			<SubmissionFeedback entries={feedback} />
+			{submission?.Feedback && (
+				<SubmissionFeedback
+					status={submission.Status}
+					submittedAt={submission.SubmittedAt}
+					feedback={submission.Feedback}
+				/>
+			)}
 
 			{examples.length > 0 && <Examples examples={examples} />}
 
