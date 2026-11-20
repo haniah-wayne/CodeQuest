@@ -1,4 +1,4 @@
-import type { Schema } from "@google/genai";
+import { Type, type Schema } from "@google/genai";
 import { generateJson } from "@/lib/ai/gemini";
 import { TESTCASE_VALIDATION_PROMPT } from "@/lib/ai/prompts";
 
@@ -25,11 +25,11 @@ export async function validateTestCase(
 	};
 }
 
-const schema = {
-	type: "OBJECT",
-	properties: {
-		valid: { type: "BOOLEAN" },
-		message: { type: "STRING" },
-	},
-	required: ["valid", "message"],
+const schema: Schema = {
+  type: Type.OBJECT,
+  properties: {
+    valid: { type: Type.BOOLEAN },
+    message: { type: Type.STRING },
+  },
+  required: ["valid", "message"],
 };
