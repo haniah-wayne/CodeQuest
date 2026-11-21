@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { CodeWorkspace } from "@/components/challenge/code-workspace";
 import { SubmissionFeedback } from "@/components/challenge/submission-feedback";
 import { SubmissionList } from "@/components/challenge/submission-list";
+import { SubmissionStats } from "@/components/challenge/submission-stats";
 import { ClassRealtime } from "@/components/class/class-realtime";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +14,7 @@ import { requireSessionUser } from "@/lib/auth/session";
 import { DEFAULT_LANGUAGE, isLanguageId } from "@/lib/challenges/languages";
 import { isWithinUnlockRadius } from "@/lib/challenges/location";
 import { getSavedPosition } from "@/lib/challenges/position";
+import { getSubmissionStats } from "@/lib/challenges/stats";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ChallengePage(
@@ -230,6 +232,10 @@ async function ProfessorView({
 		feedback: s.Feedback,
 	}));
 
+	//11.21 - Haniah Ahmed
+	//stats: uses the raw rows, not the mapped ones above, because it needs studentid
+	const stats = getSubmissionStats(submissionsResult.data ?? [], rosterResult.data?.length ?? 0);
+
 	return (
 		<>
 			<ClassRealtime classId={classId} />
@@ -255,6 +261,11 @@ async function ProfessorView({
 					/>
 				</div>
 			</div>
+
+			{/* stats: hidden with nothign with error */}
+			{!submissionsResult.error && submissions.length > 0 && (
+				<SubmissionStats stats={stats} maxScore={challenge.Points} />
+			)}
 
 			<SubmissionList submissions={submissions} error={submissionsResult.error !== null} />
 		</>
