@@ -6,6 +6,14 @@
 		"dev": "next dev",
 		"build": "next build",
 		"start": "next start",
+		"test": "vitest --project unit",
+		"test:unit": "vitest run --project unit",
+		"test:integration": "vitest run --project integration",
+		"test:e2e": "playwright test",
+		"typecheck": "next typegen && tsc --noEmit",
+		"db:start": "supabase start",
+		"db:stop": "supabase stop",
+		"db:reset": "supabase db reset",
 		"lint": "oxlint && oxfmt --check",
 		"lint:fix": "oxlint --fix && oxfmt",
 		"docker:dev": "docker compose up --watch",
@@ -44,15 +52,24 @@
 		"valibot": "^1.5.0"
 	},
 	"devDependencies": {
+		"@playwright/test": "^1.65.1",
 		"@tailwindcss/postcss": "^4",
-		"@types/node": "^20",
+		"@testing-library/dom": "^10.4.2",
+		"@testing-library/jest-dom": "^8.0.0",
+		"@testing-library/react": "^16.3.3",
+		"@testing-library/user-event": "^14.6.13",
+		"@types/node": "^24.19.2",
 		"@types/react": "^19",
 		"@types/react-dom": "^19",
+		"@vitejs/plugin-react": "^6.3.0",
 		"babel-plugin-react-compiler": "1.0.0",
+		"jsdom": "^31.0.1",
 		"lefthook": "^2.1.14",
 		"oxlint": "^1.83.0",
+		"supabase": "^3.2.0",
 		"tailwindcss": "^4",
-		"typescript": "^5"
+		"typescript": "^5",
+		"vitest": "^5.1.1"
 	},
 	"devEngines": {
 		"packageManager": {
