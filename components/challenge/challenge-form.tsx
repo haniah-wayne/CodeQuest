@@ -374,6 +374,17 @@ export function ChallengeForm({
 							testCases={testCases}
 							onTestCasesChange={setTestCases}
 							error={state.fieldErrors?.testCases}
+							getChallengeDetails={() => {
+								const form = formRef.current;
+								if (!form) return null;
+
+								const data = new FormData(form);
+
+								return {
+									title: String(data.get("title") ?? ""),
+									description: String(data.get("description") ?? ""),
+								};
+							}}
 						/>
 					</PanelSurface>
 				</FormSection>
