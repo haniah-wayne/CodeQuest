@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
-import { MAX_FEEDBACK_LENGTH } from "@/lib/schemas";
+import { MAX_FEEDBACK_LENGTH } from "@/lib/challenges/schemas";
 
 export function FeedbackDialog({
 	submissionId,

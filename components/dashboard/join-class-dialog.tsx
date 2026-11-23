@@ -2,7 +2,6 @@
 
 import { useActionState, useState } from "react";
 import { type JoinClassState, joinClass } from "@/app/dashboard/actions";
-import { AuthFormError } from "@/components/auth-card";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -13,6 +12,7 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { FormError } from "@/components/ui/form-error";
 import { Input } from "@/components/ui/input";
 
 export function JoinClassDialog() {
@@ -43,7 +43,7 @@ export function JoinClassDialog() {
 
 				<form action={action}>
 					<FieldGroup>
-						{state.error && <AuthFormError>{state.error}</AuthFormError>}
+						{state.error && <FormError>{state.error}</FormError>}
 
 						<Field data-invalid={Boolean(state.fieldErrors?.code) || undefined}>
 							<FieldLabel className="text-label" htmlFor="code">

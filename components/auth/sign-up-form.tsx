@@ -4,7 +4,7 @@ import { EyeIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useActionState, useState } from "react";
 import { signUp } from "@/app/(auth)/actions";
-import { AuthCard, AuthFormError } from "@/components/auth-card";
+import { AuthCard } from "@/components/auth/auth-card";
 import { Button } from "@/components/ui/button";
 import {
 	Field,
@@ -15,6 +15,7 @@ import {
 	FieldLegend,
 	FieldSet,
 } from "@/components/ui/field";
+import { FormError } from "@/components/ui/form-error";
 import { Input } from "@/components/ui/input";
 import { Radio, RadioGroup } from "@/components/ui/radio-group";
 import { ROLES, type Role } from "@/lib/auth/roles";
@@ -44,7 +45,7 @@ export function SignUpForm() {
 		>
 			<form action={action}>
 				<FieldGroup>
-					{state.error && <AuthFormError>{state.error}</AuthFormError>}
+					{state.error && <FormError>{state.error}</FormError>}
 
 					<Field data-invalid={Boolean(state.fieldErrors?.name) || undefined}>
 						<FieldLabel className="text-label" htmlFor="name">

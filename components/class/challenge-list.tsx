@@ -13,13 +13,9 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { ChallengeActions } from "@/components/challenge/challenge-actions";
 import { ClassSection, SectionEmpty, SectionError } from "@/components/class/class-section";
-import {
-	DataTable,
-	type DataTableFeatures,
-	dataTableFeatures,
-} from "@/components/class/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { DataTable, type DataTableFeatures, dataTableFeatures } from "@/components/ui/data-table";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -29,8 +25,8 @@ import {
 	DropdownMenuRadioItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import type { Tables } from "@/supabase/database.types";
-import { Input } from "../ui/input";
 
 export type ChallengeStatus = "not_started" | "attempted" | "solved";
 

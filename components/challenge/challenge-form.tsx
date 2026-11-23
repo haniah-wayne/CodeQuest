@@ -12,7 +12,6 @@ import Link from "next/link";
 import { useActionState, useRef, useState } from "react";
 import type * as React from "react";
 import type { ChallengeFormState } from "@/app/dashboard/classes/[classId]/challenges/new/actions";
-import { AuthFormError } from "@/components/auth-card";
 import { ChallengeGenerator } from "@/components/challenge/challenge-generator";
 import {
 	TestCaseEditor,
@@ -31,6 +30,7 @@ import {
 	FieldLegend,
 	FieldSet,
 } from "@/components/ui/field";
+import { FormError } from "@/components/ui/form-error";
 import { Input } from "@/components/ui/input";
 import { Panel, PanelHeader, PanelIcon, PanelSurface } from "@/components/ui/panel";
 import { Radio, RadioGroup } from "@/components/ui/radio-group";
@@ -43,9 +43,14 @@ import {
 	type Position,
 	type UnlockRadius,
 } from "@/lib/challenges/location";
-import { DEFAULT_POINTS, MAX_POINTS, MIN_POINTS, type TestCaseInput } from "@/lib/schemas";
+import {
+	DEFAULT_POINTS,
+	MAX_POINTS,
+	MIN_POINTS,
+	type TestCaseInput,
+} from "@/lib/challenges/schemas";
 
-const MapView = dynamic(() => import("@/components/mapview"), {
+const MapView = dynamic(() => import("@/components/map-view"), {
 	ssr: false,
 	loading: () => <div className="size-full animate-pulse bg-muted" />,
 });
@@ -155,7 +160,7 @@ export function ChallengeForm({
 				<input type="hidden" name="latitude" value={location?.latitude ?? ""} />
 				<input type="hidden" name="radius" value={radius} />
 
-				{state.error && <AuthFormError>{state.error}</AuthFormError>}
+				{state.error && <FormError>{state.error}</FormError>}
 
 				<div className="grid items-stretch gap-6 lg:grid-cols-2">
 					<FormSection id="challenge-details" title="Details" icon={Edit02Icon}>

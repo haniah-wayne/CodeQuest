@@ -6,9 +6,9 @@ import type { ReactTable } from "@tanstack/react-table";
 import { useMemo } from "react";
 import type { SubmissionRow } from "@/components/challenge/submission-list";
 import { STATUS_ORDER, statusLabel } from "@/components/challenge/submission-status";
-import type { DataTableFeatures } from "@/components/class/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import type { DataTableFeatures } from "@/components/ui/data-table";
 import {
 	DropdownMenu,
 	DropdownMenuCheckboxItem,

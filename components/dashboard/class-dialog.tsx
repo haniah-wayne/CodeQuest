@@ -3,7 +3,6 @@
 import type * as React from "react";
 import { useActionState, useId, useState } from "react";
 import { type ClassFormState, createClass, updateClass } from "@/app/dashboard/actions";
-import { AuthFormError } from "@/components/auth-card";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -13,6 +12,7 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { FormError } from "@/components/ui/form-error";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -92,7 +92,7 @@ export function ClassDialog({
 					)}
 
 					<FieldGroup>
-						{state.error && <AuthFormError>{state.error}</AuthFormError>}
+						{state.error && <FormError>{state.error}</FormError>}
 
 						<Field data-invalid={Boolean(state.fieldErrors?.name) || undefined}>
 							<FieldLabel className="text-label" htmlFor={`${id}-name`}>

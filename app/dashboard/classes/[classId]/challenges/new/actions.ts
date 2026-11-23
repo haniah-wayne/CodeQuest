@@ -16,7 +16,7 @@ import {
 	type TestCaseInput,
 	TestCasesSchema,
 	ValidateTestCaseSchema,
-} from "@/lib/schemas";
+} from "@/lib/challenges/schemas";
 import { createClient } from "@/lib/supabase/server";
 import { toFieldErrors } from "@/lib/validation";
 //new imports needed for functions

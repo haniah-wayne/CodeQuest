@@ -1,7 +1,7 @@
 import { type Schema, Type } from "@google/genai";
 import * as v from "valibot";
 import { generateJson } from "@/lib/ai/gemini";
-import type { TestCaseInput } from "@/lib/schemas";
+import type { TestCaseInput } from "@/lib/challenges/schemas";
 import { TEST_CASE_VALIDATION_PROMPT } from "./prompts";
 
 export interface TestCaseValidation {

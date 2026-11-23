@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { confirmEmail } from "@/app/(auth)/actions";
-import { AuthCard } from "@/components/auth-card";
+import { AuthCard } from "@/components/auth/auth-card";
 import { Button } from "@/components/ui/button";
 
 export default async function ConfirmEmail({ searchParams }: PageProps<"/sign-up/confirm">) {

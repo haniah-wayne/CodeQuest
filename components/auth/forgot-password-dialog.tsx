@@ -2,7 +2,6 @@
 
 import { useActionState, useState } from "react";
 import { sendResetPasswordEmail } from "@/app/(auth)/actions";
-import { AuthFormError } from "@/components/auth-card";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -14,6 +13,7 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { FormError } from "@/components/ui/form-error";
 import { Input } from "@/components/ui/input";
 
 export function ForgotPasswordDialog() {
@@ -59,7 +59,7 @@ export function ForgotPasswordDialog() {
 				) : (
 					<form action={action}>
 						<FieldGroup>
-							{state.error && <AuthFormError>{state.error}</AuthFormError>}
+							{state.error && <FormError>{state.error}</FormError>}
 
 							<Field>
 								<FieldLabel className="text-label" htmlFor="reset-email">

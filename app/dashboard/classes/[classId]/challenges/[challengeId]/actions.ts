@@ -6,14 +6,14 @@ import { type AiGrade, requestAiGrade } from "@/lib/ai/grading";
 import { getSessionUser } from "@/lib/auth/session";
 import type { LanguageId } from "@/lib/challenges/languages";
 import { isWithinUnlockRadius, type Position } from "@/lib/challenges/location";
-import { type ExecutionResult, execute, executeAll } from "@/lib/piston";
 import {
 	GradeSubmissionSchema,
 	RunCodeSchema,
 	SubmissionFeedbackSchema,
 	SubmissionScoreSchema,
 	SubmitSolutionSchema,
-} from "@/lib/schemas";
+} from "@/lib/challenges/schemas";
+import { type ExecutionResult, execute, executeAll } from "@/lib/piston";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 

@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import type { TestCaseValidation } from "@/lib/ai/test-case-validation";
-import { MAX_TEST_CASES, type TestCaseInput } from "@/lib/schemas";
+import { MAX_TEST_CASES, type TestCaseInput } from "@/lib/challenges/schemas";
 
 // test case interface with an id for the editor to track them
 export interface TestCaseDraft extends TestCaseInput {
