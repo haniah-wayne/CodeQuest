@@ -1,6 +1,6 @@
 import { Type, type Schema } from "@google/genai";
 import { generateJson } from "@/lib/ai/gemini";
-import { TESTCASE_VALIDATION_PROMPT } from "@/lib/ai/prompts";
+import { TEST_CASE_VALIDATION_PROMPT } from "@/lib/ai/prompts";
 
 export async function validateTestCase(
 	title: string,
@@ -15,7 +15,7 @@ export async function validateTestCase(
 		expectedOutput,
 	});
 	const result = await generateJson({
-		systemInstruction: TESTCASE_VALIDATION_PROMPT,
+		systemInstruction: TEST_CASE_VALIDATION_PROMPT,
 		schema,
 		contents,
 	});
@@ -26,10 +26,10 @@ export async function validateTestCase(
 }
 
 const schema: Schema = {
-  type: Type.OBJECT,
-  properties: {
-    valid: { type: Type.BOOLEAN },
-    message: { type: Type.STRING },
-  },
-  required: ["valid", "message"],
+	type: Type.OBJECT,
+	properties: {
+		valid: { type: Type.BOOLEAN },
+		message: { type: Type.STRING },
+	},
+	required: ["valid", "message"],
 };
