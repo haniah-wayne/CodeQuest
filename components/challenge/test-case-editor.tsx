@@ -7,10 +7,11 @@ import { Add01Icon, Delete02Icon } from "@hugeicons/core-free-icons";
 import { AiMagicIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
+import { validateTestCase } from "@/app/dashboard/classes/[classId]/challenges/new/actions";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
-import { checkTestCaseWithAI } from "@/lib/ai/testcase-validation-action";
+import type { TestCaseValidation } from "@/lib/ai/test-case-validation";
 import { MAX_TEST_CASES, type TestCaseInput } from "@/lib/schemas";
 
 // test case interface with an id for the editor to track them
@@ -66,37 +67,30 @@ export function TestCaseEditor({
 		]);
 	}
 
-	const [results, setResults] = useState<Record<string, { valid: boolean; message: string }>>({});
+	const [results, setResults] = useState<Record<string, TestCaseValidation>>({});
 
 	async function checkTestCase(id: string) {
 		const tc = testCases.find((tc) => tc.id === id && tc.id.startsWith("manual-"));
 
 		if (!tc) return;
 
-		const details = getChallengeDetails();
-		if (!details) return;
+		const challenge = getChallengeDetails();
+		if (!challenge) return;
+
+		let result: TestCaseValidation;
 
 		try {
-			const result = await checkTestCaseWithAI(
-				details.title,
-				details.description,
-				tc.input,
-				tc.expectedOutput,
-			);
+			const { error, validation } = await validateTestCase({
+				challenge,
+				testCase: { input: tc.input, expectedOutput: tc.expectedOutput },
+			});
 
-			setResults((prev) => ({
-				...prev,
-				[id]: result,
-			}));
+			result = validation ?? { valid: false, message: error ?? "Something went wrong." };
 		} catch {
-			setResults((prev) => ({
-				...prev,
-				[id]: {
-					valid: false,
-					message: "AI validation failed. Please try again.",
-				},
-			}));
+			result = { valid: false, message: "AI validation failed. Please try again." };
 		}
+
+		setResults((prev) => ({ ...prev, [id]: result }));
 	}
 
 	return (

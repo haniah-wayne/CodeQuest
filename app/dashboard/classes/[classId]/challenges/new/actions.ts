@@ -8,12 +8,14 @@ import {
 	GenerationError,
 	generateChallenge as requestGeneratedChallenge,
 } from "@/lib/ai/challenge";
+import { requestTestCaseValidation, type TestCaseValidation } from "@/lib/ai/test-case-validation";
 import { getSessionUser } from "@/lib/auth/session";
 import {
 	CreateChallengeSchema,
 	GenerateChallengeSchema,
 	type TestCaseInput,
 	TestCasesSchema,
+	ValidateTestCaseSchema,
 } from "@/lib/schemas";
 import { createClient } from "@/lib/supabase/server";
 import { toFieldErrors } from "@/lib/validation";
@@ -22,6 +24,11 @@ import { toFieldErrors } from "@/lib/validation";
 export interface GenerateChallengeState {
 	error?: string;
 	challenge?: GeneratedChallenge;
+}
+
+export interface ValidateTestCaseState {
+	error?: string;
+	validation?: TestCaseValidation;
 }
 
 export interface ChallengeFormState {
@@ -176,14 +183,35 @@ export async function generateChallenge(input: {
 	}
 }
 
+export async function validateTestCase(input: {
+	challenge: { title: string; description: string };
+	testCase: TestCaseInput;
+}): Promise<ValidateTestCaseState> {
+	const user = await getSessionUser();
+
+	if (user?.role !== "professor") {
+		return { error: "Only professors can check test cases." };
+	}
+
+	const parsed = v.safeParse(ValidateTestCaseSchema, input);
+
+	if (!parsed.success) {
+		return { error: parsed.issues[0].message };
+	}
+
+	try {
+		return { validation: await requestTestCaseValidation(parsed.output) };
+	} catch (error) {
+		console.error(error);
+
+		return { error: "The AI couldn't check this test case right now. Try again in a moment." };
+	}
+}
+
 export async function updateChallenge(
 	_prevState: ChallengeFormState,
 	formData: FormData,
 ): Promise<ChallengeFormState> {
-	//const { values, parsed } = readForm(formData);
-	//const classId = Number(formData.get("classId"));
-	//const challengeId = Number(formData.get("challengeId"));
-
 	//updating values
 	const validated = validateChallenge(formData); //using validate challenge instead
 	const { values } = validated;

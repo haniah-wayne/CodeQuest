@@ -147,4 +147,9 @@ export const TestCasesSchema = v.pipe(
 	v.maxLength(MAX_TEST_CASES, `You can add up to ${MAX_TEST_CASES} test cases.`),
 );
 
+export const ValidateTestCaseSchema = v.object({
+	challenge: v.pick(CreateChallengeSchema, ["title", "description"]),
+	testCase: TestCaseSchema,
+});
+
 export type TestCaseInput = v.InferOutput<typeof TestCaseSchema>; //telling it to use the type of the schema for the test cases, infer the type
