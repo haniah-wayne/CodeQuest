@@ -11,14 +11,14 @@ import { SubmissionFilters } from "@/components/challenge/submission-filters";
 import { StatusBadge } from "@/components/challenge/submission-status";
 import { SubmittedCode } from "@/components/challenge/submitted-code";
 import { ClassSection, SectionEmpty, SectionError } from "@/components/class/class-section";
+import { StudentAvatar } from "@/components/class/student-avatar";
+import { Button } from "@/components/ui/button";
 import {
 	DataTable,
 	type DataTableFeatures,
 	dataTableFeatures,
 	expandedRowId,
-} from "@/components/class/data-table";
-import { StudentAvatar } from "@/components/class/student-avatar";
-import { Button } from "@/components/ui/button";
+} from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
 import { languageLabel } from "@/lib/challenges/languages";
 

@@ -12,7 +12,6 @@ import Link from "next/link";
 import { useActionState, useRef, useState } from "react";
 import type * as React from "react";
 import type { ChallengeFormState } from "@/app/dashboard/classes/[classId]/challenges/new/actions";
-import { AuthFormError } from "@/components/auth-card";
 import { ChallengeGenerator } from "@/components/challenge/challenge-generator";
 import {
 	TestCaseEditor,
@@ -31,6 +30,7 @@ import {
 	FieldLegend,
 	FieldSet,
 } from "@/components/ui/field";
+import { FormError } from "@/components/ui/form-error";
 import { Input } from "@/components/ui/input";
 import { Panel, PanelHeader, PanelIcon, PanelSurface } from "@/components/ui/panel";
 import { Radio, RadioGroup } from "@/components/ui/radio-group";
@@ -43,9 +43,14 @@ import {
 	type Position,
 	type UnlockRadius,
 } from "@/lib/challenges/location";
-import { DEFAULT_POINTS, MAX_POINTS, MIN_POINTS, type TestCaseInput } from "@/lib/schemas";
+import {
+	DEFAULT_POINTS,
+	MAX_POINTS,
+	MIN_POINTS,
+	type TestCaseInput,
+} from "@/lib/challenges/schemas";
 
-const MapView = dynamic(() => import("@/components/mapview"), {
+const MapView = dynamic(() => import("@/components/map-view"), {
 	ssr: false,
 	loading: () => <div className="size-full animate-pulse bg-muted" />,
 });
@@ -102,16 +107,9 @@ export function ChallengeForm({
 	const locationError = state.fieldErrors?.longitude ?? state.fieldErrors?.latitude;
 	const classHref = `/dashboard/classes/${classId}`;
 
-	function applyDraft(draft: GeneratedChallenge) {
+	function setDetails(values: { title: string; points: string; description: string }) {
 		const fields = formRef.current?.elements;
-
 		if (!fields) return;
-
-		const values = {
-			title: draft.title,
-			points: String(draft.points),
-			description: draft.description,
-		};
 
 		for (const [name, value] of Object.entries(values)) {
 			const field = fields.namedItem(name);
@@ -120,14 +118,37 @@ export function ChallengeForm({
 				field.value = value;
 			}
 		}
+	}
 
-		setTestCases(() => toTestCaseDrafts(draft.testCases));
+	function fillGenerated(challenge: GeneratedChallenge) {
+		setDetails({
+			title: challenge.title,
+			points: String(challenge.points),
+			description: challenge.description,
+		});
+
+		setTestCases(toTestCaseDrafts(challenge.testCases));
+	}
+
+	// Retain non-generated values
+	function clearGenerated() {
+		setDetails({
+			title: "",
+			points: String(DEFAULT_POINTS),
+			description: "",
+		});
+
+		setTestCases([]);
 	}
 
 	return (
 		<>
 			{challengeId === undefined && (
-				<ChallengeGenerator classId={classId} onApply={applyDraft} />
+				<ChallengeGenerator
+					classId={classId}
+					onGenerate={fillGenerated}
+					onClear={clearGenerated}
+				/>
 			)}
 
 			<form ref={formRef} action={action} className="flex flex-col gap-6">
@@ -139,7 +160,7 @@ export function ChallengeForm({
 				<input type="hidden" name="latitude" value={location?.latitude ?? ""} />
 				<input type="hidden" name="radius" value={radius} />
 
-				{state.error && <AuthFormError>{state.error}</AuthFormError>}
+				{state.error && <FormError>{state.error}</FormError>}
 
 				<div className="grid items-stretch gap-6 lg:grid-cols-2">
 					<FormSection id="challenge-details" title="Details" icon={Edit02Icon}>
@@ -358,6 +379,17 @@ export function ChallengeForm({
 							testCases={testCases}
 							onTestCasesChange={setTestCases}
 							error={state.fieldErrors?.testCases}
+							getChallengeDetails={() => {
+								const form = formRef.current;
+								if (!form) return null;
+
+								const data = new FormData(form);
+
+								return {
+									title: String(data.get("title") ?? ""),
+									description: String(data.get("description") ?? ""),
+								};
+							}}
 						/>
 					</PanelSurface>
 				</FormSection>

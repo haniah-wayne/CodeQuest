@@ -8,8 +8,8 @@ import { useState } from "react";
 import { useGrading, verdictStyles } from "@/components/challenge/ai-grade";
 import { FeedbackDialog } from "@/components/challenge/feedback-dialog";
 import type { SubmissionRow } from "@/components/challenge/submission-list";
-import type { DataTableFeatures } from "@/components/class/data-table";
 import { Button } from "@/components/ui/button";
+import type { DataTableFeatures } from "@/components/ui/data-table";
 import {
 	DropdownMenu,
 	DropdownMenuContent,

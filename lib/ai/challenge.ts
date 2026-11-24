@@ -2,7 +2,7 @@ import { type Schema, ThinkingLevel, Type } from "@google/genai";
 import * as v from "valibot";
 import { generateJson } from "@/lib/ai/gemini";
 import type { LanguageId } from "@/lib/challenges/languages";
-import { MAX_POINTS, MIN_POINTS } from "@/lib/schemas";
+import { MAX_POINTS, MIN_POINTS } from "@/lib/challenges/schemas";
 import { CHALLENGE_SYSTEM_PROMPT } from "./prompts";
 import { runTestInputs, type SuggestedTestCase } from "./test-cases";
 

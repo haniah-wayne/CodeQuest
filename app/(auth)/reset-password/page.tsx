@@ -6,9 +6,10 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { updatePassword } from "@/app/(auth)/actions";
-import { AuthCard, AuthFormError } from "@/components/auth-card";
+import { AuthCard } from "@/components/auth/auth-card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { FormError } from "@/components/ui/form-error";
 import { Input } from "@/components/ui/input";
 import { MIN_PASSWORD_LENGTH } from "@/lib/auth/schemas";
 
@@ -44,7 +45,7 @@ export default function ResetPassword() {
 			) : (
 				<form action={action}>
 					<FieldGroup>
-						{state.error && <AuthFormError>{state.error}</AuthFormError>}
+						{state.error && <FormError>{state.error}</FormError>}
 
 						<Field>
 							<FieldLabel className="text-label" htmlFor="password">

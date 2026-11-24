@@ -4,11 +4,12 @@ import { EyeIcon as eye_open } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useActionState, useState } from "react";
 import { signIn } from "@/app/(auth)/actions";
-import { AuthCard, AuthFormError } from "@/components/auth-card";
-import { ForgotPasswordDialog } from "@/components/forgot-password-dialog";
+import { AuthCard } from "@/components/auth/auth-card";
+import { ForgotPasswordDialog } from "@/components/auth/forgot-password-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { FormError } from "@/components/ui/form-error";
 import { Input } from "@/components/ui/input";
 
 export function SignInForm({ initialError }: { initialError?: string }) {
@@ -27,7 +28,7 @@ export function SignInForm({ initialError }: { initialError?: string }) {
 		>
 			<form action={action}>
 				<FieldGroup>
-					{error && <AuthFormError>{error}</AuthFormError>}
+					{error && <FormError>{error}</FormError>}
 
 					<Field data-invalid={Boolean(state.fieldErrors?.email) || undefined}>
 						<FieldLabel className="text-label" htmlFor="email">

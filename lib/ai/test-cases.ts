@@ -2,8 +2,8 @@
 //test cases files, runnign the reference solution on each ai generated input
 
 import type { LanguageId } from "@/lib/challenges/languages";
+import { MAX_TEST_CASES } from "@/lib/challenges/schemas";
 import { executeAll } from "@/lib/piston";
-import { MAX_TEST_CASES } from "@/lib/schemas";
 
 export interface SuggestedTestCase {
 	input: string;

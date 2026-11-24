@@ -13,13 +13,9 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { ChallengeActions } from "@/components/challenge/challenge-actions";
 import { ClassSection, SectionEmpty, SectionError } from "@/components/class/class-section";
-import {
-	DataTable,
-	type DataTableFeatures,
-	dataTableFeatures,
-} from "@/components/class/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { DataTable, type DataTableFeatures, dataTableFeatures } from "@/components/ui/data-table";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -29,6 +25,7 @@ import {
 	DropdownMenuRadioItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import type { Tables } from "@/supabase/database.types";
 
 export type ChallengeStatus = "not_started" | "attempted" | "solved";
@@ -199,7 +196,7 @@ export function ChallengeList({
 		data: challenges,
 		getRowId: (ch) => String(ch.ChallengeID),
 	});
-
+	const search: string = table.state.globalFilter ?? "";
 	const isEmpty = !error && challenges.length === 0;
 	const filtered = table.state.columnFilters.length > 0;
 
@@ -217,7 +214,21 @@ export function ChallengeList({
 			title="Challenges"
 			icon={Flag02Icon}
 			count={challenges.length}
-			action={isEmpty ? null : action}
+			action={
+				error || isEmpty ? null : (
+					<div className="flex items-center gap-2">
+						<Input
+							type="search"
+							className="h-8 w-36 bg-card sm:w-56"
+							placeholder="Search by challenge name"
+							aria-label="Search by challenge name"
+							value={search}
+							onChange={(e) => table.setGlobalFilter(e.target.value)}
+						/>
+						{createButton}
+					</div>
+				)
+			}
 		>
 			{error ? (
 				<SectionError what="challenges" />

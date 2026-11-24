@@ -11,10 +11,10 @@ import dynamic from "next/dynamic";
 import { useRef, useState, useTransition } from "react";
 import { updatePosition } from "@/app/dashboard/classes/[classId]/actions";
 import { ClassSection } from "@/components/class/class-section";
-import type { MapChallenge } from "@/components/mapview";
+import type { MapChallenge } from "@/components/map-view";
 import { distanceInFeet, type Position } from "@/lib/challenges/location";
 
-const MapView = dynamic(() => import("@/components/mapview"), {
+const MapView = dynamic(() => import("@/components/map-view"), {
 	ssr: false,
 	loading: () => <div className="size-full animate-pulse bg-muted" />,
 });

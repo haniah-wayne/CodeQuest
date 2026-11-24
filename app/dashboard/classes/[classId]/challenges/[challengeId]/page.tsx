@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { CodeWorkspace } from "@/components/challenge/code-workspace";
 import { SubmissionFeedback } from "@/components/challenge/submission-feedback";
 import { SubmissionList } from "@/components/challenge/submission-list";
+import { SubmissionStats } from "@/components/challenge/submission-stats";
 import { ClassRealtime } from "@/components/class/class-realtime";
 import { DashboardPageHeader } from "@/components/dashboard/dashboard-page-header";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +14,7 @@ import { requireSessionUser } from "@/lib/auth/session";
 import { DEFAULT_LANGUAGE, isLanguageId } from "@/lib/challenges/languages";
 import { isWithinUnlockRadius } from "@/lib/challenges/location";
 import { getSavedPosition } from "@/lib/challenges/position";
+import { getSubmissionStats } from "@/lib/challenges/stats";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ChallengePage(
@@ -29,7 +31,7 @@ export default async function ChallengePage(
 
 	// RLS decides who can see the challenge, so a missing row means not found
 	// or not allowed
-	const [challengeResult, submissionsResult, position] = await Promise.all([
+	const [challengeResult, submissionResult, position] = await Promise.all([
 		supabase
 			.from("Challenges")
 			.select(
@@ -41,10 +43,10 @@ export default async function ChallengePage(
 			.maybeSingle(),
 		supabase
 			.from("Submission")
-			.select("SubmissionID, Code, Language, Status, SubmittedAt, Feedback")
+			.select("Code, Language, Status, SubmittedAt, Feedback")
 			.eq("ChallengeID", challengeId)
 			.eq("StudentID", user.id)
-			.order("SubmittedAt", { ascending: false }),
+			.maybeSingle(),
 		getSavedPosition(),
 	]);
 
@@ -60,31 +62,25 @@ export default async function ChallengePage(
 		return <ProfessorView classId={classId} challengeId={challengeId} challenge={challenge} />;
 	}
 
-	if (submissionsResult.error) console.error(submissionsResult.error);
+	if (submissionResult.error) {
+		console.error(submissionResult.error);
+	}
 
-	const submissions = submissionsResult.data ?? [];
-	const correct = submissions.find((s) => s.Status === "correct");
-	const solved = Boolean(correct);
+	const submission = submissionResult.data;
+	const solved = submission?.Status === "correct";
 
 	// Locked challenges stay hidden even if the student has the link
-	if (!solved && !isWithinUnlockRadius(challenge.Locations, position)) notFound();
+	if (!solved && !isWithinUnlockRadius(challenge.Locations, position)) {
+		notFound();
+	}
 
-	// Show the solution that was graded correct, otherwise pick up where the
-	// student left off with their last submission
-	const shown = correct ?? submissions[0];
-	const initialLanguage = isLanguageId(shown?.Language) ? shown.Language : DEFAULT_LANGUAGE;
-	const initialCode = shown && isLanguageId(shown.Language) ? shown.Code : null;
+	const initialLanguage = isLanguageId(submission?.Language)
+		? submission.Language
+		: DEFAULT_LANGUAGE;
+
+	const initialCode = submission && isLanguageId(submission.Language) ? submission.Code : null;
 	// Only the first test case is shown, the rest are kept for grading
 	const examples = challenge.TestCase.slice(0, 1);
-
-	const feedback = submissions
-		.filter((s) => s.Feedback)
-		.map((s) => ({
-			id: s.SubmissionID,
-			status: s.Status,
-			submittedAt: s.SubmittedAt,
-			feedback: s.Feedback!,
-		}));
 
 	return (
 		<>
@@ -122,7 +118,13 @@ export default async function ChallengePage(
 				</div>
 			</div>
 
-			<SubmissionFeedback entries={feedback} />
+			{submission?.Feedback && (
+				<SubmissionFeedback
+					status={submission.Status}
+					submittedAt={submission.SubmittedAt}
+					feedback={submission.Feedback}
+				/>
+			)}
 
 			{examples.length > 0 && <Examples examples={examples} />}
 
@@ -230,6 +232,10 @@ async function ProfessorView({
 		feedback: s.Feedback,
 	}));
 
+	//11.21 - Haniah Ahmed
+	//stats: uses the raw rows, not the mapped ones above, because it needs studentid
+	const stats = getSubmissionStats(submissionsResult.data ?? [], rosterResult.data?.length ?? 0);
+
 	return (
 		<>
 			<ClassRealtime classId={classId} />
@@ -246,7 +252,7 @@ async function ProfessorView({
 				<div className="flex flex-col gap-4">
 					<DashboardPageHeader
 						title={challenge.Title}
-						description="Review every submission students have made for this challenge."
+						description="Review each student's latest submission for this challenge."
 						actions={
 							<Badge className="bg-wsu-gold text-wsu-green tabular-nums">
 								{challenge.Points} pts
@@ -255,6 +261,11 @@ async function ProfessorView({
 					/>
 				</div>
 			</div>
+
+			{/* stats: hidden with nothign with error */}
+			{!submissionsResult.error && submissions.length > 0 && (
+				<SubmissionStats stats={stats} maxScore={challenge.Points} />
+			)}
 
 			<SubmissionList submissions={submissions} error={submissionsResult.error !== null} />
 		</>

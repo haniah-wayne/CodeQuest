@@ -3,12 +3,8 @@
 import { UserGroupIcon } from "@hugeicons/core-free-icons";
 import { createColumnHelper, useTable } from "@tanstack/react-table";
 import { ClassSection, SectionEmpty, SectionError } from "@/components/class/class-section";
-import {
-	DataTable,
-	type DataTableFeatures,
-	dataTableFeatures,
-} from "@/components/class/data-table";
 import { StudentAvatar } from "@/components/class/student-avatar";
+import { DataTable, type DataTableFeatures, dataTableFeatures } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
 
 interface RosterStudent {

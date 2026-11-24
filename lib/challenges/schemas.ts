@@ -1,6 +1,6 @@
 import * as v from "valibot";
-import { LANGUAGE_IDS } from "./challenges/languages";
-import { UNLOCK_RADII } from "./challenges/location";
+import { LANGUAGE_IDS } from "./languages";
+import { UNLOCK_RADII } from "./location";
 
 export const MIN_POINTS = 1;
 export const MAX_POINTS = 100;
@@ -146,5 +146,10 @@ export const TestCasesSchema = v.pipe(
 	v.minLength(1, "Add at least one test case."),
 	v.maxLength(MAX_TEST_CASES, `You can add up to ${MAX_TEST_CASES} test cases.`),
 );
+
+export const ValidateTestCaseSchema = v.object({
+	challenge: v.pick(CreateChallengeSchema, ["title", "description"]),
+	testCase: TestCaseSchema,
+});
 
 export type TestCaseInput = v.InferOutput<typeof TestCaseSchema>; //telling it to use the type of the schema for the test cases, infer the type

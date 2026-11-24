@@ -4,7 +4,7 @@ import { ChevronDown } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 import { signOut } from "@/app/(auth)/actions";
-import { DeleteAccountDialog } from "@/components/delete-account-dialog";
+import { DeleteAccountDialog } from "@/components/auth/delete-account-dialog";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,

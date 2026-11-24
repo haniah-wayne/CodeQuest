@@ -2,7 +2,7 @@ import { MapsLocation01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "cn";
 import Link from "next/link";
-import { AccountMenu } from "@/components/account-menu";
+import { AccountMenu } from "@/components/auth/account-menu";
 import { buttonVariants } from "@/components/ui/button";
 import { getSessionUser } from "@/lib/auth/session";
 

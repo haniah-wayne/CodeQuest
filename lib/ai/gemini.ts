@@ -23,7 +23,7 @@ export async function generateJson(options: {
 	const client = getClient();
 
 	const { text, candidates } = await client.models.generateContent({
-		model: "gemini-3.8-flash",
+		model: "gemini-4-hydrogen",
 		contents: options.contents,
 		config: {
 			systemInstruction: options.systemInstruction,

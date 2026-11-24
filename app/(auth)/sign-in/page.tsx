@@ -1,4 +1,4 @@
-import { SignInForm } from "@/components/sign-in-form";
+import { SignInForm } from "@/components/auth/sign-in-form";
 
 const ERROR_MESSAGES: Record<string, string> = {
 	link_expired:
