@@ -71,7 +71,7 @@ export async function signUp(_prevState: SignUpState, formData: FormData): Promi
 		email,
 		password,
 		options: {
-			emailRedirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback?next=${encodeURIComponent(roleHome(role))}`,
+			emailRedirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/sign-up/confirm`,
 			data: {
 				name,
 				role,
@@ -84,6 +84,29 @@ export async function signUp(_prevState: SignUpState, formData: FormData): Promi
 	}
 
 	redirect(roleHome(role));
+}
+
+export async function confirmEmail(formData: FormData) {
+	const tokenHash = formData.get("token_hash")?.toString();
+
+	if (!tokenHash) {
+		redirect("/sign-in?error=link_expired");
+	}
+
+	const supabase = await createClient();
+
+	const { data, error } = await supabase.auth.verifyOtp({
+		token_hash: tokenHash,
+		type: "email",
+	});
+
+	if (error) {
+		redirect("/sign-in?error=link_expired");
+	}
+
+	const role = data.user?.user_metadata?.role;
+
+	redirect(roleHome(isRole(role) ? role : null));
 }
 
 export async function signOut() {

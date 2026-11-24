@@ -4,10 +4,14 @@
 //11.13 - Haniah Ahmed - added the test case editor to the challenge form
 
 import { Add01Icon, Delete02Icon } from "@hugeicons/core-free-icons";
+import { AiMagicIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { useState } from "react";
+import { validateTestCase } from "@/app/dashboard/classes/[classId]/challenges/new/actions";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
+import type { TestCaseValidation } from "@/lib/ai/test-case-validation";
 import { MAX_TEST_CASES, type TestCaseInput } from "@/lib/schemas";
 
 // test case interface with an id for the editor to track them
@@ -34,10 +38,15 @@ export function TestCaseEditor({
 	testCases,
 	onTestCasesChange: setTestCases,
 	error,
+	getChallengeDetails,
 }: {
 	testCases: TestCaseDraft[];
 	onTestCasesChange: (update: (current: TestCaseDraft[]) => TestCaseDraft[]) => void;
 	error?: string;
+	getChallengeDetails: () => {
+		title: string;
+		description: string;
+	} | null;
 }) {
 	function updateTestCase(id: string, changes: Partial<TestCaseInput>) {
 		setTestCases((current) => current.map((tc) => (tc.id === id ? { ...tc, ...changes } : tc)));
@@ -48,7 +57,40 @@ export function TestCaseEditor({
 	}
 
 	function addTestCase() {
-		setTestCases((current) => [...current, ...toTestCaseDrafts([{}])]);
+		setTestCases((current) => [
+			...current,
+			{
+				id: `manual-${nextId++}`,
+				input: "",
+				expectedOutput: "",
+			},
+		]);
+	}
+
+	const [results, setResults] = useState<Record<string, TestCaseValidation>>({});
+
+	async function checkTestCase(id: string) {
+		const tc = testCases.find((tc) => tc.id === id && tc.id.startsWith("manual-"));
+
+		if (!tc) return;
+
+		const challenge = getChallengeDetails();
+		if (!challenge) return;
+
+		let result: TestCaseValidation;
+
+		try {
+			const { error, validation } = await validateTestCase({
+				challenge,
+				testCase: { input: tc.input, expectedOutput: tc.expectedOutput },
+			});
+
+			result = validation ?? { valid: false, message: error ?? "Something went wrong." };
+		} catch {
+			result = { valid: false, message: "AI validation failed. Please try again." };
+		}
+
+		setResults((prev) => ({ ...prev, [id]: result }));
 	}
 
 	return (
@@ -129,6 +171,39 @@ export function TestCaseEditor({
 									/>
 								</Field>
 							</div>
+
+							{tc.id.startsWith("manual-") && (
+								<>
+									<Button
+										type="button"
+										variant="outline"
+										className="w-fit"
+										aria-label={`Check with AI ${index + 1}`}
+										onClick={() => checkTestCase(tc.id)}
+									>
+										<HugeiconsIcon
+											icon={AiMagicIcon}
+											data-icon="inline-start"
+										/>
+										Check with AI
+									</Button>
+
+									{results[tc.id] && (
+										<p
+											role="status"
+											className={
+												results[tc.id].valid
+													? "text-sm text-green-600"
+													: "text-sm text-red-600"
+											}
+										>
+											{results[tc.id].valid
+												? "No issues found"
+												: results[tc.id].message}
+										</p>
+									)}
+								</>
+							)}
 						</li>
 					);
 				})}
