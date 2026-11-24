@@ -119,9 +119,3 @@ pnpm docker:down    # stop
 | `pnpm docker:dev`   | Run the dev server in Docker with watch mode |
 | `pnpm docker:build` | Rebuild the Docker image                     |
 | `pnpm docker:down`  | Stop the Docker containers                   |
-
-## Project structure
-
-```
-TODO
-```
