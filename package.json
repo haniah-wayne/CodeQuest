@@ -6,6 +6,7 @@
 		"dev": "next dev",
 		"build": "next build",
 		"start": "next start",
+		"test": "vitest run",
 		"lint": "oxlint && oxfmt --check",
 		"lint:fix": "oxlint --fix && oxfmt",
 		"docker:dev": "docker compose up --watch",
@@ -44,15 +45,18 @@
 		"valibot": "^1.5.0"
 	},
 	"devDependencies": {
+		"@playwright/test": "^1.65.1",
 		"@tailwindcss/postcss": "^4",
 		"@types/node": "^20",
 		"@types/react": "^19",
 		"@types/react-dom": "^19",
 		"babel-plugin-react-compiler": "1.0.0",
+		"dotenv": "^18.0.10",
 		"lefthook": "^2.1.14",
 		"oxlint": "^1.83.0",
 		"tailwindcss": "^4",
-		"typescript": "^5"
+		"typescript": "^5",
+		"vitest": "^5.1.1"
 	},
 	"devEngines": {
 		"packageManager": {
